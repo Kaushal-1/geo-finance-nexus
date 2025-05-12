@@ -13,7 +13,7 @@ declare global {
 
 // Add GeoJSON type definitions
 namespace GeoJSON {
-  interface Feature {
+  export interface Feature {
     type: string;
     properties: any;
     geometry: {
