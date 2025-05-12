@@ -1,4 +1,3 @@
-
 class FinnhubService {
   private apiKey: string;
   private baseUrl: string;
@@ -18,7 +17,7 @@ class FinnhubService {
     });
     
     try {
-      const response = await fetch(url);
+      const response = await fetch(url.toString());
       
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
@@ -32,16 +31,16 @@ class FinnhubService {
   }
   
   // Get real-time quote
-  async getQuote(symbol: string) {
+  async getQuote(symbol: string): Promise<FinnhubQuoteResult> {
     try {
       const [quote, profile] = await Promise.all([
-        this.fetchData('/quote', { symbol }),
-        this.fetchData('/stock/profile2', { symbol })
+        this.fetchData('/quote', { symbol }) as Promise<QuoteResponse>,
+        this.fetchData('/stock/profile2', { symbol }) as Promise<ProfileResponse>
       ]);
       
       return {
         symbol: symbol,
-        name: profile.name || symbol,
+        name: profile?.name || symbol,
         price: quote.c,
         change: quote.c - quote.pc,
         changePercent: ((quote.c - quote.pc) / quote.pc) * 100,
@@ -69,7 +68,7 @@ class FinnhubService {
         resolution,
         from: from.toString(),
         to: to.toString()
-      });
+      }) as CandleResponse;
       
       if (data.s !== 'ok') {
         throw new Error(`Failed to get candles: ${data.s}`);
@@ -117,11 +116,11 @@ class FinnhubService {
         Promise.all(europeanIndices.map(this.fetchIndexData.bind(this)))
       ]);
       
-      return {
-        usMarkets: usResults,
-        asianMarkets: asianResults,
-        europeanMarkets: europeanResults
-      };
+      return [
+        ...usResults,
+        ...asianResults,
+        ...europeanResults
+      ];
     } catch (error) {
       console.error('Error fetching indices:', error);
       throw error;
@@ -154,17 +153,17 @@ class FinnhubService {
   // Get market news
   async getMarketNews(category = 'general') {
     try {
-      const news = await this.fetchData('/news', { category });
+      const news = await this.fetchData('/news', { category }) as NewsItem[];
       
-      return news.map((item: any) => ({
-        id: item.id,
+      return news.map((item: NewsItem) => ({
+        id: item.id.toString(),
         title: item.headline,
         summary: item.summary,
         source: item.source,
         url: item.url,
         timestamp: new Date(item.datetime * 1000).toLocaleString(),
         image: item.image,
-        category: item.category,
+        category: this.categorizeNews(item.category, item.headline),
         credibilityScore: Math.floor(70 + Math.random() * 30), // Mock credibility score
         impact: this.getNewsImpact(),
         impactColor: this.getImpactColor()
@@ -185,6 +184,35 @@ class FinnhubService {
   private getImpactColor(): string {
     const colors = ["#ff5252", "#ffab40", "#69f0ae"];
     return colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  // Helper method to categorize news
+  private categorizeNews(apiCategory: string, headline: string): string {
+    // Map API categories to our UI categories
+    if (apiCategory === "general") {
+      // Try to determine category from headline
+      const lowerHeadline = headline.toLowerCase();
+      
+      if (lowerHeadline.includes("crypto") || lowerHeadline.includes("bitcoin") || lowerHeadline.includes("blockchain")) {
+        return "Crypto";
+      } else if (lowerHeadline.includes("tech") || lowerHeadline.includes("technology")) {
+        return "Technology";
+      } else if (lowerHeadline.includes("economy") || lowerHeadline.includes("economic")) {
+        return "Economy";
+      } else {
+        return "Markets"; // Default
+      }
+    } else if (apiCategory === "forex") {
+      return "Markets";
+    } else if (apiCategory === "crypto") {
+      return "Crypto";
+    } else if (apiCategory === "merger") {
+      return "Markets";
+    } else if (apiCategory === "economy") {
+      return "Economy";
+    } else {
+      return "Markets"; // Default fallback
+    }
   }
 }
 

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { finnhubService } from '@/services/finnhubService';
 import { useToast } from '@/components/ui/use-toast';
+import { mockNewsData } from '@/services/newsService';
 
 export interface NewsItem {
   id: string;
@@ -58,14 +59,9 @@ export function useNewsData() {
           variant: 'destructive',
         });
         
-        // Load fallback data from the news service
-        try {
-          const fallbackNews = await import('@/services/newsService');
-          if (fallbackNews.getMockNews) {
-            setNews(fallbackNews.getMockNews());
-          }
-        } catch (fallbackErr) {
-          console.error('Error loading fallback news:', fallbackErr);
+        // Load fallback data from the mockNewsData array
+        if (mockNewsData) {
+          setNews(mockNewsData);
         }
       }
     };

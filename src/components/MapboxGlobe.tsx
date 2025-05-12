@@ -42,6 +42,21 @@ interface MarketData {
   };
 }
 
+// Define a more specific type for Finnhub quote responses
+interface FinnhubQuoteResponse {
+  symbol: string;
+  name?: any;
+  price?: number;
+  change?: number;
+  changePercent?: number;
+  open?: any;
+  high?: any;
+  low?: any;
+  prevClose?: any;
+  timestamp?: Date;
+  error?: boolean;
+}
+
 const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -77,7 +92,7 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
           finnhubService.getQuote(symbol)
             .catch(err => {
               console.error(`Error fetching data for ${symbol}:`, err);
-              return { symbol, error: true };
+              return { symbol, error: true } as FinnhubQuoteResponse;
             })
         );
         
@@ -85,7 +100,7 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
         
         // Process results
         const dataMap: MarketData = {};
-        results.forEach(result => {
+        results.forEach((result: FinnhubQuoteResponse) => {
           if (result.error) {
             dataMap[result.symbol] = {
               price: 0,
@@ -96,7 +111,14 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
               error: true
             };
           } else {
-            dataMap[result.symbol] = result;
+            dataMap[result.symbol] = {
+              price: result.price || 0,
+              change: result.change || 0,
+              changePercent: result.changePercent || 0,
+              name: result.name || result.symbol,
+              symbol: result.symbol,
+              error: false
+            };
           }
         });
         

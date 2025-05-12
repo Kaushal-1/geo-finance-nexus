@@ -90,7 +90,7 @@ export function determineCategory(title: string, content: string = '') {
   return 'Markets'; // Default category
 }
 
-// Mock news data in case API fails
+// Renamed to mockNewsData to avoid confusion with getMockNews function
 export const mockNewsData = [
   {
     id: '1',
@@ -102,7 +102,8 @@ export const mockNewsData = [
     impact: "High",
     impactColor: "#ff5252", // red for high impact
     category: "Policy",
-    sentiment: "positive"
+    credibilityScore: 95,
+    url: "https://ft.com"
   },
   {
     id: '2',
@@ -114,7 +115,8 @@ export const mockNewsData = [
     impact: "Medium",
     impactColor: "#7b61ff", // purple for medium impact
     category: "Markets",
-    sentiment: "positive"
+    credibilityScore: 88,
+    url: "https://marketwatch.com"
   },
   {
     id: '3',
@@ -126,7 +128,8 @@ export const mockNewsData = [
     impact: "Low",
     impactColor: "#00b8d4", // teal for low impact
     category: "Commodities",
-    sentiment: "neutral"
+    credibilityScore: 92,
+    url: "https://reuters.com"
   },
   {
     id: '4',
@@ -138,7 +141,8 @@ export const mockNewsData = [
     impact: "Medium",
     impactColor: "#7b61ff",
     category: "Earnings",
-    sentiment: "positive"
+    credibilityScore: 90,
+    url: "https://bloomberg.com"
   },
   {
     id: '5',
@@ -150,6 +154,7 @@ export const mockNewsData = [
     impact: "Low",
     impactColor: "#00b8d4",
     category: "Markets",
-    sentiment: "neutral"
+    credibilityScore: 85,
+    url: "https://cnbc.com"
   }
 ];

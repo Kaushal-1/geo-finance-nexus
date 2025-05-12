@@ -91,7 +91,10 @@ const europeanMarkets: MarketIndex[] = [
 export async function getMarketData(): Promise<FormattedMarketData[]> {
   try {
     const result = await finnhubService.getMajorIndices();
-    return formatMarketIndices(result.usMarkets);
+    
+    // Filter out US markets and ensure we have the required data structure
+    const usMarkets = processApiResult(result, "US Markets");
+    return formatMarketIndices(usMarkets.length > 0 ? usMarkets : marketIndices);
   } catch (error) {
     console.error("Error fetching market data from Finnhub:", error);
     // Fallback to mock data
@@ -103,7 +106,10 @@ export async function getMarketData(): Promise<FormattedMarketData[]> {
 export async function getAsianMarketData(): Promise<FormattedMarketData[]> {
   try {
     const result = await finnhubService.getMajorIndices();
-    return formatMarketIndices(result.asianMarkets);
+    
+    // Filter out Asian markets and ensure we have the required data structure
+    const asiaMarkets = processApiResult(result, "Asian Markets");
+    return formatMarketIndices(asiaMarkets.length > 0 ? asiaMarkets : asianMarkets);
   } catch (error) {
     console.error("Error fetching Asian market data from Finnhub:", error);
     // Fallback to mock data
@@ -115,11 +121,49 @@ export async function getAsianMarketData(): Promise<FormattedMarketData[]> {
 export async function getEuropeanMarketData(): Promise<FormattedMarketData[]> {
   try {
     const result = await finnhubService.getMajorIndices();
-    return formatMarketIndices(result.europeanMarkets);
+    
+    // Filter out European markets and ensure we have the required data structure
+    const euroMarkets = processApiResult(result, "European Markets");
+    return formatMarketIndices(euroMarkets.length > 0 ? euroMarkets : europeanMarkets);
   } catch (error) {
     console.error("Error fetching European market data from Finnhub:", error);
     // Fallback to mock data
     return formatMarketIndices(europeanMarkets);
+  }
+}
+
+// Helper function to process API results into the MarketIndex format
+function processApiResult(result: any[], marketType: string): MarketIndex[] {
+  if (!Array.isArray(result) || result.length === 0) {
+    return [];
+  }
+
+  try {
+    // Filter and convert API results to MarketIndex format
+    return result
+      .filter(item => {
+        if (!item || typeof item !== 'object' || item.error) return false;
+        
+        // Filter based on market type
+        if (marketType === "US Markets" && (item.symbol === "^GSPC" || item.symbol === "^DJI" || item.symbol === "^IXIC" || item.symbol === "^RUT")) {
+          return true;
+        } else if (marketType === "Asian Markets" && (item.symbol === "^N225" || item.symbol === "^HSI")) {
+          return true;
+        } else if (marketType === "European Markets" && (item.symbol === "^FTSE" || item.symbol === "^GDAXI")) {
+          return true;
+        }
+        return false;
+      })
+      .map(item => ({
+        symbol: item.symbol,
+        name: item.name || item.symbol,
+        current: item.price || 0,
+        previous: item.prevClose || 0,
+        history: Array.from({ length: 24 }, () => (item.price || 0) + ((Math.random() - 0.5) * (item.price || 100) * 0.02))
+      }));
+  } catch (e) {
+    console.error(`Error processing ${marketType} data:`, e);
+    return [];
   }
 }
 
@@ -149,38 +193,49 @@ export function startMarketDataUpdates(
   const updateInterval = setInterval(async () => {
     try {
       const result = await finnhubService.getMajorIndices();
-      callback(formatMarketIndices(result.usMarkets));
+      const usMarkets = processApiResult(result, "US Markets");
+      if (usMarkets.length > 0) {
+        callback(formatMarketIndices(usMarkets));
+      } else {
+        // Fallback to updating mock data
+        updateMockData();
+        callback(formatMarketIndices(marketIndices));
+      }
     } catch (error) {
       console.error("Error in market data update:", error);
       
       // Fallback to updating mock data
-      marketIndices.forEach(index => {
-        const changeAmount = (Math.random() - 0.5) * 20;
-        index.previous = index.current;
-        index.current += changeAmount;
-        index.history.push(index.current);
-        index.history.shift();
-      });
-      
-      asianMarkets.forEach(index => {
-        const changeAmount = (Math.random() - 0.5) * 15;
-        index.previous = index.current;
-        index.current += changeAmount;
-        index.history.push(index.current);
-        index.history.shift();
-      });
-
-      europeanMarkets.forEach(index => {
-        const changeAmount = (Math.random() - 0.5) * 18;
-        index.previous = index.current;
-        index.current += changeAmount;
-        index.history.push(index.current);
-        index.history.shift();
-      });
-      
+      updateMockData();
       callback(formatMarketIndices(marketIndices));
     }
   }, interval);
   
   return () => clearInterval(updateInterval);
+}
+
+// Helper function to update mock data
+function updateMockData() {
+  marketIndices.forEach(index => {
+    const changeAmount = (Math.random() - 0.5) * 20;
+    index.previous = index.current;
+    index.current += changeAmount;
+    index.history.push(index.current);
+    index.history.shift();
+  });
+  
+  asianMarkets.forEach(index => {
+    const changeAmount = (Math.random() - 0.5) * 15;
+    index.previous = index.current;
+    index.current += changeAmount;
+    index.history.push(index.current);
+    index.history.shift();
+  });
+
+  europeanMarkets.forEach(index => {
+    const changeAmount = (Math.random() - 0.5) * 18;
+    index.previous = index.current;
+    index.current += changeAmount;
+    index.history.push(index.current);
+    index.history.shift();
+  });
 }
