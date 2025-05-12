@@ -1,4 +1,3 @@
-
 // Define interfaces for API responses
 interface QuoteResponse {
   c: number;  // Current price
@@ -17,6 +16,11 @@ interface ProfileResponse {
   exchange?: string;
   marketCapitalization?: number;
   logo?: string;
+  description?: string;
+  weburl?: string;
+  ipo?: string;
+  finnhubIndustry?: string;
+  phone?: string;
 }
 
 interface CandleResponse {
@@ -52,6 +56,41 @@ interface NewsItem {
   image?: string;
   category: string;
   related?: string;
+}
+
+interface FinancialMetric {
+  // Basic metrics
+  peBasicExcl?: number;
+  epsBasicExcl?: number;
+  dividendYieldIndicatedAnnual?: number;
+  roe?: number;
+  totalDebtToEquityQuarterly?: number;
+  grossMarginTTM?: number;
+  // Additional metrics can be added as needed
+}
+
+interface EarningsItem {
+  period: string;
+  actual: number;
+  estimate: number;
+  surprise?: number;
+  surprisePercent?: number;
+}
+
+interface CompanyPeer {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  marketCap: number;
+}
+
+interface SupplyChainLocation {
+  type: string;
+  name: string;
+  location: string;
+  coordinates: [number, number]; // [longitude, latitude]
 }
 
 class FinnhubService {
@@ -391,6 +430,203 @@ class FinnhubService {
     } else {
       return "Markets"; // Default fallback
     }
+  }
+
+  // NEW METHODS FOR STOCK DETAIL PAGE
+  
+  // Get company profile information
+  async getCompanyProfile(symbol: string): Promise<ProfileResponse> {
+    return this.queueRequest(async () => {
+      try {
+        const profile = await this.fetchData('/stock/profile2', { symbol });
+        return profile;
+      } catch (error) {
+        console.error(`Error fetching company profile for ${symbol}:`, error);
+        throw error;
+      }
+    });
+  }
+
+  // Get company financials (metrics)
+  async getCompanyFinancials(symbol: string): Promise<{ metric: FinancialMetric }> {
+    return this.queueRequest(async () => {
+      try {
+        const financials = await this.fetchData('/stock/metric', {
+          symbol,
+          metric: 'all'
+        });
+        return financials;
+      } catch (error) {
+        console.error(`Error fetching company financials for ${symbol}:`, error);
+        throw error;
+      }
+    });
+  }
+
+  // Get company earnings
+  async getCompanyEarnings(symbol: string): Promise<EarningsItem[]> {
+    return this.queueRequest(async () => {
+      try {
+        const earnings = await this.fetchData('/stock/earnings', { symbol });
+        return earnings;
+      } catch (error) {
+        console.error(`Error fetching company earnings for ${symbol}:`, error);
+        throw error;
+      }
+    });
+  }
+
+  // Get company peers
+  async getCompanyPeers(symbol: string): Promise<CompanyPeer[]> {
+    return this.queueRequest(async () => {
+      try {
+        const peers = await this.fetchData('/stock/peers', { symbol });
+        
+        // Get basic info for each peer
+        if (peers && Array.isArray(peers)) {
+          const peerData = await Promise.allSettled(
+            peers.map(async (peerSymbol: string) => {
+              try {
+                const [profile, quote] = await Promise.all([
+                  this.getCompanyProfile(peerSymbol),
+                  this.getQuote(peerSymbol)
+                ]);
+                
+                return {
+                  symbol: peerSymbol,
+                  name: profile.name || peerSymbol,
+                  price: quote.price,
+                  change: quote.change,
+                  changePercent: quote.changePercent,
+                  marketCap: profile.marketCapitalization || 0
+                };
+              } catch (err) {
+                console.error(`Error fetching data for peer ${peerSymbol}:`, err);
+                return null;
+              }
+            })
+          );
+          
+          return peerData
+            .filter((result: PromiseSettledResult<CompanyPeer | null>) => 
+              result.status === 'fulfilled' && result.value !== null)
+            .map((result: PromiseSettledResult<CompanyPeer | null>) => 
+              (result as PromiseFulfilledResult<CompanyPeer>).value);
+        }
+        
+        return [];
+      } catch (error) {
+        console.error(`Error fetching company peers for ${symbol}:`, error);
+        throw error;
+      }
+    });
+  }
+
+  // Get company news
+  async getCompanyNews(symbol: string, from: Date, to: Date) {
+    return this.queueRequest(async () => {
+      try {
+        const fromDate = from.toISOString().split('T')[0];
+        const toDate = to.toISOString().split('T')[0];
+        
+        const news = await this.fetchData('/company-news', {
+          symbol,
+          from: fromDate,
+          to: toDate
+        });
+        
+        // Process news with sentiment
+        return news.map((item: any) => ({
+          id: item.id,
+          headline: item.headline,
+          summary: item.summary,
+          source: item.source,
+          url: item.url,
+          timestamp: new Date(item.datetime * 1000),
+          image: item.image,
+          sentiment: this.analyzeSentiment(item.headline + ' ' + item.summary)
+        }));
+      } catch (error) {
+        console.error(`Error fetching company news for ${symbol}:`, error);
+        throw error;
+      }
+    });
+  }
+
+  // Basic sentiment analysis function (simplified)
+  analyzeSentiment(text: string): string {
+    const positiveWords = ['up', 'rise', 'gain', 'growth', 'positive', 'increase', 'higher', 
+      'profit', 'beat', 'exceed', 'outperform', 'success', 'strong', 'improve', 'bullish'];
+    const negativeWords = ['down', 'fall', 'drop', 'decline', 'negative', 'decrease', 'lower', 
+      'loss', 'miss', 'below', 'underperform', 'disappointing', 'weak', 'bearish'];
+    
+    const lowercaseText = text.toLowerCase();
+    let score = 0;
+    
+    positiveWords.forEach(word => {
+      if (lowercaseText.includes(word)) score += 1;
+    });
+    
+    negativeWords.forEach(word => {
+      if (lowercaseText.includes(word)) score -= 1;
+    });
+    
+    if (score > 2) return 'positive';
+    if (score < -2) return 'negative';
+    if (score > 0) return 'slightly positive';
+    if (score < 0) return 'slightly negative';
+    return 'neutral';
+  }
+
+  // Get insider transactions
+  async getInsiderTransactions(symbol: string) {
+    return this.queueRequest(async () => {
+      try {
+        return this.fetchData('/stock/insider-transactions', { symbol });
+      } catch (error) {
+        console.error(`Error fetching insider transactions for ${symbol}:`, error);
+        throw error;
+      }
+    });
+  }
+
+  // Get company supply chain locations (Note: This is mocked since Finnhub doesn't provide this)
+  async getSupplyChainLocations(symbol: string): Promise<SupplyChainLocation[]> {
+    return this.queueRequest(async () => {
+      try {
+        // This is a mock implementation since Finnhub doesn't provide supply chain data
+        const mockLocations: Record<string, SupplyChainLocation[]> = {
+          'AAPL': [
+            { type: 'headquarters', name: 'Apple Park', location: 'Cupertino, CA', coordinates: [-122.0312, 37.3318] },
+            { type: 'manufacturing', name: 'Foxconn Zhengzhou', location: 'Zhengzhou, China', coordinates: [113.6243, 34.7466] },
+            { type: 'manufacturing', name: 'Foxconn Shenzhen', location: 'Shenzhen, China', coordinates: [114.0579, 22.5431] },
+            { type: 'manufacturing', name: 'Pegatron Shanghai', location: 'Shanghai, China', coordinates: [121.4737, 31.2304] },
+            { type: 'r&d', name: 'Apple R&D Center', location: 'Herzliya, Israel', coordinates: [34.8372, 32.1573] }
+          ],
+          'MSFT': [
+            { type: 'headquarters', name: 'Microsoft Campus', location: 'Redmond, WA', coordinates: [-122.1297, 47.6422] },
+            { type: 'r&d', name: 'Microsoft Research', location: 'Cambridge, UK', coordinates: [0.1218, 52.2053] },
+            { type: 'datacenter', name: 'Azure East US', location: 'Virginia', coordinates: [-78.024, 38.7223] }
+          ],
+          'AMZN': [
+            { type: 'headquarters', name: 'Amazon HQ', location: 'Seattle, WA', coordinates: [-122.3408, 47.6150] },
+            { type: 'fulfillment', name: 'Amazon Fulfillment Center', location: 'Tracy, CA', coordinates: [-121.4252, 37.7394] },
+            { type: 'datacenter', name: 'AWS US-East', location: 'Virginia', coordinates: [-77.4433, 39.0180] }
+          ],
+          'default': [
+            { type: 'headquarters', name: 'Headquarters', location: 'New York, NY', coordinates: [-74.0060, 40.7128] }
+          ]
+        };
+        
+        // Add a short delay to simulate API call
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        return mockLocations[symbol] || mockLocations.default;
+      } catch (error) {
+        console.error(`Error fetching supply chain locations for ${symbol}:`, error);
+        return [];
+      }
+    });
   }
 }
 
