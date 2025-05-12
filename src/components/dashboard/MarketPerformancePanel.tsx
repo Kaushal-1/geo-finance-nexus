@@ -82,11 +82,12 @@ const MarketPerformancePanel = () => {
                       <Tooltip 
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
+                            const value = payload[0].value;
                             return (
                               <div className="bg-black/80 border border-white/10 rounded p-2 text-xs">
                                 <p className="mb-1">{new Date(payload[0].payload.date).toLocaleDateString()}</p>
                                 <p className="font-mono text-white">
-                                  {payload[0].value?.toFixed(2)}
+                                  {typeof value === 'number' ? value.toFixed(2) : value}
                                 </p>
                               </div>
                             );

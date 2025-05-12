@@ -271,7 +271,8 @@ const MapVisualization = () => {
       )}
 
       {/* Custom CSS for markers */}
-      <style jsx global>{`
+      <style>
+        {`
         .mapboxgl-popup-content {
           background: rgba(10, 14, 23, 0.95);
           color: white;
@@ -311,7 +312,8 @@ const MapVisualization = () => {
         .mono {
           font-family: 'Roboto Mono', monospace;
         }
-      `}</style>
+      `}
+      </style>
     </div>
   );
 };

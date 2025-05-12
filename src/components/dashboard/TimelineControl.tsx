@@ -135,7 +135,8 @@ const TimelineControl = () => {
       </div>
       
       {/* Custom styling */}
-      <style jsx global>{`
+      <style>
+        {`
         .timeline-slider .absolute {
           background-color: rgba(0, 184, 212, 0.7) !important;
         }
@@ -151,7 +152,8 @@ const TimelineControl = () => {
           width: 16px;
           height: 16px;
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };
