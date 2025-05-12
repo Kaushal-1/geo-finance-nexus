@@ -6,6 +6,7 @@ import Globe3D from "@/components/Globe";
 import FeatureCard from "@/components/FeatureCard";
 import WelcomeModal from "@/components/WelcomeModal";
 import { toast } from "@/components/ui/use-toast";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
@@ -76,9 +77,11 @@ const Index = () => {
             <a href="#" className="text-gray-300 hover:text-white transition-colors">Documentation</a>
           </div>
           <div>
-            <Button variant="outline" className="border-teal text-teal hover:bg-teal hover:text-white">
-              Sign In
-            </Button>
+            <Link to="/signin">
+              <Button variant="outline" className="border-teal text-teal hover:bg-teal hover:text-white">
+                Sign In
+              </Button>
+            </Link>
           </div>
         </div>
       </nav>
@@ -104,12 +107,13 @@ const Index = () => {
                 Visualize market insights with dynamic maps and AI-driven data overlays
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button 
-                  onClick={handleExploreClick} 
-                  className="bg-teal-gradient text-white py-6 px-8 rounded-md button-glow"
-                >
-                  Explore Platform <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <Link to="/dashboard">
+                  <Button 
+                    className="bg-teal-gradient text-white py-6 px-8 rounded-md button-glow"
+                  >
+                    Explore Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
                 <Button variant="outline" className="border-white/20 text-white py-6 px-8 rounded-md hover:bg-white/10">
                   Watch Demo
                 </Button>
@@ -201,12 +205,13 @@ const Index = () => {
             <p className="text-xl text-gray-300 mb-8">
               Join thousands of analysts who have already discovered the power of geospatial financial intelligence.
             </p>
-            <Button 
-              onClick={handleExploreClick} 
-              className="bg-teal-gradient text-white py-6 px-8 text-lg rounded-md button-glow"
-            >
-              Get Started Today <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <Link to="/dashboard">
+              <Button 
+                className="bg-teal-gradient text-white py-6 px-8 text-lg rounded-md button-glow"
+              >
+                Get Started Today <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

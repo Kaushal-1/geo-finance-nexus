@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import SignIn from "./pages/SignIn";
 import CreateAccount from "./pages/CreateAccount";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 // Create a client
@@ -25,6 +26,7 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/signin" element={<SignIn />} />
               <Route path="/signup" element={<CreateAccount />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

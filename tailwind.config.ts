@@ -32,6 +32,7 @@ export default {
 				teal: {
 					DEFAULT: '#00b8d4',
 					dark: '#0052cc',
+					light: '#80deea',
 				},
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
