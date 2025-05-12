@@ -5,46 +5,18 @@ import { ChartLine, Map, ChevronLeft, Download, RefreshCw, ZoomIn, ZoomOut, Glob
 import { Visualization } from "@/types/chat";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import MapVisualization from "@/components/dashboard/MapVisualization";
-
 interface VisualizationPanelProps {
   activeVisualization: Visualization | null;
   isExpanded: boolean;
   onToggleExpand: () => void;
 }
-
-const LoadingPanel = () => (
-  <div className="flex h-full w-full items-center justify-center">
+const LoadingPanel = () => <div className="flex h-full w-full items-center justify-center">
     <div className="text-center">
       <div className="mx-auto h-16 w-16 animate-spin rounded-full border-4 border-solid border-gray-400 border-t-teal-500"></div>
       <p className="mt-4 text-gray-400">Preparing visualization...</p>
     </div>
-  </div>
-);
-
-const PlaceholderPanel = () => (
-  <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
-    <div className="mb-8">
-      <ChartLine className="mx-auto h-16 w-16 text-gray-400 opacity-30" />
-    </div>
-    <h3 className="mb-2 text-xl font-medium text-gray-300">Visualization Panel</h3>
-    <p className="mb-6 max-w-md text-gray-400">
-      Ask questions about markets or specific stocks to see interactive charts, maps, and data visualizations here.
-    </p>
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-      <div className="rounded-lg border border-gray-800 bg-gray-800/30 p-4">
-        <ChartLine className="mb-2 h-6 w-6 text-teal-500" />
-        <h4 className="mb-1 font-medium text-white">Charts and Trends</h4>
-        <p className="text-sm text-gray-400">Visualize market data with interactive charts and trend analysis</p>
-      </div>
-      <div className="rounded-lg border border-gray-800 bg-gray-800/30 p-4">
-        <Map className="mb-2 h-6 w-6 text-teal-500" />
-        <h4 className="mb-1 font-medium text-white">Geographic Data</h4>
-        <p className="text-sm text-gray-400">Explore global markets through interactive maps and regional performance</p>
-      </div>
-    </div>
-  </div>
-);
-
+  </div>;
+const PlaceholderPanel = () => {};
 const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
   activeVisualization,
   isExpanded,
@@ -52,21 +24,16 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState("chart");
   const [is3DView, setIs3DView] = useState(true);
-  
   const handleViewToggle = () => {
     setIs3DView(prev => !prev);
   };
-
   if (!activeVisualization) {
     return <PlaceholderPanel />;
   }
-
   if (activeVisualization.loading) {
     return <LoadingPanel />;
   }
-
-  return (
-    <div className="flex h-full flex-col">
+  return <div className="flex h-full flex-col">
       {/* Header */}
       <div className="border-b border-white/10 bg-black/20 p-4 backdrop-blur-sm">
         <div className="flex items-center justify-between">
@@ -180,8 +147,6 @@ const VisualizationPanel: React.FC<VisualizationPanelProps> = ({
           </TabsContent>
         </div>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
-
 export default VisualizationPanel;
