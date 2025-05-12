@@ -1,0 +1,137 @@
+
+/* Finnhub API Integration Styles */
+
+/* Market marker styles */
+.market-marker {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+}
+
+.market-marker.positive {
+  background-color: #00e676;
+  box-shadow: 0 0 10px rgba(0, 230, 118, 0.6);
+}
+
+.market-marker.negative {
+  background-color: #ff5252;
+  box-shadow: 0 0 10px rgba(255, 82, 82, 0.6);
+}
+
+.market-marker.neutral {
+  background-color: #90a4ae;
+  box-shadow: 0 0 10px rgba(144, 164, 174, 0.6);
+}
+
+.market-marker.pulse::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: inherit;
+  opacity: 0.7;
+  animation: pulse-animation 2s infinite;
+  z-index: -1;
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* Market popup styles */
+.mapboxgl-popup-content {
+  background-color: rgba(26, 32, 53, 0.95) !important;
+  padding: 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(0, 184, 212, 0.3) !important;
+  color: #f5f7fa !important;
+}
+
+.mapboxgl-popup-content h3 {
+  font-size: 16px;
+  margin: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.mapboxgl-popup-content p {
+  margin: 4px 0;
+  font-size: 12px;
+}
+
+.market-price {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 14px !important;
+  font-weight: 500;
+}
+
+.market-change {
+  font-family: 'Roboto Mono', monospace;
+}
+
+.market-change.positive {
+  color: #00e676;
+}
+
+.market-change.negative {
+  color: #ff5252;
+}
+
+/* News item animations */
+.news-item {
+  animation: fade-in 0.4s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Market data loading indicators */
+.map-loading-indicator {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(26, 32, 53, 0.9);
+  color: #f5f7fa;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  pointer-events: none;
+  border: 1px solid rgba(0, 184, 212, 0.3);
+  z-index: 10;
+}
+
+/* Refresh button animation */
+.refresh-animation {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,108 +1,103 @@
 
 import { useState, useEffect } from 'react';
-import { fetchFinancialNews, mockNewsData } from '@/services/newsService';
+import { finnhubService } from '@/services/finnhubService';
+import { useToast } from '@/components/ui/use-toast';
 
 export interface NewsItem {
   id: string;
   title: string;
   summary: string;
   source: string;
-  sourceUrl?: string;
-  credibilityScore?: number;
+  url: string;
+  timestamp: string;
+  image?: string;
+  category: string;
+  credibilityScore: number;
   impact: string;
   impactColor: string;
-  timestamp: string;
-  category: string;
-  sentiment: string;
 }
 
-const getImpactColor = (impact: string): string => {
-  switch (impact.toLowerCase()) {
-    case 'high': return '#ff5252'; // red
-    case 'medium': return '#7b61ff'; // purple
-    default: return '#00b8d4'; // teal
-  }
-};
-
-export function useNewsData(region = 'global', topic = 'financial markets') {
+export function useNewsData() {
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [filteredNews, setFilteredNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const { toast } = useToast();
+
+  // Available news categories
+  const categories = ['All', 'Markets', 'Economy', 'Technology', 'Crypto'];
 
   useEffect(() => {
     let isMounted = true;
     
-    const loadNews = async () => {
+    const fetchNews = async () => {
       try {
         setLoading(true);
-        const fetchedNews = await fetchFinancialNews(region, topic);
+        setError(null);
+        
+        // Get news from Finnhub API
+        const newsData = await finnhubService.getMarketNews();
         
         if (!isMounted) return;
         
-        if (fetchedNews.length > 0) {
-          const processedNews: NewsItem[] = fetchedNews.map(item => ({
-            id: item.id,
-            title: item.title,
-            summary: item.summary,
-            source: item.source,
-            sourceUrl: item.sourceUrl,
-            credibilityScore: Math.floor(Math.random() * 15) + 80, // Random score between 80-95
-            impact: item.impact,
-            impactColor: getImpactColor(item.impact),
-            timestamp: new Date(item.timestamp).toLocaleString(),
-            category: item.category || 'Markets',
-            sentiment: item.sentiment || 'neutral'
-          }));
-          setNews(processedNews);
-        } else {
-          // Use mock data as fallback
-          setNews(mockNewsData.map(item => ({
-            ...item,
-            impactColor: getImpactColor(item.impact),
-            credibilityScore: Math.floor(Math.random() * 15) + 80,
-            timestamp: new Date(item.timestamp).toLocaleString()
-          })));
-        }
+        setNews(newsData);
+        setLoading(false);
       } catch (err) {
-        if (!isMounted) return;
-        console.error('Error in useNewsData:', err);
-        setError('Failed to fetch news data');
+        console.error('Error fetching news:', err);
         
-        // Fallback to mock data
-        setNews(mockNewsData.map(item => ({
-          ...item,
-          impactColor: getImpactColor(item.impact),
-          credibilityScore: Math.floor(Math.random() * 15) + 80,
-          timestamp: new Date(item.timestamp).toLocaleString()
-        })));
-      } finally {
-        if (isMounted) {
-          setLoading(false);
+        if (!isMounted) return;
+        
+        setError('Could not fetch news data. Using fallback data.');
+        setLoading(false);
+        
+        // Show error toast
+        toast({
+          title: 'News Fetch Error',
+          description: 'Could not fetch the latest financial news. Using fallback data.',
+          variant: 'destructive',
+        });
+        
+        // Load fallback data from the news service
+        try {
+          const fallbackNews = await import('@/services/newsService');
+          if (fallbackNews.getMockNews) {
+            setNews(fallbackNews.getMockNews());
+          }
+        } catch (fallbackErr) {
+          console.error('Error loading fallback news:', fallbackErr);
         }
       }
     };
-
-    loadNews();
+    
+    fetchNews();
+    
+    // Set up polling interval - refresh news every 5 minutes
+    const pollInterval = setInterval(fetchNews, 300000);
     
     return () => {
       isMounted = false;
+      clearInterval(pollInterval);
     };
-  }, [region, topic]);
-
-  const filteredNews = selectedCategory === 'All' 
-    ? news 
-    : news.filter(item => item.category === selectedCategory);
-
-  const categories = ['All', ...Array.from(new Set(news.map(item => item.category)))];
+  }, []);
+  
+  // Filter news when selected category or news items change
+  useEffect(() => {
+    if (selectedCategory === 'All') {
+      setFilteredNews(news);
+    } else {
+      setFilteredNews(news.filter(item => 
+        item.category.toLowerCase() === selectedCategory.toLowerCase()
+      ));
+    }
+  }, [selectedCategory, news]);
 
   return {
     news: filteredNews,
-    allNews: news,
     loading,
     error,
     categories,
     selectedCategory,
-    setSelectedCategory
+    setSelectedCategory,
   };
 }

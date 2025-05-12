@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, ArrowUp, ArrowDown } from 'lucide-react';
+import { ChevronDown, ChevronUp, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { 
   Collapsible, 
@@ -10,6 +10,7 @@ import {
 import { useMarketData } from '@/hooks/useMarketData';
 import { FormattedMarketData } from '@/services/marketService';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 
 // Mini sparkline chart component
 const MiniSparkline = ({ data, trend }: { data: number[], trend: string }) => {
@@ -82,7 +83,9 @@ const MarketPerformancePanel = () => {
     asianMarketData, 
     europeanMarketData, 
     globalMetrics,
-    refreshData
+    refreshData,
+    isLoading,
+    error
   } = useMarketData();
 
   if (collapsed) {
@@ -101,36 +104,52 @@ const MarketPerformancePanel = () => {
   return (
     <Card className="h-full bg-[#1a2035]/80 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden flex flex-col">
       <div className="flex justify-between items-center p-4 border-b border-white/10">
-        <h2 className="text-lg font-medium text-white">Market Performance</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-medium text-white">Market Performance</h2>
+          {isLoading && <span className="animate-pulse text-xs text-[#a0aec0]">updating...</span>}
+        </div>
         <div className="flex gap-2">
-          <button 
+          <Button 
             onClick={refreshData}
-            className="h-6 w-6 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+            disabled={isLoading}
             title="Refresh data"
           >
-            <svg className="h-3.5 w-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </button>
+            <RefreshCw className={`h-3.5 w-3.5 text-white ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
           <button 
             onClick={() => setCollapsed(true)}
-            className="h-6 w-6 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+            className="h-7 w-7 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
           >
             <ChevronUp className="h-4 w-4 text-white" />
           </button>
         </div>
       </div>
       
+      {error && (
+        <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/20">
+          <p className="text-xs text-red-400">{error}</p>
+        </div>
+      )}
+      
       <div className="flex-1 overflow-y-auto scrollbar-none">
         {/* US Indices Section */}
         <div className="p-4">
           <h3 className="text-sm text-[#a0aec0] mb-2 font-medium">US INDICES</h3>
           <div className="space-y-1">
-            {usMarketData.length ? usMarketData.map((market, index) => (
-              <MarketCard key={market.symbol} market={market} />
-            )) : (
+            {isLoading && usMarketData.length === 0 ? (
               // Loading skeleton
               Array(4).fill(0).map((_, index) => <MarketCardSkeleton key={index} />)
+            ) : usMarketData.length > 0 ? (
+              usMarketData.map((market) => (
+                <MarketCard key={market.symbol} market={market} />
+              ))
+            ) : (
+              <div className="p-3 text-center text-[#a0aec0] text-sm">
+                No market data available
+              </div>
             )}
           </div>
         </div>
@@ -145,11 +164,17 @@ const MarketPerformancePanel = () => {
           </div>
           <CollapsibleContent>
             <div className="space-y-1">
-              {asianMarketData.length ? asianMarketData.map((market) => (
-                <MarketCard key={market.symbol} market={market} />
-              )) : (
+              {isLoading && asianMarketData.length === 0 ? (
                 // Loading skeleton
                 Array(2).fill(0).map((_, index) => <MarketCardSkeleton key={index} />)
+              ) : asianMarketData.length > 0 ? (
+                asianMarketData.map((market) => (
+                  <MarketCard key={market.symbol} market={market} />
+                ))
+              ) : (
+                <div className="p-3 text-center text-[#a0aec0] text-sm">
+                  No Asian market data available
+                </div>
               )}
             </div>
           </CollapsibleContent>
@@ -165,11 +190,17 @@ const MarketPerformancePanel = () => {
           </div>
           <CollapsibleContent>
             <div className="space-y-1">
-              {europeanMarketData.length ? europeanMarketData.map((market) => (
-                <MarketCard key={market.symbol} market={market} />
-              )) : (
+              {isLoading && europeanMarketData.length === 0 ? (
                 // Loading skeleton
                 Array(2).fill(0).map((_, index) => <MarketCardSkeleton key={index} />)
+              ) : europeanMarketData.length > 0 ? (
+                europeanMarketData.map((market) => (
+                  <MarketCard key={market.symbol} market={market} />
+                ))
+              ) : (
+                <div className="p-3 text-center text-[#a0aec0] text-sm">
+                  No European market data available
+                </div>
               )}
             </div>
           </CollapsibleContent>
@@ -194,8 +225,9 @@ const MarketPerformancePanel = () => {
             </span>
           </div>
         </div>
-        <p className="text-xs text-[#a0aec0] mt-2">
-          Last updated: {globalMetrics.lastUpdated.toLocaleTimeString()}
+        <p className="text-xs text-[#a0aec0] mt-2 flex items-center gap-1">
+          <span>Last updated: {globalMetrics.lastUpdated.toLocaleTimeString()}</span>
+          {isLoading && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping"></span>}
         </p>
       </div>
     </Card>

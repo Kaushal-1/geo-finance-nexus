@@ -7,30 +7,63 @@ import {
   startMarketDataUpdates, 
   FormattedMarketData 
 } from '@/services/marketService';
+import { useToast } from '@/components/ui/use-toast';
 
 export function useMarketData() {
-  const [usMarketData, setUsMarketData] = useState<FormattedMarketData[]>(getMarketData());
-  const [asianMarketData, setAsianMarketData] = useState<FormattedMarketData[]>(getAsianMarketData());
-  const [europeanMarketData, setEuropeanMarketData] = useState<FormattedMarketData[]>(getEuropeanMarketData());
-  const [refreshInterval, setRefreshInterval] = useState<number>(5000);
+  const [usMarketData, setUsMarketData] = useState<FormattedMarketData[]>([]);
+  const [asianMarketData, setAsianMarketData] = useState<FormattedMarketData[]>([]);
+  const [europeanMarketData, setEuropeanMarketData] = useState<FormattedMarketData[]>([]);
+  const [refreshInterval, setRefreshInterval] = useState<number>(15000);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const updateMarkets = () => {
-      setUsMarketData(getMarketData());
-      setAsianMarketData(getAsianMarketData());
-      setEuropeanMarketData(getEuropeanMarketData());
-      setLastUpdated(new Date());
+    const updateMarkets = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const [usData, asianData, europeanData] = await Promise.all([
+          getMarketData(),
+          getAsianMarketData(),
+          getEuropeanMarketData()
+        ]);
+        
+        setUsMarketData(usData);
+        setAsianMarketData(asianData);
+        setEuropeanMarketData(europeanData);
+        setLastUpdated(new Date());
+      } catch (err) {
+        console.error("Failed to fetch market data:", err);
+        setError("Unable to fetch market data. Using fallback data.");
+        toast({
+          title: "Data Fetch Error",
+          description: "Could not fetch real-time market data. Using fallback data.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     // Initial update
     updateMarkets();
 
     // Set up interval for updates
-    const cleanup = startMarketDataUpdates(data => {
+    const cleanup = startMarketDataUpdates(async (data) => {
       setUsMarketData(data);
-      setAsianMarketData(getAsianMarketData());
-      setEuropeanMarketData(getEuropeanMarketData());
+      try {
+        const [asianData, europeanData] = await Promise.all([
+          getAsianMarketData(),
+          getEuropeanMarketData()
+        ]);
+        setAsianMarketData(asianData);
+        setEuropeanMarketData(europeanData);
+      } catch (error) {
+        console.error("Error in interval update:", error);
+      }
       setLastUpdated(new Date());
     }, refreshInterval);
 
@@ -46,20 +79,50 @@ export function useMarketData() {
 
   const globalPerformance = usMarketData.reduce((sum, index) => {
     return sum + parseFloat(index.percentChange);
-  }, 0) / usMarketData.length;
+  }, 0) / (usMarketData.length || 1); // Avoid division by zero
 
   // Function to force an immediate update
-  const refreshData = () => {
-    setUsMarketData(getMarketData());
-    setAsianMarketData(getAsianMarketData());
-    setEuropeanMarketData(getEuropeanMarketData());
-    setLastUpdated(new Date());
+  const refreshData = async () => {
+    toast({
+      title: "Refreshing Data",
+      description: "Fetching the latest market data...",
+    });
+    
+    try {
+      setIsLoading(true);
+      const [usData, asianData, europeanData] = await Promise.all([
+        getMarketData(),
+        getAsianMarketData(),
+        getEuropeanMarketData()
+      ]);
+      
+      setUsMarketData(usData);
+      setAsianMarketData(asianData);
+      setEuropeanMarketData(europeanData);
+      setLastUpdated(new Date());
+      
+      toast({
+        title: "Data Refreshed",
+        description: "Market data has been updated successfully.",
+      });
+    } catch (err) {
+      console.error("Failed to refresh data:", err);
+      toast({
+        title: "Refresh Failed",
+        description: "Could not fetch the latest market data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return {
     usMarketData,
     asianMarketData,
     europeanMarketData,
+    isLoading,
+    error,
     globalMetrics: {
       marketCap: (totalMarketCap / 1000).toFixed(1) + 'T', // Convert to trillions
       performance: globalPerformance.toFixed(2) + '%',

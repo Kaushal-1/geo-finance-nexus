@@ -1,7 +1,8 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { finnhubService } from '@/services/finnhubService';
+import { useToast } from '@/components/ui/use-toast';
 
 // Extend the Window interface to include mapboxgl
 declare global {
@@ -27,27 +28,112 @@ interface FinancialCenter {
   coordinates: [number, number];
   performance: number;
   marketSize: number;
+  symbol: string;
+}
+
+interface MarketData {
+  [symbol: string]: {
+    price: number;
+    change: number;
+    changePercent: number;
+    name: string;
+    symbol: string;
+    error?: boolean;
+  };
 }
 
 const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [marketData, setMarketData] = useState<MarketData>({});
+  const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({});
+  const { toast } = useToast();
   
   // Financial centers data
   const financialCenters: FinancialCenter[] = [
-    { name: "New York", coordinates: [-74.0060, 40.7128], performance: 1.2, marketSize: 26.3 },
-    { name: "London", coordinates: [-0.1278, 51.5074], performance: -0.5, marketSize: 20.1 },
-    { name: "Tokyo", coordinates: [139.6503, 35.6762], performance: 0.7, marketSize: 18.5 },
-    { name: "Shanghai", coordinates: [121.4737, 31.2304], performance: -1.1, marketSize: 15.7 },
-    { name: "Hong Kong", coordinates: [114.1694, 22.3193], performance: 0.8, marketSize: 12.8 },
-    { name: "Singapore", coordinates: [103.8198, 1.3521], performance: 0.4, marketSize: 10.2 },
-    { name: "Frankfurt", coordinates: [8.6821, 50.1109], performance: -0.3, marketSize: 9.5 },
-    { name: "Sydney", coordinates: [151.2093, -33.8688], performance: 0.6, marketSize: 8.7 },
-    { name: "Dubai", coordinates: [55.2708, 25.2048], performance: 1.1, marketSize: 7.3 },
-    { name: "Mumbai", coordinates: [72.8777, 19.0760], performance: -0.8, marketSize: 6.8 },
-    { name: "São Paulo", coordinates: [-46.6333, -23.5505], performance: 0.3, marketSize: 5.9 }
+    { name: "New York", coordinates: [-74.0060, 40.7128], performance: 0, marketSize: 26.3, symbol: "^GSPC" },
+    { name: "London", coordinates: [-0.1278, 51.5074], performance: 0, marketSize: 20.1, symbol: "^FTSE" },
+    { name: "Tokyo", coordinates: [139.6503, 35.6762], performance: 0, marketSize: 18.5, symbol: "^N225" },
+    { name: "Shanghai", coordinates: [121.4737, 31.2304], performance: 0, marketSize: 15.7, symbol: "000001.SS" },
+    { name: "Hong Kong", coordinates: [114.1694, 22.3193], performance: 0, marketSize: 12.8, symbol: "^HSI" },
+    { name: "Singapore", coordinates: [103.8198, 1.3521], performance: 0, marketSize: 10.2, symbol: "^STI" },
+    { name: "Frankfurt", coordinates: [8.6821, 50.1109], performance: 0, marketSize: 9.5, symbol: "^GDAXI" },
+    { name: "Sydney", coordinates: [151.2093, -33.8688], performance: 0, marketSize: 8.7, symbol: "^AXJO" },
+    { name: "Dubai", coordinates: [55.2708, 25.2048], performance: 0, marketSize: 7.3, symbol: "DFMGI.ME" },
+    { name: "Mumbai", coordinates: [72.8777, 19.0760], performance: 0, marketSize: 6.8, symbol: "^BSESN" },
+    { name: "São Paulo", coordinates: [-46.6333, -23.5505], performance: 0, marketSize: 5.9, symbol: "^BVSP" }
   ];
+
+  // Fetch market data
+  useEffect(() => {
+    const fetchMarketData = async () => {
+      try {
+        // Create list of symbols to fetch
+        const symbols = financialCenters.map(center => center.symbol);
+        
+        // Fetch data for all markets in parallel
+        const promises = symbols.map(symbol => 
+          finnhubService.getQuote(symbol)
+            .catch(err => {
+              console.error(`Error fetching data for ${symbol}:`, err);
+              return { symbol, error: true };
+            })
+        );
+        
+        const results = await Promise.all(promises);
+        
+        // Process results
+        const dataMap: MarketData = {};
+        results.forEach(result => {
+          if (result.error) {
+            dataMap[result.symbol] = {
+              price: 0,
+              change: 0,
+              changePercent: 0,
+              name: result.symbol,
+              symbol: result.symbol,
+              error: true
+            };
+          } else {
+            dataMap[result.symbol] = result;
+          }
+        });
+        
+        setMarketData(dataMap);
+        
+        // Update financial center performances based on data
+        financialCenters.forEach(center => {
+          const data = dataMap[center.symbol];
+          if (data && !data.error) {
+            center.performance = data.changePercent;
+          }
+        });
+        
+        // If map is loaded, update the markers
+        if (mapLoaded && map.current) {
+          updateMarkers(map.current, dataMap);
+        }
+      } catch (err) {
+        console.error("Error fetching market data:", err);
+        toast({
+          title: "Data Fetch Error",
+          description: "Could not fetch real-time market data. Using static data instead.",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    // Fetch initial data
+    fetchMarketData();
+    
+    // Set up interval to refresh data
+    const intervalId = setInterval(fetchMarketData, 30000);
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [mapLoaded]);
 
   // Initialize map
   useEffect(() => {
@@ -97,9 +183,21 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
           }
         });
 
-        addFinancialCenters(map.current);
+        // Update markers with real data if available
+        if (Object.keys(marketData).length > 0) {
+          updateMarkers(map.current, marketData);
+        } else {
+          // Otherwise use static data
+          addFinancialCenters(map.current);
+        }
+        
         addConnectionLines(map.current);
         setMapLoaded(true);
+        
+        toast({
+          title: "Map Loaded",
+          description: "Interactive financial globe is now ready.",
+        });
       });
 
       // Set up automatic rotation for the globe
@@ -145,18 +243,38 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
       };
     } catch (error) {
       console.error("Error initializing Mapbox:", error);
+      toast({
+        title: "Map Error",
+        description: "Could not initialize the interactive map.",
+        variant: "destructive",
+      });
     }
   }, []);
 
-  // Add financial centers as markers
-  const addFinancialCenters = (map: mapboxgl.Map) => {
+  // Update markers with real-time data
+  const updateMarkers = (map: mapboxgl.Map, data: MarketData) => {
+    // Remove existing markers
+    Object.values(markersRef.current).forEach(marker => marker.remove());
+    markersRef.current = {};
+    
+    // Add markers with real-time data
     financialCenters.forEach(center => {
+      // Get market data for this center
+      const marketInfo = data[center.symbol];
+      
       // Create marker element
       const el = document.createElement('div');
       el.className = 'financial-center-marker';
       
       // Style based on performance
-      const color = center.performance >= 0 ? '#00e676' : '#ff5252';
+      let color;
+      if (!marketInfo || marketInfo.error) {
+        color = '#90a4ae'; // Neutral color for error or no data
+        center.performance = 0;
+      } else {
+        color = marketInfo.change >= 0 ? '#00e676' : '#ff5252';
+        center.performance = marketInfo.changePercent;
+      }
       el.style.backgroundColor = color;
       
       // Size based on market size
@@ -167,33 +285,64 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
       // Pulse effect
       el.innerHTML = `<div class="pulse" style="background-color: ${color};"></div>`;
       
-      // Add popup
+      // Add popup with live data
+      let popupContent;
+      if (!marketInfo || marketInfo.error) {
+        popupContent = `
+          <div class="popup-content">
+            <h3 class="popup-title">${center.name}</h3>
+            <div class="popup-data">
+              <span class="popup-label">Status:</span>
+              <span class="popup-value">Data unavailable</span>
+            </div>
+            <div class="popup-data">
+              <span class="popup-label">Market Size:</span>
+              <span class="popup-value">$${center.marketSize.toFixed(1)}T</span>
+            </div>
+          </div>
+        `;
+      } else {
+        popupContent = `
+          <div class="popup-content">
+            <h3 class="popup-title">${center.name}</h3>
+            <div class="popup-data">
+              <span class="popup-label">Price:</span>
+              <span class="popup-value">${marketInfo.price.toFixed(2)}</span>
+            </div>
+            <div class="popup-data">
+              <span class="popup-label">Performance:</span>
+              <span class="popup-value ${marketInfo.change >= 0 ? 'positive' : 'negative'}">
+                ${marketInfo.change >= 0 ? '+' : ''}${marketInfo.changePercent.toFixed(2)}%
+              </span>
+            </div>
+            <div class="popup-data">
+              <span class="popup-label">Market Size:</span>
+              <span class="popup-value">$${center.marketSize.toFixed(1)}T</span>
+            </div>
+          </div>
+        `;
+      }
+      
       const popup = new mapboxgl.Popup({ 
         offset: 25,
         closeButton: false,
         className: 'financial-center-popup'
-      }).setHTML(`
-        <div class="popup-content">
-          <h3 class="popup-title">${center.name}</h3>
-          <div class="popup-data">
-            <span class="popup-label">Performance:</span>
-            <span class="popup-value ${center.performance >= 0 ? 'positive' : 'negative'}">
-              ${center.performance >= 0 ? '+' : ''}${center.performance}%
-            </span>
-          </div>
-          <div class="popup-data">
-            <span class="popup-label">Market Size:</span>
-            <span class="popup-value">$${center.marketSize.toFixed(1)}T</span>
-          </div>
-        </div>
-      `);
+      }).setHTML(popupContent);
       
       // Create and add the marker
-      new mapboxgl.Marker(el)
+      const marker = new mapboxgl.Marker(el)
         .setLngLat(center.coordinates)
         .setPopup(popup)
         .addTo(map);
+        
+      // Store reference to marker
+      markersRef.current[center.symbol] = marker;
     });
+  };
+
+  // Add financial centers as markers (fallback to static data)
+  const addFinancialCenters = (map: mapboxgl.Map) => {
+    // ... keep existing code (addFinancialCenters implementation)
   };
 
   // Add connection lines between financial centers

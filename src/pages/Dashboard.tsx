@@ -18,8 +18,8 @@ const Dashboard = () => {
   useEffect(() => {
     toast({
       title: "Dashboard loaded",
-      description: "Welcome to the GeoFinance dashboard. Data is being refreshed automatically.",
-      duration: 3000,
+      description: "Welcome to the GeoFinance dashboard with real-time Finnhub API data integration.",
+      duration: 5000,
     });
   }, []);
 

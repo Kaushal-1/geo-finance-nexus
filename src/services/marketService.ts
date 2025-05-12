@@ -1,4 +1,6 @@
 
+import { finnhubService } from './finnhubService';
+
 export interface MarketIndex {
   symbol: string;
   name: string;
@@ -86,18 +88,39 @@ const europeanMarkets: MarketIndex[] = [
 ];
 
 // Function to get formatted market data
-export function getMarketData(): FormattedMarketData[] {
-  return formatMarketIndices(marketIndices);
+export async function getMarketData(): Promise<FormattedMarketData[]> {
+  try {
+    const result = await finnhubService.getMajorIndices();
+    return formatMarketIndices(result.usMarkets);
+  } catch (error) {
+    console.error("Error fetching market data from Finnhub:", error);
+    // Fallback to mock data
+    return formatMarketIndices(marketIndices);
+  }
 }
 
 // Function to get formatted Asian market data
-export function getAsianMarketData(): FormattedMarketData[] {
-  return formatMarketIndices(asianMarkets);
+export async function getAsianMarketData(): Promise<FormattedMarketData[]> {
+  try {
+    const result = await finnhubService.getMajorIndices();
+    return formatMarketIndices(result.asianMarkets);
+  } catch (error) {
+    console.error("Error fetching Asian market data from Finnhub:", error);
+    // Fallback to mock data
+    return formatMarketIndices(asianMarkets);
+  }
 }
 
 // Function to get formatted European market data
-export function getEuropeanMarketData(): FormattedMarketData[] {
-  return formatMarketIndices(europeanMarkets);
+export async function getEuropeanMarketData(): Promise<FormattedMarketData[]> {
+  try {
+    const result = await finnhubService.getMajorIndices();
+    return formatMarketIndices(result.europeanMarkets);
+  } catch (error) {
+    console.error("Error fetching European market data from Finnhub:", error);
+    // Fallback to mock data
+    return formatMarketIndices(europeanMarkets);
+  }
 }
 
 // Helper function to format market indices
@@ -123,37 +146,40 @@ export function startMarketDataUpdates(
   callback: (data: FormattedMarketData[]) => void, 
   interval = 5000
 ): () => void {
-  const updateInterval = setInterval(() => {
-    // Update current values with small random changes
-    marketIndices.forEach(index => {
-      const changeAmount = (Math.random() - 0.5) * 20;
-      index.previous = index.current;
-      index.current += changeAmount;
+  const updateInterval = setInterval(async () => {
+    try {
+      const result = await finnhubService.getMajorIndices();
+      callback(formatMarketIndices(result.usMarkets));
+    } catch (error) {
+      console.error("Error in market data update:", error);
       
-      // Update history
-      index.history.push(index.current);
-      index.history.shift();
-    });
+      // Fallback to updating mock data
+      marketIndices.forEach(index => {
+        const changeAmount = (Math.random() - 0.5) * 20;
+        index.previous = index.current;
+        index.current += changeAmount;
+        index.history.push(index.current);
+        index.history.shift();
+      });
+      
+      asianMarkets.forEach(index => {
+        const changeAmount = (Math.random() - 0.5) * 15;
+        index.previous = index.current;
+        index.current += changeAmount;
+        index.history.push(index.current);
+        index.history.shift();
+      });
 
-    // Also update Asian and European markets
-    asianMarkets.forEach(index => {
-      const changeAmount = (Math.random() - 0.5) * 15;
-      index.previous = index.current;
-      index.current += changeAmount;
-      index.history.push(index.current);
-      index.history.shift();
-    });
-
-    europeanMarkets.forEach(index => {
-      const changeAmount = (Math.random() - 0.5) * 18;
-      index.previous = index.current;
-      index.current += changeAmount;
-      index.history.push(index.current);
-      index.history.shift();
-    });
-    
-    // Call the callback with updated data
-    callback(getMarketData());
+      europeanMarkets.forEach(index => {
+        const changeAmount = (Math.random() - 0.5) * 18;
+        index.previous = index.current;
+        index.current += changeAmount;
+        index.history.push(index.current);
+        index.history.shift();
+      });
+      
+      callback(formatMarketIndices(marketIndices));
+    }
   }, interval);
   
   return () => clearInterval(updateInterval);
