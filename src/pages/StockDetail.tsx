@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { finnhubService } from '@/services/finnhubService';
@@ -41,19 +40,19 @@ const StockDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTimeframe, setActiveTimeframe] = useState<string>('1W');
 
-  // If no symbol is provided, redirect to the default company
+  // If no symbol is provided or the symbol is ":symbol", redirect to the default company
   useEffect(() => {
-    if (!symbol) {
+    if (!symbol || symbol === ":symbol") {
       navigate(`/stock/${DEFAULT_COMPANY}`);
     }
   }, [symbol, navigate]);
 
   // Actual symbol to use (either from URL or default)
-  const effectiveSymbol = symbol || DEFAULT_COMPANY;
+  const effectiveSymbol = (symbol && symbol !== ":symbol") ? symbol : DEFAULT_COMPANY;
 
   useEffect(() => {
     async function loadStockData() {
-      if (!effectiveSymbol) {
+      if (!effectiveSymbol || effectiveSymbol === ":symbol") {
         return;
       }
 
@@ -108,7 +107,7 @@ const StockDetail: React.FC = () => {
     // Setup periodic updates for real-time data
     const updateInterval = setInterval(async () => {
       try {
-        if (!effectiveSymbol) return;
+        if (!effectiveSymbol || effectiveSymbol === ":symbol") return;
         
         const quote = await finnhubService.getQuote(effectiveSymbol);
         setStockData(prevData => {
@@ -127,7 +126,7 @@ const StockDetail: React.FC = () => {
     return () => clearInterval(updateInterval);
   }, [effectiveSymbol, navigate, toast]);
   
-  if (!symbol) {
+  if ((!symbol || symbol === ":symbol") && effectiveSymbol !== DEFAULT_COMPANY) {
     return <div className="p-8">Invalid stock symbol</div>;
   }
 
@@ -279,6 +278,7 @@ const StockDetail: React.FC = () => {
 
   const { profile, quote, financials } = stockData;
 
+  // Add null/undefined checks before accessing properties that use toFixed
   return (
     <div className="container mx-auto p-4">
       {/* Search and Title */}
@@ -318,7 +318,7 @@ const StockDetail: React.FC = () => {
               {/* Stock Price */}
               <div className="text-right">
                 <div className="text-3xl font-mono font-bold">
-                  ${quote.c.toFixed(2)}
+                  ${quote.c !== undefined ? quote.c.toFixed(2) : 'N/A'}
                 </div>
                 <div className={quote.c >= quote.pc ? "text-green-500 flex items-center justify-end" : "text-red-500 flex items-center justify-end"}>
                   {quote.c >= quote.pc ? (
@@ -326,7 +326,9 @@ const StockDetail: React.FC = () => {
                   ) : (
                     <ArrowDownIcon className="w-4 h-4 mr-1" />
                   )}
-                  {(quote.c - quote.pc).toFixed(2)} ({((quote.c - quote.pc) / quote.pc * 100).toFixed(2)}%)
+                  {quote.c !== undefined && quote.pc !== undefined ? 
+                    `${(quote.c - quote.pc).toFixed(2)} (${((quote.c - quote.pc) / quote.pc * 100).toFixed(2)}%)` : 
+                    'N/A'}
                 </div>
               </div>
             </div>
@@ -355,7 +357,7 @@ const StockDetail: React.FC = () => {
                 <CardContent className="p-4">
                   <div className="text-xs text-muted-foreground">52W Range</div>
                   <div className="text-xs font-mono font-medium">
-                    {quote.l.toFixed(2)} - {quote.h.toFixed(2)}
+                    {quote.l !== undefined ? quote.l.toFixed(2) : 'N/A'} - {quote.h !== undefined ? quote.h.toFixed(2) : 'N/A'}
                   </div>
                 </CardContent>
               </Card>
@@ -454,9 +456,9 @@ const StockDetail: React.FC = () => {
             currentCompany={{
               symbol: effectiveSymbol,
               name: profile.name || effectiveSymbol,
-              price: quote.c,
-              change: quote.c - quote.pc,
-              changePercent: ((quote.c - quote.pc) / quote.pc) * 100,
+              price: quote.c || 0,
+              change: (quote.c !== undefined && quote.pc !== undefined) ? quote.c - quote.pc : 0,
+              changePercent: (quote.c !== undefined && quote.pc !== undefined) ? ((quote.c - quote.pc) / quote.pc) * 100 : 0,
               marketCap: profile.marketCapitalization || 0
             }}
           />
@@ -476,32 +478,6 @@ const StockDetail: React.FC = () => {
       </div>
     </div>
   );
-};
-
-// Format market cap
-const formatMarketCap = (marketCap?: number) => {
-  if (!marketCap) return 'N/A';
-  
-  if (marketCap >= 1000) {
-    return `$${(marketCap / 1000).toFixed(2)}T`;
-  } else {
-    return `$${marketCap.toFixed(2)}B`;
-  }
-};
-
-// Format number with K, M, B suffixes
-const formatNumber = (num?: number) => {
-  if (!num) return 'N/A';
-  
-  if (num >= 1000000000) {
-    return `${(num / 1000000000).toFixed(2)}B`;
-  } else if (num >= 1000000) {
-    return `${(num / 1000000).toFixed(2)}M`;
-  } else if (num >= 1000) {
-    return `${(num / 1000).toFixed(2)}K`;
-  } else {
-    return num.toFixed(2);
-  }
 };
 
 export default StockDetail;
