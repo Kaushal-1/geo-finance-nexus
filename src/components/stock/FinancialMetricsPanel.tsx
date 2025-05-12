@@ -154,7 +154,7 @@ const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({ financial
                       axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
                     />
                     <Tooltip 
-                      formatter={(value: any) => [`$${value.toFixed(2)}`, 'EPS']}
+                      formatter={(value: any) => [`$${Number(value).toFixed(2)}`, 'EPS']}
                       contentStyle={{ 
                         backgroundColor: '#1a2035',
                         borderColor: '#455a64',
@@ -192,12 +192,12 @@ const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({ financial
                       axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
                     />
                     <YAxis 
-                      tickFormatter={value => `$${value.toFixed(0)}M`}
+                      tickFormatter={value => `$${Number(value).toFixed(0)}M`}
                       tick={{ fill: '#90a4ae', fontSize: 12 }}
                       axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
                     />
                     <Tooltip 
-                      formatter={(value: any) => [`$${value.toFixed(2)}M`, 'Revenue']}
+                      formatter={(value: any) => [`$${Number(value).toFixed(2)}M`, 'Revenue']}
                       contentStyle={{ 
                         backgroundColor: '#1a2035',
                         borderColor: '#455a64',

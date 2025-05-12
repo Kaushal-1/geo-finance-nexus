@@ -90,7 +90,7 @@ const PeerComparisonPanel: React.FC<PeerComparisonPanelProps> = ({ peers, curren
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" horizontal={false} />
                     <XAxis 
                       type="number" 
-                      tickFormatter={value => `${value.toFixed(1)}%`}
+                      tickFormatter={value => `${value?.toFixed(1) || 0}%`}
                       tick={{ fill: '#90a4ae', fontSize: 12 }}
                       axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
                     />
@@ -101,7 +101,7 @@ const PeerComparisonPanel: React.FC<PeerComparisonPanelProps> = ({ peers, curren
                       axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
                     />
                     <Tooltip 
-                      formatter={(value: any) => [`${value.toFixed(2)}%`, 'Change']}
+                      formatter={(value: any) => [`${Number(value)?.toFixed(2) || 0}%`, 'Change']}
                       contentStyle={{ 
                         backgroundColor: '#1a2035',
                         borderColor: '#455a64',
@@ -118,7 +118,7 @@ const PeerComparisonPanel: React.FC<PeerComparisonPanelProps> = ({ peers, curren
                       <LabelList 
                         dataKey="value" 
                         position="right" 
-                        formatter={(value: number) => `${value.toFixed(2)}%`}
+                        formatter={(value: number) => `${value?.toFixed(2) || 0}%`}
                         style={{ fill: '#f5f7fa', fontSize: '12px', fontFamily: 'Roboto Mono, monospace' }}
                       />
                     </Bar>
@@ -143,12 +143,12 @@ const PeerComparisonPanel: React.FC<PeerComparisonPanelProps> = ({ peers, curren
                       axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
                     />
                     <YAxis 
-                      tickFormatter={value => `$${(value).toFixed(0)}B`}
+                      tickFormatter={value => `$${Number(value)?.toFixed(0) || 0}B`}
                       tick={{ fill: '#90a4ae', fontSize: 12 }}
                       axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
                     />
                     <Tooltip 
-                      formatter={(value: any) => [`$${value.toFixed(2)}B`, 'Market Cap']}
+                      formatter={(value: any) => [`$${Number(value)?.toFixed(2) || 0}B`, 'Market Cap']}
                       contentStyle={{ 
                         backgroundColor: '#1a2035',
                         borderColor: '#455a64',
@@ -189,16 +189,16 @@ const PeerComparisonPanel: React.FC<PeerComparisonPanelProps> = ({ peers, curren
                       >
                         <td className="py-2 px-3 font-medium">{company.symbol}</td>
                         <td className="py-2 px-3 truncate max-w-[200px]">{company.name}</td>
-                        <td className="py-2 px-3 text-right font-mono">${company.price.toFixed(2)}</td>
+                        <td className="py-2 px-3 text-right font-mono">${(company.price || 0).toFixed(2)}</td>
                         <td className={`py-2 px-3 text-right font-mono flex items-center justify-end ${company.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                           {company.change >= 0 ? (
                             <ArrowUpIcon className="mr-1 h-4 w-4" />
                           ) : (
                             <ArrowDownIcon className="mr-1 h-4 w-4" />
                           )}
-                          {company.changePercent.toFixed(2)}%
+                          {(company.changePercent || 0).toFixed(2)}%
                         </td>
-                        <td className="py-2 px-3 text-right font-mono">${formatMarketCap(company.marketCap)}</td>
+                        <td className="py-2 px-3 text-right font-mono">${formatMarketCap(company.marketCap || 0)}</td>
                       </tr>
                     ))}
                   </tbody>

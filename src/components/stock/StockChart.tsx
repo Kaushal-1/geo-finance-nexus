@@ -42,6 +42,13 @@ const StockChart: React.FC<StockChartProps> = ({
 
   useEffect(() => {
     const loadChartData = async () => {
+      // Don't load if we have an invalid symbol
+      if (!symbol || symbol === ":symbol") {
+        setError("No valid symbol provided");
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
 
@@ -149,6 +156,16 @@ const StockChart: React.FC<StockChartProps> = ({
     );
   }
 
+  if (!chartData || chartData.length === 0) {
+    return (
+      <div className={className}>
+        <div className="flex items-center justify-center h-full bg-muted/20 rounded-md">
+          <p className="text-muted-foreground">No chart data available</p>
+        </div>
+      </div>
+    );
+  }
+
   // Calculate if the stock is up or down
   const isUp = chartData.length > 1 && 
     chartData[chartData.length - 1].price >= chartData[0].price;
@@ -157,10 +174,13 @@ const StockChart: React.FC<StockChartProps> = ({
   const gradientColor = isUp ? "rgba(0, 230, 118, 0.1)" : "rgba(255, 82, 82, 0.1)";
 
   const formatYAxis = (value: number) => {
+    if (value === undefined || value === null) return '0';
     return value.toFixed(2);
   };
 
   const formatTooltip = (value: number, name: string) => {
+    if (value === undefined || value === null) value = 0;
+    
     if (name === 'price') {
       return [`$${value.toFixed(2)}`, 'Price'];
     }
