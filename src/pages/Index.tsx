@@ -121,10 +121,11 @@ const Index: React.FC = () => {
         </footer>
       </main>
 
-      {/* Welcome Modal - Change 'open' prop to 'isOpen' to match component */}
+      {/* Welcome Modal */}
       <WelcomeModal isOpen={showModal} onClose={() => setShowModal(false)} />
     </>
   );
 };
 
 export default Index;
+
