@@ -1,11 +1,18 @@
+import { getPerplexityApiKey } from './chatService';
 
 // Function to fetch relevant news using Perplexity Sonar API
 export async function fetchFinancialNews(region = 'global', topic = 'financial markets') {
   try {
+    const apiKey = getPerplexityApiKey();
+    
+    if (!apiKey) {
+      throw new Error('Perplexity API key is not set');
+    }
+    
     const response = await fetch('https://api.perplexity.ai/sonar/search', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer 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',
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({

@@ -3,7 +3,7 @@ import { fetchFinancialNews } from '@/services/newsService';
 import { finnhubService } from '@/services/finnhubService';
 
 // Store API key (temporary solution until connected to Supabase)
-let perplexityApiKey = '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';
+let perplexityApiKey = '';
 
 export const setPerplexityApiKey = (key: string) => {
   perplexityApiKey = key;
@@ -52,7 +52,6 @@ async function fetchPerplexityResponse(query: string) {
         ],
         temperature: 0.2,
         max_tokens: 1000,
-        search_domain_filter: ['finance', 'business', 'economics'],
         search_recency_filter: 'month',
         frequency_penalty: 1,
         presence_penalty: 0
@@ -193,7 +192,7 @@ function createSourceCitations(responseJson: any): SourceCitation[] {
       return responseJson.search_results.map(result => ({
         url: result.url || '#',
         title: result.title || 'Financial Source',
-        publisher: result.publisher || 'Financial Publication',
+        publisher: result.source_name || 'Financial Publication',
         date: result.published_date || new Date().toLocaleDateString()
       })).slice(0, 3); // Limit to 3 citations
     }

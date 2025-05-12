@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { ChatMessage, Visualization } from '@/types/chat';
 import { useToast } from '@/components/ui/use-toast';
