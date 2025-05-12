@@ -4,68 +4,8 @@ import { ChevronUp, ChevronDown } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Separator } from "@/components/ui/separator";
 import { Button } from '@/components/ui/button';
-
-// Mock news data
-const newsData = [
-  {
-    id: 1,
-    title: "Fed signals potential rate cuts in coming months",
-    summary: "Federal Reserve Chair Jerome Powell indicated the central bank could begin reducing interest rates as early as March if inflation continues to ease.",
-    source: "Financial Times",
-    credibilityScore: 92,
-    impact: "High",
-    impactColor: "#ff5252", // red for high impact
-    timestamp: "2h ago",
-    category: "Policy"
-  },
-  {
-    id: 2,
-    title: "Tech sector rally continues with AI-driven momentum",
-    summary: "Technology stocks extend their gains as artificial intelligence investments continue to drive market enthusiasm despite valuation concerns.",
-    source: "Market Watch",
-    credibilityScore: 87,
-    impact: "Medium",
-    impactColor: "#7b61ff", // purple for medium impact
-    timestamp: "4h ago",
-    category: "Markets"
-  },
-  {
-    id: 3,
-    title: "Oil prices stabilize after Middle East tensions ease",
-    summary: "Crude oil futures find support at key technical levels as diplomatic efforts reduce concerns about supply disruptions in the region.",
-    source: "Reuters",
-    credibilityScore: 95,
-    impact: "Low",
-    impactColor: "#00b8d4", // teal for low impact
-    timestamp: "6h ago",
-    category: "Commodities"
-  },
-  {
-    id: 4,
-    title: "European banks exceed profit expectations in Q4",
-    summary: "Major European financial institutions report stronger-than-anticipated earnings, boosted by higher interest rates and effective cost management strategies.",
-    source: "Bloomberg",
-    credibilityScore: 94,
-    impact: "Medium",
-    impactColor: "#7b61ff",
-    timestamp: "8h ago",
-    category: "Earnings"
-  },
-  {
-    id: 5,
-    title: "Asia-Pacific markets mixed as investors assess economic data",
-    summary: "Regional equities show divergent performance with Japanese stocks declining while Chinese markets advance on manufacturing activity improvement.",
-    source: "CNBC",
-    credibilityScore: 85,
-    impact: "Low",
-    impactColor: "#00b8d4",
-    timestamp: "10h ago",
-    category: "Markets"
-  }
-];
-
-// Available categories for filtering
-const categories = ["All", "Policy", "Markets", "Commodities", "Earnings", "Economy"];
+import { useNewsData } from '@/hooks/useNewsData';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const NewsItem = ({ item }: { item: any }) => (
   <div className="p-3 border border-white/10 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 animate-fade-in">
@@ -96,13 +36,15 @@ const NewsItem = ({ item }: { item: any }) => (
 
 const NewsPanel = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const { 
+    news, 
+    loading, 
+    error, 
+    categories, 
+    selectedCategory, 
+    setSelectedCategory 
+  } = useNewsData();
   
-  // Filter news by selected category
-  const filteredNews = selectedCategory === "All" 
-    ? newsData 
-    : newsData.filter(news => news.category === selectedCategory);
-
   if (collapsed) {
     return (
       <div className="h-full flex">
@@ -149,9 +91,33 @@ const NewsPanel = () => {
       </div>
       
       <div className="flex-1 overflow-y-auto scrollbar-none p-4 space-y-3">
-        {filteredNews.map(item => (
-          <NewsItem key={item.id} item={item} />
-        ))}
+        {loading ? (
+          // Loading state
+          Array(5).fill(0).map((_, index) => (
+            <div key={index} className="p-3 border border-white/10 rounded-lg bg-white/5">
+              <div className="flex justify-between mb-2">
+                <Skeleton className="h-4 w-3/4 bg-white/10" />
+                <Skeleton className="h-4 w-12 bg-white/10 rounded-full" />
+              </div>
+              <Skeleton className="h-3 w-full bg-white/10 mb-1" />
+              <Skeleton className="h-3 w-5/6 bg-white/10 mb-2" />
+              <div className="flex justify-between">
+                <Skeleton className="h-2 w-24 bg-white/10" />
+                <Skeleton className="h-2 w-16 bg-white/10" />
+              </div>
+            </div>
+          ))
+        ) : error ? (
+          <div className="p-4 border border-red-500/30 bg-red-500/10 rounded-lg text-white">
+            <p>Could not load news data. Using fallback data.</p>
+          </div>
+        ) : news.length > 0 ? (
+          news.map(item => <NewsItem key={item.id} item={item} />)
+        ) : (
+          <div className="p-4 border border-white/10 rounded-lg text-white/50 text-center">
+            <p>No news available for the selected category.</p>
+          </div>
+        )}
       </div>
       
       <div className="p-4 border-t border-white/10">

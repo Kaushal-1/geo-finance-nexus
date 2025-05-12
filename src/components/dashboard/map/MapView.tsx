@@ -1,16 +1,29 @@
 
-import React from "react";
-import Globe from "@/components/Globe";
+import React, { useEffect } from "react";
 import MapboxGlobe from "@/components/MapboxGlobe";
 import { Skeleton } from "@/components/ui/skeleton";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "@/components/mapbox.css";
+import { useToast } from "@/components/ui/use-toast";
 
 interface MapViewProps {
   is3DView: boolean;
 }
 
 const MapView: React.FC<MapViewProps> = ({ is3DView }) => {
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Check if the Mapbox token is valid
+    if (!mapboxgl.supported()) {
+      toast({
+        title: "WebGL not supported",
+        description: "Your browser does not support WebGL, which is required for the 3D globe. Falling back to 2D view.",
+        variant: "destructive",
+      });
+    }
+  }, []);
+
   return (
     <div className="absolute inset-0 overflow-hidden">
       {is3DView ? (

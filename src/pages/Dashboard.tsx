@@ -1,16 +1,27 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MapVisualization from "@/components/dashboard/MapVisualization";
 import MarketPerformancePanel from "@/components/dashboard/MarketPerformancePanel";
 import NewsPanel from "@/components/dashboard/NewsPanel";
 import TimelineControl from "@/components/dashboard/TimelineControl";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { useToast } from "@/components/ui/use-toast";
+import { useTimelineData } from "@/hooks/useTimelineData";
+import { useNewsData } from "@/hooks/useNewsData";
 
 const Dashboard = () => {
   const [is3DView, setIs3DView] = useState(true);
-  const [selectedPeriod, setSelectedPeriod] = useState("24h");
   const { toast } = useToast();
+  const { selectedPeriod, setSelectedPeriod } = useTimelineData();
+
+  // Initial load toast
+  useEffect(() => {
+    toast({
+      title: "Dashboard loaded",
+      description: "Welcome to the GeoFinance dashboard. Data is being refreshed automatically.",
+      duration: 3000,
+    });
+  }, []);
 
   const handleViewToggle = () => {
     setIs3DView(prev => !prev);
