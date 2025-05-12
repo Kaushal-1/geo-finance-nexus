@@ -8,6 +8,8 @@ import TimelineControl from "@/components/dashboard/TimelineControl";
 import { DashboardProvider } from "@/context/DashboardContext";
 
 const Dashboard = () => {
+  console.log("Rendering Dashboard component");
+  
   return (
     <DashboardProvider>
       <Layout>
