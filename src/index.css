@@ -74,4 +74,34 @@
   .button-glow:hover {
     box-shadow: 0 0 25px rgba(0, 184, 212, 0.8);
   }
+  
+  /* Auth page specific styles */
+  .bg-teal-gradient {
+    @apply bg-gradient-to-r from-teal to-teal-dark;
+  }
+  
+  .text-teal {
+    color: #00b8d4;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent;
+  }
+  
+  /* Form focus effects */
+  input:focus {
+    @apply border-teal outline-none;
+    box-shadow: 0 0 0 2px rgba(0, 184, 212, 0.2);
+  }
+  
+  /* Error animation */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+  }
+  
+  .animate-shake {
+    animation: shake 0.6s ease-in-out;
+  }
 }
