@@ -8,11 +8,13 @@ import { Bot, ChartLine, ChevronLeft, ChevronRight, Send, LightbulbOff, Settings
 import ChatMessage from "@/components/chat/ChatMessage";
 import VisualizationPanel from "@/components/chat/VisualizationPanel";
 import SuggestedQuestions from "@/components/chat/SuggestedQuestions";
+import ApiKeyInput from "@/components/chat/ApiKeyInput";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchFinancialNews } from "@/services/newsService";
 import { finnhubService } from "@/services/finnhubService";
 import { ChatMessage as ChatMessageType } from "@/types/chat";
 import { useChatState } from "@/hooks/useChatState";
+import { getPerplexityApiKey } from "@/services/chatService";
 
 const ChatResearch = () => {
   const { 
@@ -27,10 +29,26 @@ const ChatResearch = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isPanelExpanded, setIsPanelExpanded] = useState(false);
   const [isVisualizationOpen, setIsVisualizationOpen] = useState(true);
+  const [hasApiKey, setHasApiKey] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Check for API key on load
+  useEffect(() => {
+    const apiKey = getPerplexityApiKey();
+    setHasApiKey(!!apiKey);
+    
+    if (!apiKey) {
+      toast({
+        title: "API Key Required",
+        description: "Please set your Perplexity API key in settings to enable the assistant.",
+        variant: "destructive",
+        duration: 6000,
+      });
+    }
+  }, [toast]);
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
@@ -88,13 +106,24 @@ const ChatResearch = () => {
           <div className="flex items-center gap-2">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className={`rounded-full ${!hasApiKey ? 'animate-pulse text-amber-400' : ''}`}
+                >
                   <Settings className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent>
                 <div className="space-y-4 pt-4">
                   <h2 className="text-xl font-semibold">Assistant Settings</h2>
+                  
+                  {/* API Key Input */}
+                  <div className="space-y-2">
+                    <h3 className="font-medium">API Configuration</h3>
+                    <ApiKeyInput />
+                  </div>
+                  
                   <div className="space-y-2">
                     <h3 className="font-medium">Visualization Preferences</h3>
                     <div className="flex items-center justify-between">
@@ -177,12 +206,29 @@ const ChatResearch = () => {
                       variant="outline"
                       className="h-auto justify-start border-gray-700 py-3 text-left text-xs hover:bg-gray-800 md:text-sm"
                       onClick={() => handleSuggestedQuestion(question)}
+                      disabled={!hasApiKey}
                     >
                       <MessageCircle className="mr-2 h-3.5 w-3.5" />
                       {question}
                     </Button>
                   ))}
                 </div>
+                
+                {!hasApiKey && (
+                  <div className="mt-4 rounded-md border border-amber-900/50 bg-amber-900/20 p-3 text-sm text-amber-200">
+                    <h4 className="mb-1 font-medium">API Key Required</h4>
+                    <p>Please set your Perplexity API key in the settings to enable the assistant.</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2 border-amber-500/30 bg-amber-900/30 text-amber-200 hover:bg-amber-900/50"
+                      onClick={() => document.querySelector('[aria-label="Settings"]')?.click()}
+                    >
+                      <Settings className="mr-1 h-3 w-3" />
+                      Open Settings
+                    </Button>
+                  </div>
+                )}
               </div>
             ) : (
               messages.map((message, index) => (
@@ -202,13 +248,13 @@ const ChatResearch = () => {
                   onChange={(e) => setInputMessage(e.target.value)}
                   placeholder="Ask about financial markets, stocks, or economic events..."
                   className="bg-gray-900 pr-12 text-white"
-                  disabled={loading}
+                  disabled={loading || !hasApiKey}
                 />
                 <Button
                   type="submit"
                   size="icon"
                   className="absolute right-1 top-1 h-8 w-8 rounded-md"
-                  disabled={loading || !inputMessage.trim()}
+                  disabled={loading || !inputMessage.trim() || !hasApiKey}
                 >
                   <Send className="h-4 w-4" />
                 </Button>

@@ -1,23 +1,65 @@
+
 import { ChatMessage, Visualization, SourceCitation } from '@/types/chat';
 import { fetchFinancialNews } from '@/services/newsService';
 import { finnhubService } from '@/services/finnhubService';
 
+// Store API key (temporary solution until connected to Supabase)
+let perplexityApiKey = '';
+
+export const setPerplexityApiKey = (key: string) => {
+  perplexityApiKey = key;
+  // Store in localStorage for persistence
+  localStorage.setItem('perplexity_api_key', key);
+};
+
+export const getPerplexityApiKey = () => {
+  // Try to load from localStorage if not already set
+  if (!perplexityApiKey) {
+    perplexityApiKey = localStorage.getItem('perplexity_api_key') || '';
+  }
+  return perplexityApiKey;
+};
+
 // Helper function to generate a response with the Perplexity API
 async function fetchPerplexityResponse(query: string) {
+  const apiKey = getPerplexityApiKey();
+  
+  if (!apiKey) {
+    throw new Error('Perplexity API key is not set');
+  }
+  
   try {
-    const response = await fetch('https://api.perplexity.ai/sonar/search', {
+    // Using newer chat completions API for better responses
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer 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',
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        query,
-        max_results: 5
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a financial analyst assistant that provides accurate, helpful information about markets, stocks, and economic events. Include relevant facts, data, and context in your answers. Be concise but thorough.'
+          },
+          {
+            role: 'user',
+            content: query
+          }
+        ],
+        temperature: 0.2,
+        max_tokens: 1000,
+        search_domain_filter: ['finance', 'business', 'economics'],
+        search_recency_filter: 'month',
+        frequency_penalty: 1,
+        presence_penalty: 0
       })
     });
     
     if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Perplexity API error response:', errorData);
       throw new Error(`API error: ${response.status}`);
     }
     
@@ -142,15 +184,22 @@ function generateSuggestedQuestions(message: string, history: ChatMessage[]): st
 }
 
 // Helper to create source citations from Perplexity results
-function createSourceCitations(results: any[]): SourceCitation[] {
-  if (!results || !Array.isArray(results)) return [];
-  
-  return results.map(result => ({
-    url: result.url || '#',
-    title: result.title || 'Financial Source',
-    publisher: result.source_name || 'Financial Publication',
-    date: result.published_date || new Date().toLocaleDateString()
-  })).slice(0, 3); // Limit to 3 citations
+function createSourceCitations(responseJson: any): SourceCitation[] {
+  try {
+    // Extract sources from the new Perplexity chat completions API format
+    if (responseJson?.search_results && Array.isArray(responseJson.search_results)) {
+      return responseJson.search_results.map(result => ({
+        url: result.url || '#',
+        title: result.title || 'Financial Source',
+        publisher: result.publisher || 'Financial Publication',
+        date: result.published_date || new Date().toLocaleDateString()
+      })).slice(0, 3); // Limit to 3 citations
+    }
+    return [];
+  } catch (error) {
+    console.error('Error creating source citations:', error);
+    return [];
+  }
 }
 
 // Main function to generate AI responses
@@ -166,13 +215,31 @@ export async function generateResponse(
     // Analyze if visualization is needed
     const visualizationAnalysis = analyzeForVisualization(message);
     
+    // Check if API key is set
+    if (!getPerplexityApiKey()) {
+      return {
+        message: {
+          id: '',
+          sender: 'ai',
+          content: "Please set your Perplexity API key to enable AI responses. Click the settings icon in the header to add your API key.",
+          timestamp: new Date(),
+          sentiment: 'neutral'
+        },
+        visualization: null,
+        suggestedQuestions: [
+          'How do I get a Perplexity API key?',
+          'What can I ask about financial markets?',
+          'How does this assistant work?'
+        ]
+      };
+    }
+    
     // Fetch data from Perplexity
     const perplexityResponse = await fetchPerplexityResponse(message);
+    console.log('Perplexity API response:', perplexityResponse);
     
     // Extract content from response
-    const responseContent = perplexityResponse.results.reduce((acc: string, result: any) => {
-      return acc + (result.content ? `\n\n${result.content.substring(0, 300)}` : '');
-    }, '').trim();
+    const responseContent = perplexityResponse?.choices?.[0]?.message?.content || '';
     
     // Create a simplified response if Perplexity doesn't provide good data
     const fallbackResponse = 
@@ -188,7 +255,7 @@ export async function generateResponse(
     const sentiment = determineSentiment(aiResponseContent);
     
     // Create source citations
-    const sources = createSourceCitations(perplexityResponse.results);
+    const sources = createSourceCitations(perplexityResponse);
     
     // Generate AI message
     const aiMessage: ChatMessage = {

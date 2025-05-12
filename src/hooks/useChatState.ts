@@ -1,8 +1,8 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ChatMessage, Visualization } from '@/types/chat';
 import { useToast } from '@/components/ui/use-toast';
-import { generateResponse } from '@/services/chatService';
+import { generateResponse, getPerplexityApiKey } from '@/services/chatService';
 
 export function useChatState() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -16,6 +16,16 @@ export function useChatState() {
 
   const sendMessage = useCallback(async (content: string) => {
     try {
+      // Check for API key
+      if (!getPerplexityApiKey()) {
+        toast({
+          title: "API Key Required",
+          description: "Please set your Perplexity API key in settings to enable the assistant.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Add user message
       const userMessage: ChatMessage = {
         id: generateId(),
@@ -72,7 +82,7 @@ export function useChatState() {
       console.error('Error sending message:', error);
       toast({
         title: "Error",
-        description: "Failed to generate response. Please try again.",
+        description: "Failed to generate response. Please try again or check your API key.",
         variant: "destructive",
       });
 
@@ -84,6 +94,18 @@ export function useChatState() {
       setLoading(false);
     }
   }, [messages, activeVisualization, toast]);
+
+  // Load suggested questions on initial load
+  useEffect(() => {
+    if (messages.length === 0) {
+      setSuggestedQuestions([
+        "How will rising interest rates affect tech stocks?",
+        "Compare Apple and Microsoft's performance this quarter",
+        "Explain the impact of Fed announcements on banking stocks",
+        "What regions are affected by semiconductor shortages?"
+      ]);
+    }
+  }, [messages]);
 
   return {
     messages,
