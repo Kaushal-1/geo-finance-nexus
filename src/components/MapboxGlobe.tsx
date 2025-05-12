@@ -11,6 +11,18 @@ declare global {
   }
 }
 
+// Add GeoJSON type definitions
+namespace GeoJSON {
+  interface Feature {
+    type: string;
+    properties: any;
+    geometry: {
+      type: string;
+      coordinates: number[][];
+    };
+  }
+}
+
 // Set your Mapbox token - using the existing token from the code
 mapboxgl.accessToken = 'pk.eyJ1Ijoia2F1c2hhbG1hcCIsImEiOiJjbWFrdTdoZXkwMWxuMmtzZGI0YjJzMm8yIn0.YMJoyUNjklC3jrOmzG7xUA';
 
@@ -353,7 +365,45 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
 
   // Add financial centers as markers (fallback to static data)
   const addFinancialCenters = (map: mapboxgl.Map) => {
-    // ... keep existing code (addFinancialCenters implementation)
+    financialCenters.forEach(center => {
+      // Create marker element
+      const el = document.createElement('div');
+      el.className = 'financial-center-marker';
+      el.style.backgroundColor = '#90a4ae'; // Grey color for static data
+      
+      // Size based on market size
+      const size = 10 + (center.marketSize / 3);
+      el.style.width = `${size}px`;
+      el.style.height = `${size}px`;
+      
+      // Pulse effect
+      el.innerHTML = `<div class="pulse" style="background-color: #90a4ae;"></div>`;
+      
+      // Add popup with static data
+      const popup = new mapboxgl.Popup({ 
+        offset: 25,
+        closeButton: false,
+        className: 'financial-center-popup'
+      }).setHTML(
+        `<div class="popup-content">
+          <h3 class="popup-title">${center.name}</h3>
+          <div class="popup-data">
+            <span class="popup-label">Status:</span>
+            <span class="popup-value">Data unavailable</span>
+          </div>
+          <div class="popup-data">
+            <span class="popup-label">Market Size:</span>
+            <span class="popup-value">$${center.marketSize.toFixed(1)}T</span>
+          </div>
+        </div>`
+      );
+      
+      // Create and add the marker
+      new mapboxgl.Marker(el)
+        .setLngLat(center.coordinates)
+        .setPopup(popup)
+        .addTo(map);
+    });
   };
 
   // Add connection lines between financial centers
