@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import MapVisualization from "@/components/dashboard/MapVisualization";
 import MarketPerformancePanel from "@/components/dashboard/MarketPerformancePanel";
@@ -8,39 +7,39 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { useToast } from "@/components/ui/use-toast";
 import { useTimelineData } from "@/hooks/useTimelineData";
 import { useNewsData } from "@/hooks/useNewsData";
-
 const Dashboard = () => {
   const [is3DView, setIs3DView] = useState(true);
-  const { toast } = useToast();
-  const { selectedPeriod, setSelectedPeriod } = useTimelineData();
+  const {
+    toast
+  } = useToast();
+  const {
+    selectedPeriod,
+    setSelectedPeriod
+  } = useTimelineData();
 
   // Initial load toast
   useEffect(() => {
     toast({
       title: "Dashboard loaded",
       description: "Welcome to the GeoFinance dashboard with real-time Finnhub API data integration.",
-      duration: 5000,
+      duration: 5000
     });
   }, []);
-
   const handleViewToggle = () => {
     setIs3DView(prev => !prev);
     toast({
       title: `Switched to ${!is3DView ? "3D Globe" : "2D Map"} view`,
-      duration: 2000,
+      duration: 2000
     });
   };
-
   const handlePeriodChange = (period: string) => {
     setSelectedPeriod(period);
     toast({
       title: `Timeline period updated: ${period}`,
-      duration: 2000,
+      duration: 2000
     });
   };
-
-  return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] text-[#f5f7fa] overflow-hidden">
+  return <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] text-[#f5f7fa] overflow-hidden">
       <DashboardHeader />
       
       <div className="flex flex-col md:flex-row h-[calc(100vh-120px)] p-4 gap-4">
@@ -63,14 +62,7 @@ const Dashboard = () => {
       </div>
       
       {/* Bottom Timeline Control */}
-      <div className="h-20 px-4 pb-4">
-        <TimelineControl 
-          selectedPeriod={selectedPeriod} 
-          onPeriodChange={handlePeriodChange} 
-        />
-      </div>
-    </div>
-  );
+      
+    </div>;
 };
-
 export default Dashboard;
