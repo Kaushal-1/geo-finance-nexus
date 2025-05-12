@@ -1,10 +1,9 @@
-
 import { ChatMessage, Visualization, SourceCitation } from '@/types/chat';
 import { fetchFinancialNews } from '@/services/newsService';
 import { finnhubService } from '@/services/finnhubService';
 
 // Store API key (temporary solution until connected to Supabase)
-let perplexityApiKey = '';
+let perplexityApiKey = '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';
 
 export const setPerplexityApiKey = (key: string) => {
   perplexityApiKey = key;
@@ -15,7 +14,10 @@ export const setPerplexityApiKey = (key: string) => {
 export const getPerplexityApiKey = () => {
   // Try to load from localStorage if not already set
   if (!perplexityApiKey) {
-    perplexityApiKey = localStorage.getItem('perplexity_api_key') || '';
+    const storedKey = localStorage.getItem('perplexity_api_key');
+    if (storedKey) {
+      perplexityApiKey = storedKey;
+    }
   }
   return perplexityApiKey;
 };

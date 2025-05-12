@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -110,6 +109,7 @@ const ChatResearch = () => {
                   variant="ghost" 
                   size="icon" 
                   className={`rounded-full ${!hasApiKey ? 'animate-pulse text-amber-400' : ''}`}
+                  aria-label="Settings"
                 >
                   <Settings className="h-5 w-5" />
                 </Button>
@@ -218,15 +218,27 @@ const ChatResearch = () => {
                   <div className="mt-4 rounded-md border border-amber-900/50 bg-amber-900/20 p-3 text-sm text-amber-200">
                     <h4 className="mb-1 font-medium">API Key Required</h4>
                     <p>Please set your Perplexity API key in the settings to enable the assistant.</p>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="mt-2 border-amber-500/30 bg-amber-900/30 text-amber-200 hover:bg-amber-900/50"
-                      onClick={() => document.querySelector('[aria-label="Settings"]')?.click()}
-                    >
-                      <Settings className="mr-1 h-3 w-3" />
-                      Open Settings
-                    </Button>
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-2 border-amber-500/30 bg-amber-900/30 text-amber-200 hover:bg-amber-900/50"
+                        >
+                          <Settings className="mr-1 h-3 w-3" />
+                          Open Settings
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent>
+                        <div className="space-y-4 pt-4">
+                          <h2 className="text-xl font-semibold">Assistant Settings</h2>
+                          <div className="space-y-2">
+                            <h3 className="font-medium">API Configuration</h3>
+                            <ApiKeyInput />
+                          </div>
+                        </div>
+                      </SheetContent>
+                    </Sheet>
                   </div>
                 )}
               </div>
