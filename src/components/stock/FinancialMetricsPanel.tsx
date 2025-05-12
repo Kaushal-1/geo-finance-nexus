@@ -68,7 +68,7 @@ const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({ financial
       const [year, q] = quarter.split('Q');
       return {
         quarter: `Q${q} ${year}`,
-        revenue: revenueQuarterly[quarter] / 1000000 // Convert to millions
+        revenue: (revenueQuarterly[quarter] || 0) / 1000000 // Convert to millions
       };
     });
   }
@@ -76,9 +76,9 @@ const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({ financial
   // Format earnings data for the chart
   const earningsChartData = hasEarningsData 
     ? earnings.map(quarter => ({
-        period: quarter.period,
-        actual: quarter.actual,
-        estimate: quarter.estimate,
+        period: quarter.period || '',
+        actual: quarter.actual || 0,
+        estimate: quarter.estimate || 0,
         surprise: quarter.surprise || 0,
         surprisePercent: quarter.surprisePercent || 0
       })).reverse().slice(0, 8)
@@ -149,12 +149,12 @@ const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({ financial
                       axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
                     />
                     <YAxis 
-                      tickFormatter={value => `$${value.toFixed(2)}`}
+                      tickFormatter={value => `$${(value || 0).toFixed(2)}`}
                       tick={{ fill: '#90a4ae', fontSize: 12 }}
                       axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
                     />
                     <Tooltip 
-                      formatter={(value: any) => [`$${Number(value).toFixed(2)}`, 'EPS']}
+                      formatter={(value: any) => [`$${Number(value || 0).toFixed(2)}`, 'EPS']}
                       contentStyle={{ 
                         backgroundColor: '#1a2035',
                         borderColor: '#455a64',
@@ -192,12 +192,12 @@ const FinancialMetricsPanel: React.FC<FinancialMetricsPanelProps> = ({ financial
                       axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
                     />
                     <YAxis 
-                      tickFormatter={value => `$${Number(value).toFixed(0)}M`}
+                      tickFormatter={value => `$${Number(value || 0).toFixed(0)}M`}
                       tick={{ fill: '#90a4ae', fontSize: 12 }}
                       axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
                     />
                     <Tooltip 
-                      formatter={(value: any) => [`$${Number(value).toFixed(2)}M`, 'Revenue']}
+                      formatter={(value: any) => [`$${Number(value || 0).toFixed(2)}M`, 'Revenue']}
                       contentStyle={{ 
                         backgroundColor: '#1a2035',
                         borderColor: '#455a64',

@@ -17,6 +17,7 @@ import {
   ReferenceLine
 } from 'recharts';
 import { finnhubService } from '@/services/finnhubService';
+import { useToast } from '@/components/ui/use-toast';
 
 interface StockChartProps {
   symbol: string;
@@ -39,6 +40,8 @@ const StockChart: React.FC<StockChartProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [volumeData, setVolumeData] = useState<ChartData[]>([]);
+  const { toast } = useToast();
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const loadChartData = async () => {
@@ -92,9 +95,19 @@ const StockChart: React.FC<StockChartProps> = ({
         if (timeframe === '1D') resolution = '15';
         if (timeframe === '5Y') resolution = 'W';
 
+        console.log(`Fetching chart data for ${symbol} with timeframe ${timeframe}`);
         const candles = await finnhubService.getCandles(symbol, resolution, fromDate);
 
         if (!candles || candles.length === 0) {
+          // If no data and we haven't retried much, retry
+          if (retryCount < 3) {
+            console.log(`Retry attempt ${retryCount + 1} for chart data`);
+            setRetryCount(prev => prev + 1);
+            // Wait a bit longer between retries
+            setTimeout(() => loadChartData(), 2000 * (retryCount + 1));
+            return;
+          }
+          
           setError('No chart data available');
           setLoading(false);
           return;
@@ -107,17 +120,13 @@ const StockChart: React.FC<StockChartProps> = ({
             date: timeframe === '1D'
               ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
               : date.toLocaleDateString([], { month: 'short', day: 'numeric' }),
-            price: candle.close,
-            volume: candle.volume
+            price: candle.close || 0,
+            volume: candle.volume || 0
           };
         });
 
-        // Get min and max for better chart display
-        const prices = formattedData.map(item => item.price);
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
-        const buffer = (maxPrice - minPrice) * 0.1; // Add 10% buffer
-
+        // Reset retry count on success
+        setRetryCount(0);
         setChartData(formattedData);
 
         // Create separate volume data
@@ -128,10 +137,28 @@ const StockChart: React.FC<StockChartProps> = ({
         }
 
         setLoading(false);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error loading chart data:', err);
-        setError('Failed to load chart data');
+        
+        // If API rate limited, retry with backoff
+        if (err.message?.includes('rate limit')) {
+          if (retryCount < 5) {
+            const delay = Math.pow(2, retryCount) * 1000;
+            console.log(`Rate limited. Retrying in ${delay}ms...`);
+            setRetryCount(prev => prev + 1);
+            setTimeout(() => loadChartData(), delay);
+            return;
+          }
+        }
+        
+        setError('Failed to load chart data. API may be temporarily unavailable.');
         setLoading(false);
+        
+        toast({
+          title: "Chart loading error",
+          description: "Could not load the chart data. The API may be temporarily unavailable.",
+          variant: "destructive",
+        });
       }
     };
 

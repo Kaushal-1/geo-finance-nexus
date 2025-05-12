@@ -12,8 +12,16 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import StockDetail from "./pages/StockDetail";
 
-// Create a client
-const queryClient = new QueryClient();
+// Create a client with retry configurations
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 60000, // 1 minute
+    },
+  },
+});
 
 const App = () => {
   return (
