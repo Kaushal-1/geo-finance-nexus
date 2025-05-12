@@ -10,18 +10,9 @@ import SignIn from "./pages/SignIn";
 import CreateAccount from "./pages/CreateAccount";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
-import StockDetail from "./pages/StockDetail";
 
-// Create a client with retry configurations
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 3,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      staleTime: 60000, // 1 minute
-    },
-  },
-});
+// Create a client
+const queryClient = new QueryClient();
 
 const App = () => {
   return (
@@ -36,8 +27,6 @@ const App = () => {
               <Route path="/signin" element={<SignIn />} />
               <Route path="/signup" element={<CreateAccount />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/stock" element={<Navigate to="/stock/AAPL" replace />} />
-              <Route path="/stock/:symbol" element={<StockDetail />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
