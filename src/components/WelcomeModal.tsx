@@ -65,7 +65,7 @@ const WelcomeModal = ({ isOpen, onClose }: WelcomeModalProps) => {
               <div
                 key={index}
                 className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${
-                  index === currentStep ? "bg-teal" : "bg-gray-600"
+                  index === currentStep ? "bg-teal-400" : "bg-gray-600"
                 }`}
               />
             ))}
@@ -76,7 +76,7 @@ const WelcomeModal = ({ isOpen, onClose }: WelcomeModalProps) => {
           <Button
             variant="default"
             onClick={handleNext}
-            className="w-full bg-teal hover:bg-teal/90 button-glow"
+            className="w-full bg-teal-500 hover:bg-teal-600 text-white button-glow"
           >
             {currentStep < steps.length - 1 ? "Next" : "Get Started"}
           </Button>

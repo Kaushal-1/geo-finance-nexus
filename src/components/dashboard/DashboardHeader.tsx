@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Bot, Globe, LogOut, ChartLine } from "lucide-react";
+import { Bot, Globe, LogOut } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 const DashboardHeader = () => {
@@ -53,6 +53,15 @@ const DashboardHeader = () => {
           >
             <Bot className="h-4 w-4" />
             AI Research
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="text-gray-300 hover:text-white gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
           </Button>
         </div>
       </div>
