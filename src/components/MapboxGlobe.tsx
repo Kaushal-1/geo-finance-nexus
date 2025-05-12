@@ -3,6 +3,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
+// Extend the Window interface to include mapboxgl
+declare global {
+  interface Window {
+    mapboxgl: typeof mapboxgl;
+  }
+}
+
 // Set your Mapbox token - using the existing token from the code
 mapboxgl.accessToken = 'pk.eyJ1Ijoia2F1c2hhbG1hcCIsImEiOiJjbWFrdTdoZXkwMWxuMmtzZGI0YjJzMm8yIn0.YMJoyUNjklC3jrOmzG7xUA';
 
