@@ -1,7 +1,8 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { ChatMessage, Visualization } from '@/types/chat';
 import { useToast } from '@/components/ui/use-toast';
-import { generateResponse, getPerplexityApiKey } from '@/services/chatService';
+import { generateResponse } from '@/services/chatService';
 
 export function useChatState() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -15,16 +16,6 @@ export function useChatState() {
 
   const sendMessage = useCallback(async (content: string) => {
     try {
-      // Check for API key
-      if (!getPerplexityApiKey()) {
-        toast({
-          title: "API Key Required",
-          description: "Please set your Perplexity API key in settings to enable the assistant.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
       // Add user message
       const userMessage: ChatMessage = {
         id: generateId(),
@@ -81,7 +72,7 @@ export function useChatState() {
       console.error('Error sending message:', error);
       toast({
         title: "Error",
-        description: "Failed to generate response. Please try again or check your API key.",
+        description: "Failed to generate response. Please try again.",
         variant: "destructive",
       });
 

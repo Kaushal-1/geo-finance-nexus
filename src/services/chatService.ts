@@ -2,40 +2,29 @@ import { ChatMessage, Visualization, SourceCitation } from '@/types/chat';
 import { fetchFinancialNews } from '@/services/newsService';
 import { finnhubService } from '@/services/finnhubService';
 
-// Store API key (temporary solution until connected to Supabase)
-let perplexityApiKey = '';
+// Hardcoded API key - in a production app, this would be stored in an environment variable
+const PERPLEXITY_API_KEY = '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';
 
-export const setPerplexityApiKey = (key: string) => {
-  perplexityApiKey = key;
-  // Store in localStorage for persistence
-  localStorage.setItem('perplexity_api_key', key);
+// Always return the hardcoded API key
+export const getPerplexityApiKey = () => {
+  return PERPLEXITY_API_KEY;
 };
 
-export const getPerplexityApiKey = () => {
-  // Try to load from localStorage if not already set
-  if (!perplexityApiKey) {
-    const storedKey = localStorage.getItem('perplexity_api_key');
-    if (storedKey) {
-      perplexityApiKey = storedKey;
-    }
-  }
-  return perplexityApiKey;
+// This function is no longer needed as the API key is hardcoded
+// Keeping it for backwards compatibility but it doesn't do anything
+export const setPerplexityApiKey = (key: string) => {
+  // No-op - the key is hardcoded now
+  console.log('API key is hardcoded, this function is deprecated');
 };
 
 // Helper function to generate a response with the Perplexity API
 async function fetchPerplexityResponse(query: string) {
-  const apiKey = getPerplexityApiKey();
-  
-  if (!apiKey) {
-    throw new Error('Perplexity API key is not set');
-  }
-  
   try {
     // Using newer chat completions API for better responses
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -215,25 +204,6 @@ export async function generateResponse(
   try {
     // Analyze if visualization is needed
     const visualizationAnalysis = analyzeForVisualization(message);
-    
-    // Check if API key is set
-    if (!getPerplexityApiKey()) {
-      return {
-        message: {
-          id: '',
-          sender: 'ai',
-          content: "Please set your Perplexity API key to enable AI responses. Click the settings icon in the header to add your API key.",
-          timestamp: new Date(),
-          sentiment: 'neutral'
-        },
-        visualization: null,
-        suggestedQuestions: [
-          'How do I get a Perplexity API key?',
-          'What can I ask about financial markets?',
-          'How does this assistant work?'
-        ]
-      };
-    }
     
     // Fetch data from Perplexity
     const perplexityResponse = await fetchPerplexityResponse(message);
