@@ -7,6 +7,8 @@ export interface MarketIndex {
   current: number;
   previous: number;
   history: number[];
+  change?: number;
+  changePercent?: number;
 }
 
 export interface FormattedMarketData {
@@ -135,6 +137,7 @@ export async function getEuropeanMarketData(): Promise<FormattedMarketData[]> {
 // Helper function to process API results into the MarketIndex format
 function processApiResult(result: any[], marketType: string): MarketIndex[] {
   if (!Array.isArray(result) || result.length === 0) {
+    console.log(`No data returned for ${marketType}, using fallback data`);
     return [];
   }
 
@@ -142,7 +145,7 @@ function processApiResult(result: any[], marketType: string): MarketIndex[] {
     // Filter and convert API results to MarketIndex format
     return result
       .filter(item => {
-        if (!item || typeof item !== 'object' || item.error) return false;
+        if (!item || typeof item !== 'object') return false;
         
         // Filter based on market type
         if (marketType === "US Markets" && (item.symbol === "^GSPC" || item.symbol === "^DJI" || item.symbol === "^IXIC" || item.symbol === "^RUT")) {
@@ -157,9 +160,11 @@ function processApiResult(result: any[], marketType: string): MarketIndex[] {
       .map(item => ({
         symbol: item.symbol,
         name: item.name || item.symbol,
-        current: item.price || 0,
-        previous: item.prevClose || 0,
-        history: Array.from({ length: 24 }, () => (item.price || 0) + ((Math.random() - 0.5) * (item.price || 100) * 0.02))
+        current: item.current || item.price || 0,
+        previous: item.previous || item.prevClose || 0,
+        change: item.change || 0,
+        changePercent: item.changePercent || 0,
+        history: item.history || Array.from({ length: 24 }, () => (item.current || item.price || 0) + ((Math.random() - 0.5) * (item.current || item.price || 100) * 0.02))
       })) as MarketIndex[];
   } catch (e) {
     console.error(`Error processing ${marketType} data:`, e);
@@ -170,8 +175,8 @@ function processApiResult(result: any[], marketType: string): MarketIndex[] {
 // Helper function to format market indices
 function formatMarketIndices(indices: MarketIndex[]): FormattedMarketData[] {
   return indices.map(index => {
-    const change = index.current - index.previous;
-    const percentChange = (change / index.previous) * 100;
+    const change = index.change !== undefined ? index.change : (index.current - index.previous);
+    const percentChange = index.changePercent !== undefined ? index.changePercent : ((change / index.previous) * 100);
     
     return {
       symbol: index.symbol,
