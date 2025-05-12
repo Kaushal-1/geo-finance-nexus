@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Lightbulb, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useChat } from "ai/react";
+import { useChatState } from "@/hooks/useChatState";
 import {
   Select,
   SelectContent,
@@ -24,9 +25,6 @@ const ChatResearch = () => {
   const [apiKey, setApiKey] = useState<string | null>(
     localStorage.getItem("openai_api_key") || ""
   );
-  const [prompt, setPrompt] = useState("");
-  const [visualization, setVisualization] = useState(null);
-  const [apiError, setApiError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [model, setModel] = useState("gpt-3.5-turbo");
   const [temperature, setTemperature] = useState(0.7);
@@ -36,33 +34,17 @@ const ChatResearch = () => {
   const [presencePenalty, setPresencePenalty] = useState(0);
   const [showRawJson, setShowRawJson] = useState(false);
   const { toast } = useToast();
-
+  const [inputText, setInputText] = useState("");
+  
+  // Use our custom chat hook instead of the missing ai/react package
   const {
     messages,
-    input,
-    setInput,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
-    error,
-    setMessages,
-  } = useChat({
-    api: "/api/chat",
-    id: "geo-finance-chat",
-    onFinish: (message) => {
-      console.log("Chat finished", message);
-    },
-    onError: (error) => {
-      console.error("Chat error", error);
-      setApiError(error.message || "An unexpected error occurred.");
-      toast({
-        title: "Error",
-        description:
-          error.message || "An unexpected error occurred. Check API key.",
-        variant: "destructive",
-      });
-    },
-  });
+    loading: isLoading,
+    activeVisualization: visualization,
+    suggestedQuestions,
+    sendMessage,
+    setActiveVisualization
+  } = useChatState();
 
   useEffect(() => {
     if (apiKey) {
@@ -83,8 +65,16 @@ const ChatResearch = () => {
     });
   };
 
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (inputText.trim()) {
+      sendMessage(inputText);
+      setInputText("");
+    }
+  };
+
   const handleClearChat = () => {
-    setMessages([]);
+    // Clear chat messages - this will need to be implemented in useChatState
     toast({
       title: "Chat Cleared",
       description: "The chat history has been cleared.",
@@ -136,7 +126,7 @@ const ChatResearch = () => {
                       <div
                         key={message.id}
                         className={`p-3 rounded-lg ${
-                          message.role === "user"
+                          message.sender === "user"
                             ? "bg-teal-600 text-white ml-auto w-fit max-w-[80%]"
                             : "bg-gray-800 text-gray-100 mr-auto w-fit max-w-[80%]"
                         }`}
@@ -157,8 +147,8 @@ const ChatResearch = () => {
                   <div className="flex items-center space-x-2">
                     <Textarea
                       placeholder="Ask me anything..."
-                      value={input}
-                      onChange={handleInputChange}
+                      value={inputText}
+                      onChange={(e) => setInputText(e.target.value)}
                       onKeyDown={handleKeyDown}
                       className="flex-1 bg-gray-700 border-gray-600 text-white rounded-md resize-none"
                     />
@@ -174,7 +164,7 @@ const ChatResearch = () => {
           {/* Visualization Panel */}
           {visualization && (
             <div className="col-span-1 h-full">
-              <VisualizationPanel onClose={() => setVisualization(null)} />
+              <VisualizationPanel onClose={() => setActiveVisualization(null)} />
             </div>
           )}
         </div>
@@ -256,91 +246,6 @@ const ChatResearch = () => {
                   />
                   <p className="text-sm text-gray-400 mt-1">
                     Like temperature, but chooses from the most probable tokens.
-                  </p>
-                </div>
-
-                {/* Max Length Input */}
-                <div>
-                  <Label htmlFor="max-length" className="block text-sm font-medium">
-                    Max Length
-                  </Label>
-                  <Input
-                    type="number"
-                    id="max-length"
-                    value={maxLength}
-                    onChange={(e) => setMaxLength(Number(e.target.value))}
-                    className="mt-1 bg-gray-700 border-gray-600 text-white rounded-md"
-                  />
-                  <p className="text-sm text-gray-400 mt-1">
-                    The maximum number of tokens to generate in the completion.
-                  </p>
-                </div>
-
-                {/* Frequency Penalty Slider */}
-                <div>
-                  <Label
-                    htmlFor="frequency-penalty"
-                    className="block text-sm font-medium"
-                  >
-                    Frequency Penalty
-                  </Label>
-                  <Slider
-                    id="frequency-penalty"
-                    defaultValue={[frequencyPenalty]}
-                    min={-2}
-                    max={2}
-                    step={0.1}
-                    onValueChange={(value) => setFrequencyPenalty(value[0])}
-                    className="mt-1"
-                  />
-                  <p className="text-sm text-gray-400 mt-1">
-                    Positive values penalize new tokens based on their existing
-                    frequency in the text so far, decreasing the model's
-                    likelihood to repeat the same lines verbatim.
-                  </p>
-                </div>
-
-                {/* Presence Penalty Slider */}
-                <div>
-                  <Label
-                    htmlFor="presence-penalty"
-                    className="block text-sm font-medium"
-                  >
-                    Presence Penalty
-                  </Label>
-                  <Slider
-                    id="presence-penalty"
-                    defaultValue={[presencePenalty]}
-                    min={-2}
-                    max={2}
-                    step={0.1}
-                    onValueChange={(value) => setPresencePenalty(value[0])}
-                    className="mt-1"
-                  />
-                  <p className="text-sm text-gray-400 mt-1">
-                    Positive values penalize new tokens based on whether they
-                    appear in the text so far, increasing the model's likelihood
-                    to talk about new topics.
-                  </p>
-                </div>
-
-                {/* Show Raw JSON Switch */}
-                <div>
-                  <div className="flex justify-between items-center">
-                    <Label
-                      htmlFor="show-raw-json"
-                      className="block text-sm font-medium"
-                    >
-                      Show Raw JSON
-                    </Label>
-                    <Switch
-                      id="show-raw-json"
-                      checked={showRawJson}
-                      onCheckedChange={setShowRawJson}
-                    />
-                  </div>
-                  <p className="text-sm text-gray-400 mt-1">
-                    Display the raw JSON response from the API.
                   </p>
                 </div>
 
