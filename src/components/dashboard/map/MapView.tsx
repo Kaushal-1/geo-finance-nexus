@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "@/components/mapbox.css";
 import { useToast } from "@/components/ui/use-toast";
+import mapboxgl from "mapbox-gl";
 
 interface MapViewProps {
   is3DView: boolean;
