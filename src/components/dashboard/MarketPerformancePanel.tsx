@@ -11,6 +11,7 @@ import { useMarketData } from '@/hooks/useMarketData';
 import { FormattedMarketData } from '@/services/marketService';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 // Mini sparkline chart component
 const MiniSparkline = ({ data, trend }: { data: number[], trend: string }) => {
@@ -39,27 +40,39 @@ const MiniSparkline = ({ data, trend }: { data: number[], trend: string }) => {
 };
 
 // Market index card component
-const MarketCard = ({ market }: { market: FormattedMarketData }) => (
-  <div className="flex items-center justify-between p-3 border-b border-white/5 hover:bg-white/5 transition-colors rounded-md group">
-    <div>
-      <h3 className="text-white font-medium">{market.name}</h3>
-    </div>
-    <div className="flex items-center gap-3">
-      <span className="font-mono text-white">{market.value}</span>
-      <div className="flex flex-col items-end min-w-[80px]">
-        <span className={`font-mono text-sm ${market.trend === 'up' ? 'text-[#00e676]' : 'text-[#ff5252]'}`}>
-          {market.trend === 'up' ? '+' : ''}{market.change}
-        </span>
-        <span className={`font-mono text-xs ${market.trend === 'up' ? 'text-[#00e676]' : 'text-[#ff5252]'}`}>
-          {market.trend === 'up' ? '+' : ''}{market.percentChange}%
-        </span>
+const MarketCard = ({ market }: { market: FormattedMarketData }) => {
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    // Navigate to stock detail page with symbol as parameter
+    navigate(`/stock/${encodeURIComponent(market.symbol)}`);
+  };
+  
+  return (
+    <div 
+      className="flex items-center justify-between p-3 border-b border-white/5 hover:bg-white/5 transition-colors rounded-md group cursor-pointer"
+      onClick={handleClick}
+    >
+      <div>
+        <h3 className="text-white font-medium">{market.name}</h3>
       </div>
-      <div className="w-[60px] opacity-70 group-hover:opacity-100 transition-opacity">
-        <MiniSparkline data={market.sparkline} trend={market.trend} />
+      <div className="flex items-center gap-3">
+        <span className="font-mono text-white">{market.value}</span>
+        <div className="flex flex-col items-end min-w-[80px]">
+          <span className={`font-mono text-sm ${market.trend === 'up' ? 'text-[#00e676]' : 'text-[#ff5252]'}`}>
+            {market.trend === 'up' ? '+' : ''}{market.change}
+          </span>
+          <span className={`font-mono text-xs ${market.trend === 'up' ? 'text-[#00e676]' : 'text-[#ff5252]'}`}>
+            {market.trend === 'up' ? '+' : ''}{market.percentChange}%
+          </span>
+        </div>
+        <div className="w-[60px] opacity-70 group-hover:opacity-100 transition-opacity">
+          <MiniSparkline data={market.sparkline} trend={market.trend} />
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Loading skeleton for market card
 const MarketCardSkeleton = () => (
