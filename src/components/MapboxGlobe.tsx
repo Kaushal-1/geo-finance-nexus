@@ -3,8 +3,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-// Set your Mapbox token
+// Set your Mapbox token - using the existing token from the code
 mapboxgl.accessToken = 'pk.eyJ1Ijoia2F1c2hhbG1hcCIsImEiOiJjbWFrdTdoZXkwMWxuMmtzZGI0YjJzMm8yIn0.YMJoyUNjklC3jrOmzG7xUA';
+
+// Make mapboxgl available on the window for troubleshooting
+if (typeof window !== 'undefined') {
+  window.mapboxgl = mapboxgl;
+}
 
 interface MapboxGlobeProps {
   className?: string;
@@ -44,92 +49,96 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
     // Initialize map only once
     if (map.current) return;
     
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [0, 20],
-      zoom: 1.5,
-      projection: 'globe'
-    });
-
-    // Add navigation control
-    map.current.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-
-    // Handle map load event
-    map.current.on('load', () => {
-      if (!map.current) return;
-      
-      // Add atmosphere effect
-      map.current.setFog({
-        color: 'rgb(10, 14, 23)',
-        'high-color': 'rgb(19, 27, 46)',
-        'horizon-blend': 0.2
-      });
-      
-      // Add 3D terrain
-      map.current.addSource('mapbox-dem', {
-        'type': 'raster-dem',
-        'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
-      });
-      
-      map.current.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
-      
-      // Add sky layer
-      map.current.addLayer({
-        'id': 'sky',
-        'type': 'sky',
-        'paint': {
-          'sky-type': 'atmosphere',
-          'sky-atmosphere-color': 'rgba(19, 27, 46, 1)'
-        }
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [0, 20],
+        zoom: 1.5,
+        projection: 'globe'
       });
 
-      addFinancialCenters(map.current);
-      addConnectionLines(map.current);
-      setMapLoaded(true);
-    });
+      // Add navigation control
+      map.current.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
 
-    // Set up automatic rotation for the globe
-    let userInteracting = false;
-    let spinEnabled = true;
-    const secondsPerRevolution = 240;
+      // Handle map load event
+      map.current.on('load', () => {
+        if (!map.current) return;
+        
+        // Add atmosphere effect
+        map.current.setFog({
+          color: 'rgb(10, 14, 23)',
+          'high-color': 'rgb(19, 27, 46)',
+          'horizon-blend': 0.2
+        });
+        
+        // Add 3D terrain
+        map.current.addSource('mapbox-dem', {
+          'type': 'raster-dem',
+          'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+        });
+        
+        map.current.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 });
+        
+        // Add sky layer
+        map.current.addLayer({
+          'id': 'sky',
+          'type': 'sky',
+          'paint': {
+            'sky-type': 'atmosphere',
+            'sky-atmosphere-color': 'rgba(19, 27, 46, 1)'
+          }
+        });
 
-    function spinGlobe() {
-      if (!map.current || !spinEnabled || userInteracting) return;
+        addFinancialCenters(map.current);
+        addConnectionLines(map.current);
+        setMapLoaded(true);
+      });
+
+      // Set up automatic rotation for the globe
+      let userInteracting = false;
+      let spinEnabled = true;
+      const secondsPerRevolution = 240;
+
+      function spinGlobe() {
+        if (!map.current || !spinEnabled || userInteracting) return;
+        
+        const center = map.current.getCenter();
+        center.lng -= 360 / secondsPerRevolution;
+        map.current.easeTo({ center, duration: 1000, easing: (n) => n });
+      }
+
+      // User interaction handlers
+      map.current.on('mousedown', () => {
+        userInteracting = true;
+      });
       
-      const center = map.current.getCenter();
-      center.lng -= 360 / secondsPerRevolution;
-      map.current.easeTo({ center, duration: 1000, easing: (n) => n });
+      map.current.on('mouseup', () => {
+        userInteracting = false;
+        setTimeout(spinGlobe, 1000);
+      });
+
+      map.current.on('touchstart', () => {
+        userInteracting = true;
+      });
+      
+      map.current.on('touchend', () => {
+        userInteracting = false;
+        setTimeout(spinGlobe, 1000);
+      });
+
+      // Start spinning
+      const spinInterval = setInterval(spinGlobe, 1000);
+      
+      // Clean up
+      return () => {
+        clearInterval(spinInterval);
+        map.current?.remove();
+        map.current = null;
+      };
+    } catch (error) {
+      console.error("Error initializing Mapbox:", error);
     }
-
-    // User interaction handlers
-    map.current.on('mousedown', () => {
-      userInteracting = true;
-    });
-    
-    map.current.on('mouseup', () => {
-      userInteracting = false;
-      setTimeout(spinGlobe, 1000);
-    });
-
-    map.current.on('touchstart', () => {
-      userInteracting = true;
-    });
-    
-    map.current.on('touchend', () => {
-      userInteracting = false;
-      setTimeout(spinGlobe, 1000);
-    });
-
-    // Start spinning
-    const spinInterval = setInterval(spinGlobe, 1000);
-    
-    // Clean up
-    return () => {
-      clearInterval(spinInterval);
-      map.current?.remove();
-      map.current = null;
-    };
   }, []);
 
   // Add financial centers as markers

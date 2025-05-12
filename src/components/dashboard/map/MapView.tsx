@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import MapboxGlobe from "@/components/MapboxGlobe";
 import { Skeleton } from "@/components/ui/skeleton";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -13,21 +13,36 @@ interface MapViewProps {
 
 const MapView: React.FC<MapViewProps> = ({ is3DView }) => {
   const { toast } = useToast();
+  const [isWebGLSupported, setIsWebGLSupported] = useState(true);
 
   useEffect(() => {
-    // Check if the Mapbox token is valid
-    if (!mapboxgl.supported()) {
+    // Check if WebGL is supported
+    try {
+      const isSupported = mapboxgl.supported();
+      setIsWebGLSupported(isSupported);
+      
+      if (!isSupported) {
+        toast({
+          title: "WebGL not supported",
+          description: "Your browser does not support WebGL, which is required for the 3D globe. Falling back to 2D view.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error checking Mapbox support:", error);
+      setIsWebGLSupported(false);
+      
       toast({
-        title: "WebGL not supported",
-        description: "Your browser does not support WebGL, which is required for the 3D globe. Falling back to 2D view.",
+        title: "Error initializing map",
+        description: "There was a problem loading the map. Please try again later.",
         variant: "destructive",
       });
     }
-  }, []);
+  }, [toast]);
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {is3DView ? (
+      {is3DView && isWebGLSupported ? (
         <MapboxGlobe className="w-full h-full" />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-[#1a2035]">
