@@ -43,17 +43,17 @@ interface MarketData {
 }
 
 // Define a more specific type for Finnhub quote responses
-interface FinnhubQuoteResponse {
+interface FinnhubQuoteResult {
   symbol: string;
-  name?: any;
-  price?: number;
-  change?: number;
-  changePercent?: number;
-  open?: any;
-  high?: any;
-  low?: any;
-  prevClose?: any;
-  timestamp?: Date;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  open: number;
+  high: number;
+  low: number;
+  prevClose: number;
+  timestamp: Date;
   error?: boolean;
 }
 
@@ -65,62 +65,51 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
   const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({});
   const { toast } = useToast();
   
-  // Financial centers data
+  // Financial centers data - reduced number to minimize API calls
   const financialCenters: FinancialCenter[] = [
     { name: "New York", coordinates: [-74.0060, 40.7128], performance: 0, marketSize: 26.3, symbol: "^GSPC" },
     { name: "London", coordinates: [-0.1278, 51.5074], performance: 0, marketSize: 20.1, symbol: "^FTSE" },
-    { name: "Tokyo", coordinates: [139.6503, 35.6762], performance: 0, marketSize: 18.5, symbol: "^N225" },
-    { name: "Shanghai", coordinates: [121.4737, 31.2304], performance: 0, marketSize: 15.7, symbol: "000001.SS" },
-    { name: "Hong Kong", coordinates: [114.1694, 22.3193], performance: 0, marketSize: 12.8, symbol: "^HSI" },
-    { name: "Singapore", coordinates: [103.8198, 1.3521], performance: 0, marketSize: 10.2, symbol: "^STI" },
-    { name: "Frankfurt", coordinates: [8.6821, 50.1109], performance: 0, marketSize: 9.5, symbol: "^GDAXI" },
-    { name: "Sydney", coordinates: [151.2093, -33.8688], performance: 0, marketSize: 8.7, symbol: "^AXJO" },
-    { name: "Dubai", coordinates: [55.2708, 25.2048], performance: 0, marketSize: 7.3, symbol: "DFMGI.ME" },
-    { name: "Mumbai", coordinates: [72.8777, 19.0760], performance: 0, marketSize: 6.8, symbol: "^BSESN" },
-    { name: "São Paulo", coordinates: [-46.6333, -23.5505], performance: 0, marketSize: 5.9, symbol: "^BVSP" }
+    { name: "Tokyo", coordinates: [139.6503, 35.6762], performance: 0, marketSize: 18.5, symbol: "^N225" }
   ];
 
-  // Fetch market data
+  // Fetch market data with reduced frequency
   useEffect(() => {
     const fetchMarketData = async () => {
       try {
         // Create list of symbols to fetch
         const symbols = financialCenters.map(center => center.symbol);
         
-        // Fetch data for all markets in parallel
-        const promises = symbols.map(symbol => 
-          finnhubService.getQuote(symbol)
-            .catch(err => {
-              console.error(`Error fetching data for ${symbol}:`, err);
-              return { symbol, error: true } as FinnhubQuoteResponse;
-            })
-        );
-        
-        const results = await Promise.all(promises);
-        
-        // Process results
+        // Queue symbol requests with delay between each to prevent rate limiting
         const dataMap: MarketData = {};
-        results.forEach((result: FinnhubQuoteResponse) => {
-          if (result.error) {
-            dataMap[result.symbol] = {
-              price: 0,
-              change: 0,
-              changePercent: 0,
-              name: result.symbol,
-              symbol: result.symbol,
-              error: true
-            };
-          } else {
-            dataMap[result.symbol] = {
+        
+        for (const symbol of symbols) {
+          try {
+            console.log(`Fetching globe data for ${symbol}`);
+            const result = await finnhubService.getQuote(symbol);
+            
+            dataMap[symbol] = {
               price: result.price || 0,
               change: result.change || 0,
               changePercent: result.changePercent || 0,
-              name: result.name || result.symbol,
+              name: result.name || symbol.replace('^', ''),
               symbol: result.symbol,
               error: false
             };
+            
+            // Add delay between requests
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } catch (err) {
+            console.error(`Error fetching data for ${symbol}:`, err);
+            dataMap[symbol] = {
+              price: 0,
+              change: 0,
+              changePercent: 0,
+              name: symbol.replace('^', ''),
+              symbol: symbol,
+              error: true
+            };
           }
-        });
+        }
         
         setMarketData(dataMap);
         
@@ -140,7 +129,7 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
         console.error("Error fetching market data:", err);
         toast({
           title: "Data Fetch Error",
-          description: "Could not fetch real-time market data. Using static data instead.",
+          description: "Could not fetch real-time market data for the globe.",
           variant: "destructive",
         });
       }
@@ -149,8 +138,8 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
     // Fetch initial data
     fetchMarketData();
     
-    // Set up interval to refresh data
-    const intervalId = setInterval(fetchMarketData, 30000);
+    // Set up interval to refresh data less frequently (2 minutes)
+    const intervalId = setInterval(fetchMarketData, 120000);
     
     return () => {
       clearInterval(intervalId);

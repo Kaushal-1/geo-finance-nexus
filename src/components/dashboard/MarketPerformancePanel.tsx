@@ -106,7 +106,7 @@ const MarketPerformancePanel = () => {
       <div className="flex justify-between items-center p-4 border-b border-white/10">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-medium text-white">Market Performance</h2>
-          {isLoading && <span className="animate-pulse text-xs text-[#a0aec0]">updating...</span>}
+          {isLoading && <span className="animate-pulse text-xs text-[#a0aec0]">updating live data...</span>}
         </div>
         <div className="flex gap-2">
           <Button 
@@ -115,7 +115,7 @@ const MarketPerformancePanel = () => {
             variant="ghost"
             className="h-7 w-7 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
             disabled={isLoading}
-            title="Refresh data"
+            title="Refresh real-time data"
           >
             <RefreshCw className={`h-3.5 w-3.5 text-white ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
@@ -141,14 +141,14 @@ const MarketPerformancePanel = () => {
           <div className="space-y-1">
             {isLoading && usMarketData.length === 0 ? (
               // Loading skeleton
-              Array(4).fill(0).map((_, index) => <MarketCardSkeleton key={index} />)
+              Array(1).fill(0).map((_, index) => <MarketCardSkeleton key={index} />)
             ) : usMarketData.length > 0 ? (
               usMarketData.map((market) => (
                 <MarketCard key={market.symbol} market={market} />
               ))
             ) : (
               <div className="p-3 text-center text-[#a0aec0] text-sm">
-                No market data available
+                No real-time US market data available
               </div>
             )}
           </div>
@@ -166,14 +166,14 @@ const MarketPerformancePanel = () => {
             <div className="space-y-1">
               {isLoading && asianMarketData.length === 0 ? (
                 // Loading skeleton
-                Array(2).fill(0).map((_, index) => <MarketCardSkeleton key={index} />)
+                Array(1).fill(0).map((_, index) => <MarketCardSkeleton key={index} />)
               ) : asianMarketData.length > 0 ? (
                 asianMarketData.map((market) => (
                   <MarketCard key={market.symbol} market={market} />
                 ))
               ) : (
                 <div className="p-3 text-center text-[#a0aec0] text-sm">
-                  No Asian market data available
+                  No real-time Asian market data available
                 </div>
               )}
             </div>
@@ -192,14 +192,14 @@ const MarketPerformancePanel = () => {
             <div className="space-y-1">
               {isLoading && europeanMarketData.length === 0 ? (
                 // Loading skeleton
-                Array(2).fill(0).map((_, index) => <MarketCardSkeleton key={index} />)
+                Array(1).fill(0).map((_, index) => <MarketCardSkeleton key={index} />)
               ) : europeanMarketData.length > 0 ? (
                 europeanMarketData.map((market) => (
                   <MarketCard key={market.symbol} market={market} />
                 ))
               ) : (
                 <div className="p-3 text-center text-[#a0aec0] text-sm">
-                  No European market data available
+                  No real-time European market data available
                 </div>
               )}
             </div>
@@ -226,7 +226,7 @@ const MarketPerformancePanel = () => {
           </div>
         </div>
         <p className="text-xs text-[#a0aec0] mt-2 flex items-center gap-1">
-          <span>Last updated: {globalMetrics.lastUpdated.toLocaleTimeString()}</span>
+          <span>Last updated: {globalMetrics.lastUpdated.toLocaleTimeString()} (real-time data)</span>
           {isLoading && <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping"></span>}
         </p>
       </div>
