@@ -92,17 +92,17 @@ const Index: React.FC = () => {
           <h2 className="mb-12 text-center text-3xl font-bold">Our Platform Features</h2>
           <div className="grid gap-8 md:grid-cols-3">
             <FeatureCard 
-              icon={<Globe className="h-8 w-8" />}
+              icon={<Globe className="h-6 w-6 text-white" />}
               title="Interactive Global Map"
               description="Explore financial data from around the world with our interactive 3D globe visualization."
             />
             <FeatureCard 
-              icon={<Bot className="h-8 w-8" />}
+              icon={<Bot className="h-6 w-6 text-white" />}
               title="AI Market Research"
               description="Get personalized market insights and analysis powered by advanced AI technology."
             />
             <FeatureCard 
-              icon={<BarChart className="h-8 w-8" />}
+              icon={<BarChart className="h-6 w-6 text-white" />}
               title="Real-Time Analytics"
               description="Track market performance with real-time data feeds and customizable analytics."
             />
@@ -128,4 +128,3 @@ const Index: React.FC = () => {
 };
 
 export default Index;
-
