@@ -1,0 +1,34 @@
+
+.home-financial-center-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: default;
+  position: relative;
+}
+
+.home-financial-center-marker .home-pulse {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  animation: home-pulse 2s infinite;
+  opacity: 0.7;
+  z-index: -1;
+}
+
+@keyframes home-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}

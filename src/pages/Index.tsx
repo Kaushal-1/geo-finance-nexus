@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, ChartBar, Bell, Clock } from "lucide-react";
-import Globe3D from "@/components/Globe";
 import FeatureCard from "@/components/FeatureCard";
 import WelcomeModal from "@/components/WelcomeModal";
 import { toast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
+import HomeMapboxGlobe from "@/components/HomeMapboxGlobe";
+import "@/components/home-mapbox.css";
+
 const Index = () => {
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
   const [hasScrolled, setHasScrolled] = useState(false);
+
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
@@ -17,6 +20,7 @@ const Index = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
   const handleExploreClick = () => {
     toast({
       title: "Welcome to GeoFinance",
@@ -24,24 +28,32 @@ const Index = () => {
       duration: 5000
     });
   };
-  const features = [{
-    title: "Geospatial Insights",
-    description: "Visualize financial data layered onto geographic maps to identify regional trends and opportunities.",
-    icon: Globe
-  }, {
-    title: "Real-Time Dashboards",
-    description: "Monitor market changes with customizable dashboards that update in real-time with global financial data.",
-    icon: ChartBar
-  }, {
-    title: "Custom Alerts",
-    description: "Set up personalized notifications for market events based on geospatial and financial parameters.",
-    icon: Bell
-  }, {
-    title: "Portfolio Mapping",
-    description: "Plot your investments on a global scale and visualize exposure across different geographic regions.",
-    icon: Clock
-  }];
-  return <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] overflow-x-hidden">
+
+  const features = [
+    {
+      title: "Geospatial Insights",
+      description: "Visualize financial data layered onto geographic maps to identify regional trends and opportunities.",
+      icon: Globe
+    },
+    {
+      title: "Real-Time Dashboards",
+      description: "Monitor market changes with customizable dashboards that update in real-time with global financial data.",
+      icon: ChartBar
+    },
+    {
+      title: "Custom Alerts",
+      description: "Set up personalized notifications for market events based on geospatial and financial parameters.",
+      icon: Bell
+    },
+    {
+      title: "Portfolio Mapping",
+      description: "Plot your investments on a global scale and visualize exposure across different geographic regions.",
+      icon: Clock
+    }
+  ];
+
+  return (
+    <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] overflow-x-hidden">
       {/* Navbar */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${hasScrolled ? "py-3 bg-black/70 backdrop-blur-md" : "py-5 bg-transparent"}`}>
         <div className="container mx-auto flex items-center justify-between">
@@ -67,11 +79,11 @@ const Index = () => {
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {/* Hero Section with Mapbox Globe */}
       <section className="relative min-h-screen flex items-center">
-        {/* Background Globe */}
-        <div className="absolute inset-0 z-0 opacity-70">
-          <Globe3D />
+        {/* Background Globe - replaced with Mapbox Globe */}
+        <div className="absolute inset-0 z-0 opacity-80">
+          <HomeMapboxGlobe className="w-full h-full" />
         </div>
         
         {/* Content overlay */}
@@ -210,6 +222,8 @@ const Index = () => {
 
       {/* Welcome Modal */}
       <WelcomeModal isOpen={showWelcomeModal} onClose={() => setShowWelcomeModal(false)} />
-    </div>;
+    </div>
+  );
 };
+
 export default Index;

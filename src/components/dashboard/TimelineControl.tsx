@@ -1,53 +1,29 @@
-import React from 'react';
-import { Slider } from "@/components/ui/slider";
-import { Button } from '@/components/ui/button';
-import { Play, Pause } from 'lucide-react';
-import { useTimelineData } from '@/hooks/useTimelineData';
+
+import React from "react";
+import { Button } from "@/components/ui/button";
+
 interface TimelineControlProps {
   selectedPeriod: string;
   onPeriodChange: (period: string) => void;
 }
-const TimelineControl: React.FC<TimelineControlProps> = ({
-  selectedPeriod,
-  onPeriodChange
-}) => {
-  const {
-    timeValue,
-    setTimeValue,
-    isPlaying,
-    setIsPlaying,
-    playbackSpeed,
-    setPlaybackSpeed,
-    currentTime,
-    timelineEvents,
-    currentEvent
-  } = useTimelineData();
 
-  // Available time periods
-  const periods = ["1h", "4h", "24h", "7d", "30d", "YTD", "1y"];
-
-  // Toggle play/pause
-  const togglePlayback = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  // Format the event markers from timelineEvents
-  const eventMarkers = timelineEvents.map(event => {
-    // Convert event timestamp to position percentage based on our current timeline
-    const eventDate = new Date(event.timestamp);
-    const now = new Date();
-    const dayStart = new Date(now);
-    dayStart.setHours(0, 0, 0, 0);
-
-    // Simple linear mapping for visualization
-    const position = (eventDate.getTime() - dayStart.getTime()) / (24 * 60 * 60 * 1000) * 100;
-    return {
-      id: event.id,
-      position: position,
-      label: event.title,
-      impact: event.impact
-    };
-  });
-  return;
+// Fix: Return JSX instead of void
+const TimelineControl: React.FC<TimelineControlProps> = ({ selectedPeriod, onPeriodChange }) => {
+  return (
+    <div className="flex space-x-2 py-2">
+      {["1D", "1W", "1M", "3M", "1Y", "5Y"].map((period) => (
+        <Button
+          key={period}
+          variant={selectedPeriod === period ? "default" : "outline"}
+          size="sm"
+          onClick={() => onPeriodChange(period)}
+          className={selectedPeriod === period ? "bg-teal-500" : ""}
+        >
+          {period}
+        </Button>
+      ))}
+    </div>
+  );
 };
+
 export default TimelineControl;

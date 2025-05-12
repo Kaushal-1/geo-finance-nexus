@@ -1,215 +1,358 @@
-
-import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Bot, ChevronLeft, Settings, MessageCircle } from "lucide-react";
-import ChatMessage from "@/components/chat/ChatMessage";
-import VisualizationPanel from "@/components/chat/VisualizationPanel";
-import SuggestedQuestions from "@/components/chat/SuggestedQuestions";
-import ApiKeyInput from "@/components/chat/ApiKeyInput";
+import { Send, Lightbulb, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useChatState } from "@/hooks/useChatState";
-import { getPerplexityApiKey } from "@/services/chatService";
+import { useChat } from "ai/react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import VisualizationPanel from "@/components/chat/VisualizationPanel";
 
 const ChatResearch = () => {
+  const [apiKey, setApiKey] = useState<string | null>(
+    localStorage.getItem("openai_api_key") || ""
+  );
+  const [prompt, setPrompt] = useState("");
+  const [visualization, setVisualization] = useState(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [model, setModel] = useState("gpt-3.5-turbo");
+  const [temperature, setTemperature] = useState(0.7);
+  const [topP, setTopP] = useState(1);
+  const [maxLength, setMaxLength] = useState(4096);
+  const [frequencyPenalty, setFrequencyPenalty] = useState(0);
+  const [presencePenalty, setPresencePenalty] = useState(0);
+  const [showRawJson, setShowRawJson] = useState(false);
+  const { toast } = useToast();
+
   const {
     messages,
-    loading,
-    activeVisualization,
-    suggestedQuestions,
-    sendMessage,
-    setActiveVisualization
-  } = useChatState();
-  const [inputMessage, setInputMessage] = useState("");
-  const [hasApiKey, setHasApiKey] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
-  const navigate = useNavigate();
-
-  // Check for API key on load
-  useEffect(() => {
-    const apiKey = getPerplexityApiKey();
-    setHasApiKey(!!apiKey);
-    if (!apiKey) {
+    input,
+    setInput,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    error,
+    setMessages,
+  } = useChat({
+    api: "/api/chat",
+    id: "geo-finance-chat",
+    onFinish: (message) => {
+      console.log("Chat finished", message);
+    },
+    onError: (error) => {
+      console.error("Chat error", error);
+      setApiError(error.message || "An unexpected error occurred.");
       toast({
-        title: "API Key Required",
-        description: "Please set your Perplexity API key in settings to enable the assistant.",
+        title: "Error",
+        description:
+          error.message || "An unexpected error occurred. Check API key.",
         variant: "destructive",
-        duration: 6000
       });
+    },
+  });
+
+  useEffect(() => {
+    if (apiKey) {
+      localStorage.setItem("openai_api_key", apiKey);
+    } else {
+      localStorage.removeItem("openai_api_key");
     }
-  }, [toast]);
+  }, [apiKey]);
 
-  // Auto-scroll to bottom of chat
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth"
+  const handleSettingsSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+    setSettingsOpen(false);
+    toast({
+      title: "Settings Saved",
+      description: "Your chat settings have been updated.",
     });
-  }, [messages]);
-
-  // Focus input on load
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  const handleSendMessage = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (inputMessage.trim() === "") return;
-    const userMessage = inputMessage;
-    setInputMessage("");
-    await sendMessage(userMessage);
   };
 
-  const handleSuggestedQuestion = async (question: string) => {
-    setInputMessage(question);
-    await sendMessage(question);
+  const handleClearChat = () => {
+    setMessages([]);
+    toast({
+      title: "Chat Cleared",
+      description: "The chat history has been cleared.",
+    });
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && event.shiftKey === false) {
+      event.preventDefault();
+      handleSubmit(event);
+    }
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] text-[#f5f7fa] flex flex-col">
-      {/* Header */}
-      <div className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate("/dashboard")}>
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center gap-2">
-              <Bot className="h-5 w-5 text-teal-400" />
-              <h1 className="text-lg font-semibold md:text-xl">Market Research Assistant</h1>
-            </div>
+    <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] text-[#f5f7fa]">
+      <div className="container mx-auto py-8 px-4">
+        {/* Header */}
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">AI Research Assistant</h1>
+            <p className="text-gray-400">
+              Get real-time insights and analysis powered by AI.
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className={`rounded-full ${!hasApiKey ? 'animate-pulse text-amber-400' : ''}`} 
-                  aria-label="Settings"
-                >
-                  <Settings className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <div className="space-y-4 pt-4">
-                  <h2 className="text-xl font-semibold">Assistant Settings</h2>
-                  <div className="space-y-2">
-                    <h3 className="font-medium">API Configuration</h3>
-                    <ApiKeyInput />
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="flex flex-1 h-[calc(100vh-4rem)] overflow-hidden">
-        {/* Chat Panel */}
-        <div className="relative flex-1 flex flex-col h-full">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4">
-            {messages.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center gap-4 text-center text-gray-400">
-                <Bot className="h-16 w-16 text-gray-300" />
+          {/* Settings Button */}
+          <Button variant="outline" onClick={() => setSettingsOpen(true)}>
+            Settings
+          </Button>
+        </div>
+
+        {/* Main Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Chat Panel */}
+          <div className="md:col-span-2 h-[calc(85vh)]">
+            <Card className="border border-white/10 rounded-xl bg-black/40 backdrop-blur-md h-full overflow-hidden flex flex-col">
+              <CardHeader className="py-4">
+                <div className="flex items-center space-x-2">
+                  <Lightbulb className="h-5 w-5 text-yellow-500" />
+                  <h2 className="text-lg font-semibold">
+                    Interactive Chat Session
+                  </h2>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 flex flex-col p-4">
+                <ScrollArea className="flex-1 mb-4">
+                  <div className="space-y-4">
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`p-3 rounded-lg ${
+                          message.role === "user"
+                            ? "bg-teal-600 text-white ml-auto w-fit max-w-[80%]"
+                            : "bg-gray-800 text-gray-100 mr-auto w-fit max-w-[80%]"
+                        }`}
+                      >
+                        {message.content}
+                      </div>
+                    ))}
+                    {isLoading && (
+                      <div className="p-3 rounded-lg bg-gray-800 text-gray-100 mr-auto w-fit max-w-[80%]">
+                        Thinking...
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+
+                {/* Chat Input */}
+                <form onSubmit={handleSubmit} className="mt-4">
+                  <div className="flex items-center space-x-2">
+                    <Textarea
+                      placeholder="Ask me anything..."
+                      value={input}
+                      onChange={handleInputChange}
+                      onKeyDown={handleKeyDown}
+                      className="flex-1 bg-gray-700 border-gray-600 text-white rounded-md resize-none"
+                    />
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading ? "Submitting..." : <Send className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Visualization Panel */}
+          {visualization && (
+            <div className="col-span-1 h-full">
+              <VisualizationPanel onClose={() => setVisualization(null)} />
+            </div>
+          )}
+        </div>
+
+        {/* Settings Modal */}
+        {settingsOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-[#0a0e17] rounded-xl p-8 border border-white/10 w-full max-w-md">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">Chat Settings</h2>
+                <Button variant="ghost" onClick={() => setSettingsOpen(false)}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              <Separator className="bg-white/10 mb-4" />
+              <form onSubmit={handleSettingsSubmit} className="space-y-4">
+                {/* API Key Input */}
                 <div>
-                  <h3 className="text-xl font-medium text-gray-200">Financial Research Assistant</h3>
-                  <p className="mt-1 max-w-md text-sm">
-                    Ask questions about markets, stocks, and economic events to get AI-powered insights with visualizations.
+                  <Label htmlFor="api-key" className="block text-sm font-medium">
+                    OpenAI API Key
+                  </Label>
+                  <Input
+                    type="password"
+                    id="api-key"
+                    placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    value={apiKey || ""}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    className="mt-1 bg-gray-700 border-gray-600 text-white rounded-md"
+                  />
+                </div>
+
+                {/* Model Selection */}
+                <div>
+                  <Label htmlFor="model" className="block text-sm font-medium">
+                    Model
+                  </Label>
+                  <Select value={model} onValueChange={setModel}>
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white rounded-md mt-1 w-full justify-between">
+                      <SelectValue placeholder="Select a model" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0a0e17] border-white/10 text-white">
+                      <SelectItem value="gpt-3.5-turbo">GPT 3.5 Turbo</SelectItem>
+                      <SelectItem value="gpt-4">GPT 4</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Temperature Slider */}
+                <div>
+                  <Label htmlFor="temperature" className="block text-sm font-medium">
+                    Temperature
+                  </Label>
+                  <Slider
+                    id="temperature"
+                    defaultValue={[temperature]}
+                    max={1}
+                    step={0.1}
+                    onValueChange={(value) => setTemperature(value[0])}
+                    className="mt-1"
+                  />
+                  <p className="text-sm text-gray-400 mt-1">
+                    Lower values are more predictable; higher values are more
+                    random.
                   </p>
                 </div>
-                <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-2">
-                  {["How will rising interest rates affect tech stocks?", "Compare Apple and Microsoft's performance this quarter", "Explain the impact of Fed announcements on banking stocks", "What regions are affected by semiconductor shortages?", "Show me historical patterns of market reactions to similar events"].map(question => (
-                    <Button 
-                      key={question} 
-                      variant="outline" 
-                      className="h-auto justify-start border-gray-700 py-3 text-left text-xs hover:bg-gray-800 md:text-sm" 
-                      onClick={() => handleSuggestedQuestion(question)} 
-                      disabled={!hasApiKey}
-                    >
-                      <MessageCircle className="mr-2 h-3.5 w-3.5" />
-                      {question}
-                    </Button>
-                  ))}
+
+                {/* Top P Slider */}
+                <div>
+                  <Label htmlFor="top-p" className="block text-sm font-medium">
+                    Top P
+                  </Label>
+                  <Slider
+                    id="top-p"
+                    defaultValue={[topP]}
+                    max={1}
+                    step={0.1}
+                    onValueChange={(value) => setTopP(value[0])}
+                    className="mt-1"
+                  />
+                  <p className="text-sm text-gray-400 mt-1">
+                    Like temperature, but chooses from the most probable tokens.
+                  </p>
                 </div>
-                
-                {!hasApiKey && (
-                  <div className="mt-4 rounded-md border border-amber-900/50 bg-amber-900/20 p-3 text-sm text-amber-200">
-                    <h4 className="mb-1 font-medium">API Key Required</h4>
-                    <p>Please set your Perplexity API key in the settings to enable the assistant.</p>
-                    <Sheet>
-                      <SheetTrigger asChild>
-                        <Button variant="outline" size="sm" className="mt-2 border-amber-500/30 bg-amber-900/30 text-amber-200 hover:bg-amber-900/50">
-                          <Settings className="mr-1 h-3 w-3" />
-                          Open Settings
-                        </Button>
-                      </SheetTrigger>
-                      <SheetContent>
-                        <div className="space-y-4 pt-4">
-                          <h2 className="text-xl font-semibold">Assistant Settings</h2>
-                          <div className="space-y-2">
-                            <h3 className="font-medium">API Configuration</h3>
-                            <ApiKeyInput />
-                          </div>
-                        </div>
-                      </SheetContent>
-                    </Sheet>
+
+                {/* Max Length Input */}
+                <div>
+                  <Label htmlFor="max-length" className="block text-sm font-medium">
+                    Max Length
+                  </Label>
+                  <Input
+                    type="number"
+                    id="max-length"
+                    value={maxLength}
+                    onChange={(e) => setMaxLength(Number(e.target.value))}
+                    className="mt-1 bg-gray-700 border-gray-600 text-white rounded-md"
+                  />
+                  <p className="text-sm text-gray-400 mt-1">
+                    The maximum number of tokens to generate in the completion.
+                  </p>
+                </div>
+
+                {/* Frequency Penalty Slider */}
+                <div>
+                  <Label
+                    htmlFor="frequency-penalty"
+                    className="block text-sm font-medium"
+                  >
+                    Frequency Penalty
+                  </Label>
+                  <Slider
+                    id="frequency-penalty"
+                    defaultValue={[frequencyPenalty]}
+                    min={-2}
+                    max={2}
+                    step={0.1}
+                    onValueChange={(value) => setFrequencyPenalty(value[0])}
+                    className="mt-1"
+                  />
+                  <p className="text-sm text-gray-400 mt-1">
+                    Positive values penalize new tokens based on their existing
+                    frequency in the text so far, decreasing the model's
+                    likelihood to repeat the same lines verbatim.
+                  </p>
+                </div>
+
+                {/* Presence Penalty Slider */}
+                <div>
+                  <Label
+                    htmlFor="presence-penalty"
+                    className="block text-sm font-medium"
+                  >
+                    Presence Penalty
+                  </Label>
+                  <Slider
+                    id="presence-penalty"
+                    defaultValue={[presencePenalty]}
+                    min={-2}
+                    max={2}
+                    step={0.1}
+                    onValueChange={(value) => setPresencePenalty(value[0])}
+                    className="mt-1"
+                  />
+                  <p className="text-sm text-gray-400 mt-1">
+                    Positive values penalize new tokens based on whether they
+                    appear in the text so far, increasing the model's likelihood
+                    to talk about new topics.
+                  </p>
+                </div>
+
+                {/* Show Raw JSON Switch */}
+                <div>
+                  <div className="flex justify-between items-center">
+                    <Label
+                      htmlFor="show-raw-json"
+                      className="block text-sm font-medium"
+                    >
+                      Show Raw JSON
+                    </Label>
+                    <Switch
+                      id="show-raw-json"
+                      checked={showRawJson}
+                      onCheckedChange={setShowRawJson}
+                    />
                   </div>
-                )}
-              </div>
-            ) : (
-              messages.map((message, index) => (
-                <ChatMessage key={index} message={message} />
-              ))
-            )}
-            <div ref={messagesEndRef} />
-          </div>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Display the raw JSON response from the API.
+                  </p>
+                </div>
 
-          {/* Input Area */}
-          <div className="border-t border-white/10 bg-black/20 p-4 backdrop-blur-sm">
-            <form onSubmit={handleSendMessage} className="space-y-4">
-              <div className="relative">
-                <Input 
-                  ref={inputRef} 
-                  value={inputMessage} 
-                  onChange={e => setInputMessage(e.target.value)} 
-                  placeholder="Ask about financial markets, stocks, or economic events..." 
-                  className="bg-gray-900 pr-12 text-white" 
-                  disabled={loading || !hasApiKey} 
-                />
-                <Button 
-                  type="submit" 
-                  size="icon" 
-                  className="absolute right-1 top-1 h-8 w-8 rounded-md" 
-                  disabled={loading || !inputMessage.trim() || !hasApiKey}
-                >
-                  <MessageCircle className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* Suggested Questions */}
-              {suggestedQuestions.length > 0 && (
-                <SuggestedQuestions 
-                  questions={suggestedQuestions} 
-                  onSelectQuestion={handleSuggestedQuestion} 
-                />
-              )}
-            </form>
-          </div>
-        </div>
-        
-        {/* Visualization Panel (shows only when there's active visualization) */}
-        {activeVisualization && (
-          <div className="w-full md:w-1/2 h-full border-l border-white/10 bg-black/20 backdrop-blur-sm">
-            <VisualizationPanel 
-              visualization={activeVisualization} 
-              onClose={() => setActiveVisualization(null)} 
-            />
+                {/* Submit and Clear Buttons */}
+                <div className="flex justify-end space-x-2">
+                  <Button variant="ghost" onClick={handleClearChat}>
+                    Clear Chat
+                  </Button>
+                  <Button type="submit">Save Settings</Button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </div>
