@@ -1,3 +1,59 @@
+
+// Define interfaces for API responses
+interface QuoteResponse {
+  c: number;  // Current price
+  h: number;  // High price of the day
+  l: number;  // Low price of the day
+  o: number;  // Open price of the day
+  pc: number; // Previous close price
+  t: number;  // Timestamp
+}
+
+interface ProfileResponse {
+  name?: string;
+  ticker?: string;
+  country?: string;
+  currency?: string;
+  exchange?: string;
+  marketCapitalization?: number;
+  logo?: string;
+}
+
+interface CandleResponse {
+  c: number[];  // Close prices
+  h: number[];  // High prices
+  l: number[];  // Low prices
+  o: number[];  // Open prices
+  s: string;    // Status of the response ("ok" or "no_data")
+  t: number[];  // Timestamps
+  v: number[];  // Volumes
+}
+
+interface FinnhubQuoteResult {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  open: number;
+  high: number;
+  low: number;
+  prevClose: number;
+  timestamp: Date;
+}
+
+interface NewsItem {
+  id: number | string;
+  headline: string;
+  summary: string;
+  source: string;
+  url: string;
+  datetime: number;
+  image?: string;
+  category: string;
+  related?: string;
+}
+
 class FinnhubService {
   private apiKey: string;
   private baseUrl: string;

@@ -160,7 +160,7 @@ function processApiResult(result: any[], marketType: string): MarketIndex[] {
         current: item.price || 0,
         previous: item.prevClose || 0,
         history: Array.from({ length: 24 }, () => (item.price || 0) + ((Math.random() - 0.5) * (item.price || 100) * 0.02))
-      }));
+      })) as MarketIndex[];
   } catch (e) {
     console.error(`Error processing ${marketType} data:`, e);
     return [];
