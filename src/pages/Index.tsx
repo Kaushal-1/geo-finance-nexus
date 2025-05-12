@@ -1,215 +1,130 @@
-import { useState, useEffect } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Globe, ChartBar, Bell, Clock } from "lucide-react";
-import Globe3D from "@/components/Globe";
-import FeatureCard from "@/components/FeatureCard";
+import { useNavigate } from "react-router-dom";
+import { ChevronRight, Globe, Bot, BarChart } from "lucide-react";
+import ParticleField from "@/components/ParticleField";
 import WelcomeModal from "@/components/WelcomeModal";
-import { toast } from "@/components/ui/use-toast";
-import { Link } from "react-router-dom";
-const Index = () => {
-  const [showWelcomeModal, setShowWelcomeModal] = useState(true);
-  const [hasScrolled, setHasScrolled] = useState(false);
+import FeatureCard from "@/components/FeatureCard";
+
+const Index: React.FC = () => {
+  const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
+
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      setHasScrolled(scrollPosition > 50);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    // Show welcome modal after 1 second for first-time visitors
+    const hasVisitedBefore = localStorage.getItem("hasVisitedBefore");
+    if (!hasVisitedBefore) {
+      const timer = setTimeout(() => {
+        setShowModal(true);
+        localStorage.setItem("hasVisitedBefore", "true");
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
   }, []);
-  const handleExploreClick = () => {
-    toast({
-      title: "Welcome to GeoFinance",
-      description: "Start exploring our advanced geospatial financial analytics platform.",
-      duration: 5000
-    });
-  };
-  const features = [{
-    title: "Geospatial Insights",
-    description: "Visualize financial data layered onto geographic maps to identify regional trends and opportunities.",
-    icon: Globe
-  }, {
-    title: "Real-Time Dashboards",
-    description: "Monitor market changes with customizable dashboards that update in real-time with global financial data.",
-    icon: ChartBar
-  }, {
-    title: "Custom Alerts",
-    description: "Set up personalized notifications for market events based on geospatial and financial parameters.",
-    icon: Bell
-  }, {
-    title: "Portfolio Mapping",
-    description: "Plot your investments on a global scale and visualize exposure across different geographic regions.",
-    icon: Clock
-  }];
-  return <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] overflow-x-hidden">
-      {/* Navbar */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${hasScrolled ? "py-3 bg-black/70 backdrop-blur-md" : "py-5 bg-transparent"}`}>
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="rounded-lg bg-teal p-1 mr-2">
-              <Globe className="h-6 w-6 text-white" />
+
+  return (
+    <>
+      <main className="relative min-h-screen w-full overflow-hidden bg-black text-white">
+        {/* Interactive background */}
+        <ParticleField />
+
+        {/* Navbar */}
+        <nav className="fixed top-0 z-20 w-full border-b border-white/10 bg-black/40 backdrop-blur-md">
+          <div className="container mx-auto flex h-16 items-center justify-between px-4">
+            <div className="flex items-center">
+              <Globe className="mr-2 h-6 w-6 text-teal-400" />
+              <span className="text-xl font-bold">GeoFinance</span>
             </div>
-            <span className="text-white text-xl font-bold">GeoFinance</span>
-          </div>
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/signin" className="text-gray-300 hover:text-white transition-colors">Sign In</Link>
-            <Link to="/dashboard" className="text-gray-300 hover:text-white transition-colors">Dashboard</Link>
-            <Link to="/chat-research" className="text-gray-300 hover:text-white transition-colors">AI Research</Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link to="/signin">
-              
-            </Link>
-            <Link to="/dashboard">
-              
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center">
-        {/* Background Globe */}
-        <div className="absolute inset-0 z-0 opacity-70">
-          <Globe3D />
-        </div>
-        
-        {/* Content overlay */}
-        <div className="container mx-auto relative z-10 pt-20">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div className="space-y-6 animate-fade-in">
-              <div className="p-2 px-4 rounded-full border border-teal/30 bg-teal/5 backdrop-blur-sm inline-flex items-center">
-                <span className="text-sm text-teal font-medium">New Feature: Market Correlation Maps</span>
-              </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
-                Unlock the Power of Geospatial Financial Intelligence
-              </h1>
-              <p className="text-xl text-gray-300">
-                Visualize market insights with dynamic maps and AI-driven data overlays
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Link to="/dashboard">
-                  <Button className="bg-teal-gradient text-white py-6 px-8 rounded-md button-glow">
-                    Explore Dashboard <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                
-              </div>
-              <div className="flex items-center space-x-2 pt-6">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4].map(idx => <div key={idx} className="w-8 h-8 rounded-full bg-gray-500 border-2 border-white/20"></div>)}
-                </div>
-                <span className="text-gray-400 text-sm font-mono">
-                  <span className="text-teal font-bold">2400+</span> financial analysts trust our platform
-                </span>
-              </div>
-            </div>
-            <div className="hidden md:block">
-              {/* This space is intentionally empty for the hero section layout */}
-            </div>
-          </div>
-        </div>
-        
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce">
-          <span className="text-gray-400 mb-2">Scroll to explore</span>
-          <ArrowRight className="h-5 w-5 text-teal transform rotate-90" />
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20 relative">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Advanced Geospatial Analytics
-            </h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Combine financial data with location intelligence to discover insights that traditional analytics miss.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => <div key={index} className="transition-all duration-500 opacity-0 translate-y-10" style={{
-            animation: `fade-in 0.5s ease-out ${0.1 * (index + 1)}s forwards`
-          }}>
-                <FeatureCard title={feature.title} description={feature.description} icon={feature.icon} />
-              </div>)}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-16 bg-black/30">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
-            {[{
-            value: "2.4B+",
-            label: "Data Points Analyzed"
-          }, {
-            value: "184",
-            label: "Countries Covered"
-          }, {
-            value: "93%",
-            label: "Prediction Accuracy"
-          }, {
-            value: "12ms",
-            label: "Average Response Time"
-          }].map((stat, index) => <div key={index} className="p-6">
-                <div className="font-mono text-3xl md:text-4xl font-bold text-teal mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-gray-400">{stat.label}</div>
-              </div>)}
-          </div>
-        </div>
-      </section>
-
-      {/* Call to Action */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-8 md:p-12 text-center max-w-4xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              Ready to transform your financial analysis?
-            </h2>
-            <p className="text-xl text-gray-300 mb-8">
-              Join thousands of analysts who have already discovered the power of geospatial financial intelligence.
-            </p>
-            <Link to="/dashboard">
-              <Button className="bg-teal-gradient text-white py-6 px-8 text-lg rounded-md button-glow">
-                Get Started Today <ArrowRight className="ml-2 h-5 w-5" />
+            <div className="hidden space-x-6 md:flex">
+              <Button variant="ghost" className="text-gray-300 hover:text-white" onClick={() => navigate("/dashboard")}>
+                Dashboard
               </Button>
-            </Link>
+              <Button variant="ghost" className="text-gray-300 hover:text-white" onClick={() => navigate("/chat-research")}>
+                AI Research
+              </Button>
+              <Button variant="ghost" className="text-gray-300 hover:text-white" onClick={() => navigate("/signin")}>
+                Sign In
+              </Button>
+            </div>
+            <div className="md:hidden">
+              <Button variant="ghost" size="sm">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </Button>
+            </div>
           </div>
-        </div>
-      </section>
+        </nav>
 
-      {/* Footer */}
-      <footer className="py-10 bg-black/50 border-t border-white/10">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center mb-6 md:mb-0">
-              <div className="rounded-lg bg-teal p-1 mr-2">
-                <Globe className="h-5 w-5 text-white" />
+        {/* Hero Section */}
+        <section className="container relative mx-auto min-h-screen px-4 pt-32 pb-20">
+          <div className="grid items-center gap-12 lg:grid-cols-5">
+            <div className="lg:col-span-3">
+              <h1 className="mb-6 text-4xl font-bold leading-tight sm:text-5xl md:text-6xl">
+                Global Finance<br /> 
+                <span className="bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">Visualized</span>
+              </h1>
+              <p className="mb-8 max-w-2xl text-lg text-gray-400">
+                Real-time financial data and market insights powered by AI. Experience a new way to understand global markets through interactive visualizations and expert analysis.
+              </p>
+              <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+                <Button size="lg" className="bg-gradient-to-r from-teal-500 to-blue-600 text-white" onClick={() => navigate("/dashboard")}>
+                  Explore Dashboard
+                  <ChevronRight className="ml-2 h-5 w-5" />
+                </Button>
+                <Button size="lg" variant="outline" className="border-gray-700 bg-black/50 text-gray-300" onClick={() => navigate("/chat-research")}>
+                  <Bot className="mr-2 h-5 w-5" />
+                  Try AI Research
+                </Button>
               </div>
-              <span className="text-white text-lg font-bold">GeoFinance</span>
             </div>
-            <div className="flex flex-wrap gap-6 text-sm text-gray-400">
-              <a href="#" className="hover:text-teal transition-colors">Terms</a>
-              <a href="#" className="hover:text-teal transition-colors">Privacy</a>
-              <a href="#" className="hover:text-teal transition-colors">Documentation</a>
-              <a href="#" className="hover:text-teal transition-colors">API</a>
-              <a href="#" className="hover:text-teal transition-colors">Contact</a>
-            </div>
-            <div className="mt-6 md:mt-0 text-sm text-gray-500">
-              © 2025 GeoFinance. All rights reserved.
+            <div className="mx-auto lg:col-span-2">
+              <div className="relative h-[400px] w-[400px]">
+                <Globe className="absolute inset-0 h-full w-full rotate-12 text-teal-500/20 animate-pulse" />
+              </div>
             </div>
           </div>
-        </div>
-      </footer>
+        </section>
+
+        {/* Features */}
+        <section className="container mx-auto px-4 py-20">
+          <h2 className="mb-12 text-center text-3xl font-bold">Our Platform Features</h2>
+          <div className="grid gap-8 md:grid-cols-3">
+            <FeatureCard 
+              icon={<Globe className="h-8 w-8" />}
+              title="Interactive Global Map"
+              description="Explore financial data from around the world with our interactive 3D globe visualization."
+            />
+            <FeatureCard 
+              icon={<Bot className="h-8 w-8" />}
+              title="AI Market Research"
+              description="Get personalized market insights and analysis powered by advanced AI technology."
+            />
+            <FeatureCard 
+              icon={<BarChart className="h-8 w-8" />}
+              title="Real-Time Analytics"
+              description="Track market performance with real-time data feeds and customizable analytics."
+            />
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="border-t border-gray-800 bg-black py-12">
+          <div className="container mx-auto px-4 text-center">
+            <div className="mb-4 flex items-center justify-center">
+              <Globe className="mr-2 h-5 w-5 text-teal-400" />
+              <span className="text-lg font-bold">GeoFinance</span>
+            </div>
+            <p className="text-sm text-gray-500">© 2025 GeoFinance. All rights reserved.</p>
+          </div>
+        </footer>
+      </main>
 
       {/* Welcome Modal */}
-      <WelcomeModal isOpen={showWelcomeModal} onClose={() => setShowWelcomeModal(false)} />
-    </div>;
+      <WelcomeModal open={showModal} onClose={() => setShowModal(false)} />
+    </>
+  );
 };
+
 export default Index;

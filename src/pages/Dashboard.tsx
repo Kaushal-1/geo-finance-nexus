@@ -1,21 +1,19 @@
+
 import React, { useState, useEffect } from "react";
 import MapVisualization from "@/components/dashboard/MapVisualization";
-import MarketPerformancePanel from "@/components/dashboard/MarketPerformancePanel";
 import NewsPanel from "@/components/dashboard/NewsPanel";
-import TimelineControl from "@/components/dashboard/TimelineControl";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { useToast } from "@/components/ui/use-toast";
 import { useTimelineData } from "@/hooks/useTimelineData";
-import { useNewsData } from "@/hooks/useNewsData";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Newspaper } from "lucide-react";
+import TradingViewWidget from "@/components/dashboard/TradingViewWidget";
+
 const Dashboard = () => {
   const [is3DView, setIs3DView] = useState(true);
-  const {
-    toast
-  } = useToast();
-  const {
-    selectedPeriod,
-    setSelectedPeriod
-  } = useTimelineData();
+  const { toast } = useToast();
+  const { selectedPeriod, setSelectedPeriod } = useTimelineData();
 
   // Initial load toast
   useEffect(() => {
@@ -25,6 +23,7 @@ const Dashboard = () => {
       duration: 5000
     });
   }, []);
+  
   const handleViewToggle = () => {
     setIs3DView(prev => !prev);
     toast({
@@ -32,6 +31,7 @@ const Dashboard = () => {
       duration: 2000
     });
   };
+  
   const handlePeriodChange = (period: string) => {
     setSelectedPeriod(period);
     toast({
@@ -39,30 +39,39 @@ const Dashboard = () => {
       duration: 2000
     });
   };
-  return <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] text-[#f5f7fa] overflow-hidden">
+
+  return (
+    <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] text-[#f5f7fa] overflow-hidden">
       <DashboardHeader />
       
-      <div className="flex flex-col md:flex-row h-[calc(100vh-120px)] p-4 gap-4">
-        {/* Left Sidebar - News Panel */}
-        <div className="w-full md:w-80 lg:w-96 h-full md:h-full overflow-hidden flex-shrink-0 order-2 md:order-1">
-          <NewsPanel />
-        </div>
-        
-        {/* Main Content - Interactive Map */}
-        <div className="flex-1 h-full flex flex-col order-1 md:order-2">
-          <div className="relative flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm">
-            <MapVisualization is3DView={is3DView} onViewToggle={handleViewToggle} />
+      <div className="container mx-auto px-4 py-6 flex flex-col h-[calc(100vh-120px)] gap-6">
+        {/* Main Content - Interactive Map with floating News button */}
+        <div className="relative flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm">
+          <MapVisualization is3DView={is3DView} onViewToggle={handleViewToggle} />
+          
+          {/* Floating News Button */}
+          <div className="absolute top-4 right-4 z-10">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="secondary" className="rounded-full shadow-lg">
+                  <Newspaper className="mr-2 h-4 w-4" />
+                  Financial News
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full sm:w-[540px] p-0 bg-[#1a2035]/95 border-white/10">
+                <NewsPanel />
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
         
-        {/* Right Sidebar - Market Performance */}
-        <div className="w-full md:w-80 lg:w-96 h-full md:h-full overflow-hidden flex-shrink-0 order-3">
-          <MarketPerformancePanel />
+        {/* TradingView Widget */}
+        <div className="h-28 bg-[#1a2035]/80 backdrop-blur-sm rounded-xl border border-white/10 overflow-hidden">
+          <TradingViewWidget />
         </div>
       </div>
-      
-      {/* Bottom Timeline Control */}
-      
-    </div>;
+    </div>
+  );
 };
+
 export default Dashboard;
