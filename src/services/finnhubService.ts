@@ -1,4 +1,3 @@
-
 // Define interfaces for API responses
 interface QuoteResponse {
   c: number;  // Current price
@@ -692,18 +691,25 @@ class FinnhubService {
           for (const peerSymbol of limitedPeers) {
             try {
               console.log(`Fetching peer data for ${peerSymbol}`);
-              const [profile, quote] = await Promise.all([
-                this.getCompanyProfile(peerSymbol).catch(() => ({})),
-                this.getQuote(peerSymbol).catch(() => ({ price: 0, change: 0, changePercent: 0 }))
-              ]);
+              // Fix: Proper type handling for profile and quote
+              const profileResult = await this.getCompanyProfile(peerSymbol).catch(() => ({ 
+                name: undefined, 
+                marketCapitalization: undefined 
+              } as ProfileResponse));
+              
+              const quoteResult = await this.getQuote(peerSymbol).catch(() => ({ 
+                price: 0, 
+                change: 0, 
+                changePercent: 0 
+              }));
               
               results.push({
                 symbol: peerSymbol,
-                name: profile.name || peerSymbol,
-                price: quote.price || 0,
-                change: quote.change || 0,
-                changePercent: quote.changePercent || 0,
-                marketCap: profile.marketCapitalization || 0
+                name: profileResult?.name || peerSymbol,
+                price: quoteResult.price || 0,
+                change: quoteResult.change || 0,
+                changePercent: quoteResult.changePercent || 0,
+                marketCap: profileResult?.marketCapitalization || 0
               });
               
               // Add delay between peer fetches
