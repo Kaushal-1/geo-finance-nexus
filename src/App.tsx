@@ -28,6 +28,7 @@ const App = () => {
               <Route path="/signin" element={<SignIn />} />
               <Route path="/signup" element={<CreateAccount />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/stock" element={<StockDetail />} />
               <Route path="/stock/:symbol" element={<StockDetail />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

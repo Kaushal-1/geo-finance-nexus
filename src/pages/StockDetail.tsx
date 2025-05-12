@@ -14,6 +14,7 @@ import FinancialMetricsPanel from '@/components/stock/FinancialMetricsPanel';
 import PeerComparisonPanel from '@/components/stock/PeerComparisonPanel';
 import StockNewsPanel from '@/components/stock/StockNewsPanel';
 import CompanyMapPanel from '@/components/stock/CompanyMapPanel';
+import CompanySearch from '@/components/stock/CompanySearch';
 
 // Define the interface for our stock data
 interface StockDetailData {
@@ -28,6 +29,9 @@ interface StockDetailData {
   lastUpdated: Date;
 }
 
+// Default company to show when no symbol is provided
+const DEFAULT_COMPANY = 'AAPL';
+
 const StockDetail: React.FC = () => {
   const { symbol } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
@@ -37,10 +41,19 @@ const StockDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTimeframe, setActiveTimeframe] = useState<string>('1W');
 
+  // If no symbol is provided, redirect to the default company
+  useEffect(() => {
+    if (!symbol) {
+      navigate(`/stock/${DEFAULT_COMPANY}`);
+    }
+  }, [symbol, navigate]);
+
+  // Actual symbol to use (either from URL or default)
+  const effectiveSymbol = symbol || DEFAULT_COMPANY;
+
   useEffect(() => {
     async function loadStockData() {
-      if (!symbol) {
-        navigate('/dashboard');
+      if (!effectiveSymbol) {
         return;
       }
 
@@ -50,18 +63,18 @@ const StockDetail: React.FC = () => {
         
         // Load all company data in parallel
         const [profile, quote, financials, earnings, peers, locations, news, insiderTransactions] = await Promise.all([
-          finnhubService.getCompanyProfile(symbol),
-          finnhubService.getQuote(symbol),
-          finnhubService.getCompanyFinancials(symbol).catch(() => ({ metric: {} })), // Continue if this fails
-          finnhubService.getCompanyEarnings(symbol).catch(() => []), // Continue if this fails
-          finnhubService.getCompanyPeers(symbol).catch(() => []), // Continue if this fails
-          finnhubService.getSupplyChainLocations(symbol),
+          finnhubService.getCompanyProfile(effectiveSymbol),
+          finnhubService.getQuote(effectiveSymbol),
+          finnhubService.getCompanyFinancials(effectiveSymbol).catch(() => ({ metric: {} })), // Continue if this fails
+          finnhubService.getCompanyEarnings(effectiveSymbol).catch(() => []), // Continue if this fails
+          finnhubService.getCompanyPeers(effectiveSymbol).catch(() => []), // Continue if this fails
+          finnhubService.getSupplyChainLocations(effectiveSymbol),
           finnhubService.getCompanyNews(
-            symbol, 
+            effectiveSymbol, 
             new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
             new Date()
           ).catch(() => []), // Continue if this fails
-          finnhubService.getInsiderTransactions(symbol).catch(() => []), // Continue if this fails
+          finnhubService.getInsiderTransactions(effectiveSymbol).catch(() => []), // Continue if this fails
         ]);
         
         setStockData({
@@ -95,9 +108,9 @@ const StockDetail: React.FC = () => {
     // Setup periodic updates for real-time data
     const updateInterval = setInterval(async () => {
       try {
-        if (!symbol) return;
+        if (!effectiveSymbol) return;
         
-        const quote = await finnhubService.getQuote(symbol);
+        const quote = await finnhubService.getQuote(effectiveSymbol);
         setStockData(prevData => {
           if (!prevData) return null;
           return {
@@ -112,7 +125,7 @@ const StockDetail: React.FC = () => {
     }, 30000); // Update every 30 seconds
     
     return () => clearInterval(updateInterval);
-  }, [symbol, navigate, toast]);
+  }, [effectiveSymbol, navigate, toast]);
   
   if (!symbol) {
     return <div className="p-8">Invalid stock symbol</div>;
@@ -209,7 +222,10 @@ const StockDetail: React.FC = () => {
   if (isLoading && !stockData) {
     return (
       <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-6">Stock Details</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Stock Details</h1>
+          <CompanySearch className="w-72" />
+        </div>
         {renderLoadingSkeleton()}
       </div>
     );
@@ -218,6 +234,10 @@ const StockDetail: React.FC = () => {
   if (error && !stockData) {
     return (
       <div className="container mx-auto p-4">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Stock Details</h1>
+          <CompanySearch className="w-72" />
+        </div>
         <Card className="bg-destructive/10 border border-destructive">
           <CardContent className="p-6">
             <h2 className="text-xl font-medium mb-2 text-destructive">Error</h2>
@@ -237,6 +257,10 @@ const StockDetail: React.FC = () => {
   if (!stockData) {
     return (
       <div className="container mx-auto p-4">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Stock Details</h1>
+          <CompanySearch className="w-72" />
+        </div>
         <Card>
           <CardContent className="p-6">
             <h2 className="text-xl font-medium mb-2">No Data</h2>
@@ -257,6 +281,12 @@ const StockDetail: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4">
+      {/* Search and Title */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Stock Details</h1>
+        <CompanySearch className="w-72" />
+      </div>
+      
       {/* Stock Header */}
       <div className="mb-8">
         <Card>
@@ -267,20 +297,20 @@ const StockDetail: React.FC = () => {
                 {profile.logo ? (
                   <img 
                     src={profile.logo} 
-                    alt={profile.name || symbol} 
+                    alt={profile.name || effectiveSymbol} 
                     className="w-12 h-12 rounded-full object-contain bg-white p-1"
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-xl font-bold text-primary">
-                      {symbol.charAt(0)}
+                      {effectiveSymbol?.charAt(0) || '?'}
                     </span>
                   </div>
                 )}
                 <div>
-                  <h1 className="text-2xl font-bold">{profile.name || symbol}</h1>
+                  <h1 className="text-2xl font-bold">{profile.name || effectiveSymbol}</h1>
                   <div className="text-sm text-muted-foreground">
-                    {symbol} • {profile.exchange || 'Unknown Exchange'}
+                    {effectiveSymbol} • {profile.exchange || 'Unknown Exchange'}
                   </div>
                 </div>
               </div>
@@ -288,15 +318,15 @@ const StockDetail: React.FC = () => {
               {/* Stock Price */}
               <div className="text-right">
                 <div className="text-3xl font-mono font-bold">
-                  ${quote.price.toFixed(2)}
+                  ${quote.c.toFixed(2)}
                 </div>
-                <div className={quote.change >= 0 ? "text-green-500 flex items-center justify-end" : "text-red-500 flex items-center justify-end"}>
-                  {quote.change >= 0 ? (
+                <div className={quote.c >= quote.pc ? "text-green-500 flex items-center justify-end" : "text-red-500 flex items-center justify-end"}>
+                  {quote.c >= quote.pc ? (
                     <ArrowUpIcon className="w-4 h-4 mr-1" />
                   ) : (
                     <ArrowDownIcon className="w-4 h-4 mr-1" />
                   )}
-                  {quote.change.toFixed(2)} ({quote.changePercent.toFixed(2)}%)
+                  {(quote.c - quote.pc).toFixed(2)} ({((quote.c - quote.pc) / quote.pc * 100).toFixed(2)}%)
                 </div>
               </div>
             </div>
@@ -325,7 +355,7 @@ const StockDetail: React.FC = () => {
                 <CardContent className="p-4">
                   <div className="text-xs text-muted-foreground">52W Range</div>
                   <div className="text-xs font-mono font-medium">
-                    {quote.low.toFixed(2)} - {quote.high.toFixed(2)}
+                    {quote.l.toFixed(2)} - {quote.h.toFixed(2)}
                   </div>
                 </CardContent>
               </Card>
@@ -384,7 +414,7 @@ const StockDetail: React.FC = () => {
           </CardHeader>
           <CardContent>
             <StockChart 
-              symbol={symbol}
+              symbol={effectiveSymbol}
               timeframe={activeTimeframe}
               className="h-[350px] w-full"
             />
@@ -402,12 +432,11 @@ const StockDetail: React.FC = () => {
           <TabsTrigger value="locations">Locations</TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
+        {/* Tab Contents */}
         <TabsContent value="overview">
           <CompanyProfilePanel profile={stockData.profile} />
         </TabsContent>
 
-        {/* Financials Tab */}
         <TabsContent value="financials">
           <FinancialMetricsPanel 
             financials={stockData.financials} 
@@ -415,31 +444,28 @@ const StockDetail: React.FC = () => {
           />
         </TabsContent>
 
-        {/* News Tab */}
         <TabsContent value="news">
           <StockNewsPanel news={stockData.news} />
         </TabsContent>
 
-        {/* Peers Tab */}
         <TabsContent value="peers">
           <PeerComparisonPanel 
             peers={stockData.peers}
             currentCompany={{
-              symbol,
-              name: profile.name || symbol,
-              price: quote.price,
-              change: quote.change,
-              changePercent: quote.changePercent,
+              symbol: effectiveSymbol,
+              name: profile.name || effectiveSymbol,
+              price: quote.c,
+              change: quote.c - quote.pc,
+              changePercent: ((quote.c - quote.pc) / quote.pc) * 100,
               marketCap: profile.marketCapitalization || 0
             }}
           />
         </TabsContent>
 
-        {/* Locations Tab */}
         <TabsContent value="locations">
           <CompanyMapPanel 
             locations={stockData.locations} 
-            companyName={profile.name || symbol}
+            companyName={profile.name || effectiveSymbol}
           />
         </TabsContent>
       </Tabs>
@@ -450,6 +476,32 @@ const StockDetail: React.FC = () => {
       </div>
     </div>
   );
+};
+
+// Format market cap
+const formatMarketCap = (marketCap?: number) => {
+  if (!marketCap) return 'N/A';
+  
+  if (marketCap >= 1000) {
+    return `$${(marketCap / 1000).toFixed(2)}T`;
+  } else {
+    return `$${marketCap.toFixed(2)}B`;
+  }
+};
+
+// Format number with K, M, B suffixes
+const formatNumber = (num?: number) => {
+  if (!num) return 'N/A';
+  
+  if (num >= 1000000000) {
+    return `${(num / 1000000000).toFixed(2)}B`;
+  } else if (num >= 1000000) {
+    return `${(num / 1000000).toFixed(2)}M`;
+  } else if (num >= 1000) {
+    return `${(num / 1000).toFixed(2)}K`;
+  } else {
+    return num.toFixed(2);
+  }
 };
 
 export default StockDetail;
