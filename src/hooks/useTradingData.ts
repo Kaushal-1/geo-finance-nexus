@@ -44,10 +44,32 @@ export const useTradingData = () => {
   }, []);
   
   const fetchWatchlists = useCallback(async () => {
+    console.log("Fetching watchlists in hook...");
     setIsLoadingWatchlists(true);
-    const watchlistsData = await alpacaService.getWatchlists();
-    if (watchlistsData) {
-      setWatchlists(watchlistsData);
+    try {
+      const watchlistsData = await alpacaService.getWatchlists();
+      console.log("Watchlists data received in hook:", watchlistsData);
+      if (watchlistsData) {
+        // For each watchlist, fetch its details to get the assets
+        const watchlistsWithDetails = await Promise.all(
+          watchlistsData.map(async (watchlist: AlpacaWatchlist) => {
+            const details = await alpacaService.getWatchlist(watchlist.id);
+            return details || watchlist;
+          })
+        );
+        console.log("Watchlists with details:", watchlistsWithDetails);
+        setWatchlists(watchlistsWithDetails);
+      } else {
+        setWatchlists([]);
+      }
+    } catch (error) {
+      console.error("Error in fetchWatchlists:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch watchlists. Please try again.",
+        duration: 5000,
+      });
+      setWatchlists([]);
     }
     setIsLoadingWatchlists(false);
   }, []);
@@ -100,44 +122,73 @@ export const useTradingData = () => {
     fetchOrders();
   }, [fetchOrders]);
 
-  const handleCreateWatchlist = async (name: string, symbols: string[]) => {
-    const result = await alpacaService.createWatchlist(name, symbols);
-    if (result) {
-      fetchWatchlists();
-      return result;
+  const handleCreateWatchlist = async (name: string, symbols: string[] = []) => {
+    console.log(`Creating watchlist "${name}" with symbols:`, symbols);
+    try {
+      const result = await alpacaService.createWatchlist(name, symbols);
+      console.log("Create watchlist result:", result);
+      if (result) {
+        await fetchWatchlists();
+        return result;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error in handleCreateWatchlist:", error);
+      return null;
     }
-    return null;
   };
 
   const handleAddToWatchlist = async (watchlistId: string, symbol: string) => {
-    const result = await alpacaService.addToWatchlist(watchlistId, symbol);
-    if (result) {
-      fetchWatchlists();
-      return result;
+    console.log(`Adding ${symbol} to watchlist ${watchlistId}`);
+    try {
+      const result = await alpacaService.addToWatchlist(watchlistId, symbol);
+      console.log("Add to watchlist result:", result);
+      if (result) {
+        await fetchWatchlists();
+        return result;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error in handleAddToWatchlist:", error);
+      return null;
     }
-    return null;
   };
 
   const handleRemoveFromWatchlist = async (watchlistId: string, symbol: string) => {
-    const result = await alpacaService.removeFromWatchlist(watchlistId, symbol);
-    if (result) {
-      fetchWatchlists();
-      return true;
+    console.log(`Removing ${symbol} from watchlist ${watchlistId}`);
+    try {
+      const result = await alpacaService.removeFromWatchlist(watchlistId, symbol);
+      console.log("Remove from watchlist result:", result);
+      if (result) {
+        await fetchWatchlists();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error in handleRemoveFromWatchlist:", error);
+      return false;
     }
-    return false;
   };
 
   const handleDeleteWatchlist = async (watchlistId: string) => {
-    const result = await alpacaService.deleteWatchlist(watchlistId);
-    if (result) {
-      fetchWatchlists();
-      return true;
+    console.log(`Deleting watchlist ${watchlistId}`);
+    try {
+      const result = await alpacaService.deleteWatchlist(watchlistId);
+      console.log("Delete watchlist result:", result);
+      if (result) {
+        await fetchWatchlists();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error in handleDeleteWatchlist:", error);
+      return false;
     }
-    return false;
   };
 
   const handleRefreshWatchlists = useCallback(async () => {
-    fetchWatchlists();
+    console.log("Manual refresh of watchlists requested");
+    await fetchWatchlists();
   }, [fetchWatchlists]);
 
   return {

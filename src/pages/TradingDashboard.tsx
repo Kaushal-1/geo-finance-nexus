@@ -43,7 +43,15 @@ const TradingDashboard = () => {
       description: "Welcome to the Alpaca Paper Trading Dashboard. All trades are simulated.",
       duration: 5000
     });
+    
+    // Log some debug information
+    console.log("Trading Dashboard mounted");
   }, []);
+
+  // Debug log when watchlists change
+  useEffect(() => {
+    console.log("Watchlists updated:", watchlists);
+  }, [watchlists]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0e17] to-[#131b2e]">

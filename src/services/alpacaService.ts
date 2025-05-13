@@ -88,17 +88,34 @@ export const alpacaService = {
   // Get all watchlists
   getWatchlists: async () => {
     try {
+      console.log("Fetching watchlists...");
       const response = await alpacaApi.get('/v2/watchlists');
+      console.log("Watchlists response:", response.data);
       return response.data;
     } catch (error) {
       return handleApiError(error, "Failed to fetch watchlists");
     }
   },
 
-  // Create a new watchlist
-  createWatchlist: async (name: string, symbols: string[]) => {
+  // Get a specific watchlist by ID
+  getWatchlist: async (watchlistId: string) => {
     try {
+      console.log(`Fetching watchlist ${watchlistId}...`);
+      const response = await alpacaApi.get(`/v2/watchlists/${watchlistId}`);
+      console.log("Watchlist response:", response.data);
+      return response.data;
+    } catch (error) {
+      return handleApiError(error, "Failed to fetch watchlist details");
+    }
+  },
+
+  // Create a new watchlist
+  createWatchlist: async (name: string, symbols: string[] = []) => {
+    try {
+      console.log(`Creating watchlist "${name}" with symbols:`, symbols);
       const response = await alpacaApi.post('/v2/watchlists', { name, symbols });
+      console.log("Create watchlist response:", response.data);
+      
       toast({
         title: "Watchlist Created",
         description: `Watchlist "${name}" has been created.`,
@@ -113,7 +130,10 @@ export const alpacaService = {
   // Add a symbol to a watchlist
   addToWatchlist: async (watchlistId: string, symbol: string) => {
     try {
+      console.log(`Adding ${symbol} to watchlist ${watchlistId}`);
       const response = await alpacaApi.post(`/v2/watchlists/${watchlistId}`, { symbol });
+      console.log("Add to watchlist response:", response.data);
+      
       toast({
         title: "Symbol Added",
         description: `${symbol} added to watchlist.`,
@@ -128,7 +148,9 @@ export const alpacaService = {
   // Remove a symbol from a watchlist
   removeFromWatchlist: async (watchlistId: string, symbol: string) => {
     try {
+      console.log(`Removing ${symbol} from watchlist ${watchlistId}`);
       await alpacaApi.delete(`/v2/watchlists/${watchlistId}/${symbol}`);
+      
       toast({
         title: "Symbol Removed",
         description: `${symbol} removed from watchlist.`,
@@ -143,7 +165,9 @@ export const alpacaService = {
   // Delete a watchlist
   deleteWatchlist: async (watchlistId: string) => {
     try {
+      console.log(`Deleting watchlist ${watchlistId}`);
       await alpacaApi.delete(`/v2/watchlists/${watchlistId}`);
+      
       toast({
         title: "Watchlist Deleted",
         description: "Watchlist has been deleted.",

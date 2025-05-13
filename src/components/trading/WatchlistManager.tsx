@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlpacaWatchlist } from "@/types/alpaca";
-import { Plus, X, Star, PlusCircle, Trash2 } from "lucide-react";
+import { Plus, X, Star, PlusCircle, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { 
   Dialog,
@@ -44,8 +44,10 @@ const WatchlistManager: React.FC<WatchlistManagerProps> = ({
   const [selectedWatchlistId, setSelectedWatchlistId] = useState<string>("");
   const [newSymbol, setNewSymbol] = useState<string>("");
   const [newWatchlistName, setNewWatchlistName] = useState<string>("");
+  const [initialSymbols, setInitialSymbols] = useState<string>("");
   const [isCreatingWatchlist, setIsCreatingWatchlist] = useState<boolean>(false);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   const handleAddSymbol = async () => {
     if (!newSymbol || !selectedWatchlistId) {
@@ -57,28 +59,40 @@ const WatchlistManager: React.FC<WatchlistManagerProps> = ({
       return;
     }
 
+    const symbol = newSymbol.toUpperCase().trim();
+    console.log(`Adding symbol ${symbol} to watchlist ${selectedWatchlistId}`);
+    
     try {
-      await onAddToWatchlist(selectedWatchlistId, newSymbol.toUpperCase());
+      await onAddToWatchlist(selectedWatchlistId, symbol);
       setNewSymbol("");
-      onRefreshWatchlists();
     } catch (err) {
       console.error("Error adding symbol:", err);
+      toast({
+        title: "Error",
+        description: "Failed to add symbol to watchlist",
+        duration: 3000,
+      });
     }
   };
 
   const handleRemoveSymbol = async (symbol: string) => {
     if (!selectedWatchlistId) return;
     
+    console.log(`Removing symbol ${symbol} from watchlist ${selectedWatchlistId}`);
     try {
       await onRemoveFromWatchlist(selectedWatchlistId, symbol);
-      onRefreshWatchlists();
     } catch (err) {
       console.error("Error removing symbol:", err);
+      toast({
+        title: "Error",
+        description: "Failed to remove symbol from watchlist",
+        duration: 3000,
+      });
     }
   };
 
   const handleCreateWatchlist = async () => {
-    if (!newWatchlistName) {
+    if (!newWatchlistName.trim()) {
       toast({
         title: "Error",
         description: "Please enter a watchlist name",
@@ -89,12 +103,39 @@ const WatchlistManager: React.FC<WatchlistManagerProps> = ({
 
     setIsCreatingWatchlist(true);
     try {
-      await onCreateWatchlist(newWatchlistName, []);
-      setNewWatchlistName("");
-      setIsDialogOpen(false);
-      onRefreshWatchlists();
+      // Parse initial symbols if provided
+      const symbols = initialSymbols
+        ? initialSymbols.split(',').map(s => s.trim().toUpperCase()).filter(s => s)
+        : [];
+      
+      console.log(`Creating watchlist "${newWatchlistName}" with symbols:`, symbols);
+      
+      const result = await onCreateWatchlist(newWatchlistName.trim(), symbols);
+      console.log("Create watchlist result:", result);
+      
+      if (result) {
+        setNewWatchlistName("");
+        setInitialSymbols("");
+        setIsDialogOpen(false);
+        
+        // Set the newly created watchlist as selected
+        if (result.id) {
+          setSelectedWatchlistId(result.id);
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to create watchlist",
+          duration: 3000,
+        });
+      }
     } catch (err) {
       console.error("Error creating watchlist:", err);
+      toast({
+        title: "Error",
+        description: "Failed to create watchlist",
+        duration: 3000,
+      });
     } finally {
       setIsCreatingWatchlist(false);
     }
@@ -106,9 +147,22 @@ const WatchlistManager: React.FC<WatchlistManagerProps> = ({
     try {
       await onDeleteWatchlist(selectedWatchlistId);
       setSelectedWatchlistId("");
-      onRefreshWatchlists();
     } catch (err) {
       console.error("Error deleting watchlist:", err);
+      toast({
+        title: "Error",
+        description: "Failed to delete watchlist",
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await onRefreshWatchlists();
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -138,41 +192,68 @@ const WatchlistManager: React.FC<WatchlistManagerProps> = ({
     <Card className="bg-black/20 border-white/10 backdrop-blur-sm">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <CardTitle className="text-xl font-semibold text-white">Watchlists</CardTitle>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="text-teal-400 hover:text-teal-300">
-              <PlusCircle className="h-4 w-4 mr-1" /> New Watchlist
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-[#1f2833] border-white/10 text-white">
-            <DialogHeader>
-              <DialogTitle>Create Watchlist</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="watchlistName" className="text-sm text-gray-400">Watchlist Name</label>
-                  <Input
-                    id="watchlistName"
-                    value={newWatchlistName}
-                    onChange={(e) => setNewWatchlistName(e.target.value)}
-                    placeholder="e.g. My Tech Stocks"
-                    className="bg-black/30 border-white/10 text-white"
-                  />
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-white hover:text-teal-300"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="text-teal-400 hover:text-teal-300">
+                <PlusCircle className="h-4 w-4 mr-1" /> New Watchlist
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-[#1f2833] border-white/10 text-white">
+              <DialogHeader>
+                <DialogTitle>Create Watchlist</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="watchlistName" className="text-sm text-gray-400">Watchlist Name</label>
+                    <Input
+                      id="watchlistName"
+                      value={newWatchlistName}
+                      onChange={(e) => setNewWatchlistName(e.target.value)}
+                      placeholder="e.g. My Tech Stocks"
+                      className="bg-black/30 border-white/10 text-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="initialSymbols" className="text-sm text-gray-400">
+                      Initial Symbols (comma-separated, optional)
+                    </label>
+                    <Input
+                      id="initialSymbols"
+                      value={initialSymbols}
+                      onChange={(e) => setInitialSymbols(e.target.value)}
+                      placeholder="e.g. AAPL, MSFT, GOOGL"
+                      className="bg-black/30 border-white/10 text-white"
+                    />
+                    <p className="text-xs text-gray-500 italic mt-1">
+                      Add multiple symbols by separating them with commas
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <DialogFooter>
-              <Button 
-                onClick={handleCreateWatchlist} 
-                disabled={isCreatingWatchlist}
-                className="bg-teal-600 hover:bg-teal-700"
-              >
-                {isCreatingWatchlist ? "Creating..." : "Create Watchlist"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button 
+                  onClick={handleCreateWatchlist} 
+                  disabled={isCreatingWatchlist}
+                  className="bg-teal-600 hover:bg-teal-700"
+                >
+                  {isCreatingWatchlist ? "Creating..." : "Create Watchlist"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -215,6 +296,7 @@ const WatchlistManager: React.FC<WatchlistManagerProps> = ({
                   placeholder="Add symbol (e.g. AAPL)"
                   value={newSymbol}
                   onChange={(e) => setNewSymbol(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddSymbol()}
                   className="bg-black/30 border-white/10 text-white flex-grow"
                 />
                 <Button 
