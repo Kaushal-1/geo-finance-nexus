@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { 
   ArrowRight, AtSign, Check, CircleUserRound, 
   Eye, EyeOff, LineChart, Lock, Building, Briefcase
@@ -11,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import Globe from "@/components/Globe";
 import ParticleField from "@/components/ParticleField";
+import { useAuth } from "@/contexts/AuthContext";
 
 type FormStep = 1 | 2 | 3;
 
@@ -19,6 +19,9 @@ const CreateAccount = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { signUp, user } = useAuth();
   
   // Form fields states - Step 1
   const [firstName, setFirstName] = useState("");
@@ -34,6 +37,11 @@ const CreateAccount = () => {
   // Form fields states - Step 3
   const [notifications, setNotifications] = useState(true);
   const [markets, setMarkets] = useState<string[]>([]);
+
+  // If user is already logged in, redirect to dashboard
+  if (user) {
+    return <Navigate to="/dashboard" />;
+  }
 
   const handleNextStep = () => {
     if (currentStep < 3) {
@@ -63,14 +71,30 @@ const CreateAccount = () => {
     calculatePasswordStrength(newPassword);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Account creation form submitted with:", {
-      firstName, lastName, email, password,
-      industry, role, experience,
-      notifications, markets
-    });
-    // Add actual registration logic here
+    setIsLoading(true);
+    
+    try {
+      const userData = {
+        firstName,
+        lastName,
+        industry,
+        role,
+        experience,
+        markets,
+        notifications
+      };
+      
+      const { error, user } = await signUp(email, password, userData);
+      
+      if (!error && user) {
+        // Successful signup will auto-redirect through AuthContext
+        navigate("/dashboard");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getStrengthColor = () => {
@@ -171,6 +195,7 @@ const CreateAccount = () => {
                       onChange={(e) => setFirstName(e.target.value)}
                       className="pl-10 bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20"
                       required
+                      disabled={isLoading}
                     />
                   </div>
                   <div className="relative flex-1">
@@ -181,6 +206,7 @@ const CreateAccount = () => {
                       onChange={(e) => setLastName(e.target.value)}
                       className="bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20"
                       required
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -196,6 +222,7 @@ const CreateAccount = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20"
                     required
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -210,6 +237,7 @@ const CreateAccount = () => {
                     onChange={handlePasswordChange}
                     className="pl-10 pr-10 bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20"
                     required
+                    disabled={isLoading}
                   />
                   <div 
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-300"
@@ -240,6 +268,7 @@ const CreateAccount = () => {
                     id="terms" 
                     checked={termsAccepted}
                     onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                    disabled={isLoading}
                   />
                   <label htmlFor="terms" className="text-sm text-gray-300 cursor-pointer">
                     I agree to the <Link to="/terms" className="text-teal hover:underline">Terms of Service</Link> and <Link to="/privacy" className="text-teal hover:underline">Privacy Policy</Link>
@@ -261,6 +290,7 @@ const CreateAccount = () => {
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
                     className="pl-10 bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20"
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -274,6 +304,7 @@ const CreateAccount = () => {
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
                     className="pl-10 bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20"
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -286,6 +317,7 @@ const CreateAccount = () => {
                     value={experience}
                     onChange={(e) => setExperience(e.target.value)}
                     className="w-full rounded-md bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20 text-white p-2.5"
+                    disabled={isLoading}
                   >
                     <option value="" className="bg-[#151b2d]">Select your experience level</option>
                     <option value="beginner" className="bg-[#151b2d]">Beginner (0-2 years)</option>
@@ -322,6 +354,7 @@ const CreateAccount = () => {
                               setMarkets(markets.filter(m => m !== market));
                             }
                           }}
+                          disabled={isLoading}
                         />
                         <label htmlFor={market.toLowerCase().replace(/\s/g, '-')} className="text-sm text-gray-300 cursor-pointer">
                           {market}
@@ -336,6 +369,7 @@ const CreateAccount = () => {
                     id="notifications" 
                     checked={notifications}
                     onCheckedChange={(checked) => setNotifications(checked === true)}
+                    disabled={isLoading}
                   />
                   <label htmlFor="notifications" className="text-sm text-gray-300 cursor-pointer">
                     Receive email notifications for market insights and alerts
@@ -356,6 +390,7 @@ const CreateAccount = () => {
                   onClick={handlePrevStep}
                   variant="outline"
                   className="text-white border-white/20 hover:bg-white/10"
+                  disabled={isLoading}
                 >
                   Back
                 </Button>
@@ -368,6 +403,7 @@ const CreateAccount = () => {
                     onClick={handleNextStep}
                     className="text-white bg-teal-gradient button-glow hover:brightness-110 transition-all"
                     disabled={
+                      isLoading || 
                       (currentStep === 1 && (!firstName || !lastName || !email || !password || !termsAccepted))
                     }
                   >
@@ -377,8 +413,13 @@ const CreateAccount = () => {
                   <Button 
                     type="submit" 
                     className="text-white bg-teal-gradient button-glow hover:brightness-110 transition-all flex items-center"
+                    disabled={isLoading}
                   >
-                    Create Account <Check className="ml-2 h-4 w-4" />
+                    {isLoading ? "Creating Account..." : (
+                      <>
+                        Create Account <Check className="ml-2 h-4 w-4" />
+                      </>
+                    )}
                   </Button>
                 )}
               </div>
