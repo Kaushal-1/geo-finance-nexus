@@ -131,6 +131,9 @@ const WatchlistManager: React.FC<WatchlistManagerProps> = ({
     );
   }
 
+  // Make sure watchlists is always an array, even if it's null or undefined
+  const safeWatchlists = watchlists || [];
+
   return (
     <Card className="bg-black/20 border-white/10 backdrop-blur-sm">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
@@ -181,10 +184,10 @@ const WatchlistManager: React.FC<WatchlistManagerProps> = ({
                   <SelectValue placeholder="Select a watchlist" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1f2833] border-white/10 text-white">
-                  {!watchlists || watchlists.length === 0 ? (
+                  {safeWatchlists.length === 0 ? (
                     <SelectItem value="none" disabled>No watchlists available</SelectItem>
                   ) : (
-                    watchlists.map(watchlist => (
+                    safeWatchlists.map(watchlist => (
                       <SelectItem key={watchlist.id} value={watchlist.id}>
                         {watchlist.name}
                       </SelectItem>
@@ -224,13 +227,17 @@ const WatchlistManager: React.FC<WatchlistManagerProps> = ({
               </div>
 
               <div className="bg-black/30 rounded-md p-2 min-h-[100px] max-h-[200px] overflow-y-auto">
-                {selectedWatchlist && selectedWatchlist.assets.length === 0 ? (
+                {selectedWatchlist && selectedWatchlist.assets && selectedWatchlist.assets.length === 0 ? (
                   <div className="text-center text-gray-400 py-4">
                     No symbols in watchlist. Add some above.
                   </div>
+                ) : !selectedWatchlist || !selectedWatchlist.assets ? (
+                  <div className="text-center text-gray-400 py-4">
+                    Unable to load watchlist data. Try refreshing.
+                  </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
-                    {selectedWatchlist?.assets.map(asset => (
+                    {selectedWatchlist.assets.map(asset => (
                       <div 
                         key={asset.id} 
                         className="bg-[#1f2833] text-white px-3 py-1 rounded-full flex items-center"
