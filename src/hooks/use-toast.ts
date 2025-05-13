@@ -3,7 +3,6 @@ import * as React from "react";
 import {
   toast as sonnerToast,
   ToastT,
-  // Remove the incorrect import of 'Toast'
   Toaster as SonnerToaster,
 } from "sonner";
 
@@ -16,6 +15,7 @@ type ToasterToast = ToastT & {
   description?: React.ReactNode;
   action?: React.ReactNode;
   cancel?: React.ReactNode;
+  variant?: "default" | "destructive";
 };
 
 type ToastActionElement = React.ReactElement<HTMLButtonElement>;
@@ -38,6 +38,7 @@ interface Toast extends Omit<ToastT, "id"> {
   description?: React.ReactNode;
   action?: ToastActionElement;
   cancel?: ToastActionElement;
+  variant?: "default" | "destructive";
 }
 
 type ToastOptions = Omit<Toast, "id" | "title" | "description" | "action">;
