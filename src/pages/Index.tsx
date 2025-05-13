@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, ChartBar, Bell, Clock } from "lucide-react";
@@ -65,7 +66,8 @@ const Index = () => {
           </div>
           <div className="hidden md:flex items-center space-x-6">
             <Link to="/signin" className="text-gray-300 hover:text-white transition-colors">Sign In</Link>
-            <Link to="/dashboard" className="text-gray-300 hover:text-white transition-colors">Dashboard</Link>
+            <Link to="/dashboard" className="text-gray-300 hover:text-white transition-colors">Market Map</Link>
+            <Link to="/trading" className="text-gray-300 hover:text-white transition-colors">Trading Dashboard</Link>
             <Link to="/chat-research" className="text-gray-300 hover:text-white transition-colors">AI Research</Link>
           </div>
           <div className="flex items-center gap-2">
@@ -105,7 +107,11 @@ const Index = () => {
                     Explore Dashboard <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                
+                <Link to="/trading">
+                  <Button variant="outline" className="border-white/20 text-white py-6 px-8 rounded-md hover:bg-white/10">
+                    Trading Platform <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
               <div className="flex items-center space-x-2 pt-6">
                 <div className="flex -space-x-2">
