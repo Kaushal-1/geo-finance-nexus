@@ -15,8 +15,11 @@ export function Toaster() {
   return (
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, variant, ...props }) {
+        // Remove any properties that might cause type conflicts
+        const { type, ...safeProps } = props as any;
+        
         return (
-          <Toast key={id} {...props} variant={variant as "default" | "destructive" | undefined}>
+          <Toast key={id} {...safeProps} variant={variant as "default" | "destructive" | undefined}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
