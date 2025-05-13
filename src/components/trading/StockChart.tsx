@@ -2,7 +2,7 @@
 import React from "react";
 import { Line } from "react-chartjs-2";
 import {
-  Chart as ChartJS,
+  Chart,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -11,11 +11,11 @@ import {
   Tooltip,
   Legend,
   Filler,
-  ChartOptions
+  ChartOptions,
 } from "chart.js";
 
 // Register Chart.js components
-ChartJS.register(
+Chart.register(
   CategoryScale,
   LinearScale,
   PointElement,
