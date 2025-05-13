@@ -34,10 +34,29 @@ export function useChatState() {
           content.toLowerCase().includes('compare') ||
           content.toLowerCase().includes('visualization')) {
         
+        // Determine visualization type based on query
+        let visualizationType: 'bar' | 'line' | 'pie' | 'map' = 'bar';
+        
+        if (content.toLowerCase().includes('trend') || 
+            content.toLowerCase().includes('over time') || 
+            content.toLowerCase().includes('history')) {
+          visualizationType = 'line';
+        } else if (content.toLowerCase().includes('distribution') || 
+                  content.toLowerCase().includes('allocation') || 
+                  content.toLowerCase().includes('breakdown')) {
+          visualizationType = 'pie';
+        } else if (content.toLowerCase().includes('map') || 
+                  content.toLowerCase().includes('region') || 
+                  content.toLowerCase().includes('country') || 
+                  content.toLowerCase().includes('global')) {
+          visualizationType = 'map';
+        }
+        
         const loadingVisualization: Visualization = {
           id: generateId(),
           title: 'Generating visualization...',
           loading: true,
+          type: visualizationType
         };
         
         setActiveVisualization(loadingVisualization);
@@ -97,6 +116,19 @@ export function useChatState() {
     }
   }, [messages]);
 
+  // Function to clear chat history and reset state
+  const clearChat = useCallback(() => {
+    setMessages([]);
+    setActiveVisualization(null);
+    // Reset suggested questions to initial state
+    setSuggestedQuestions([
+      "How will rising interest rates affect tech stocks?",
+      "Compare Apple and Microsoft's performance this quarter",
+      "Explain the impact of Fed announcements on banking stocks",
+      "What regions are affected by semiconductor shortages?"
+    ]);
+  }, []);
+
   return {
     messages,
     loading,
@@ -104,5 +136,6 @@ export function useChatState() {
     suggestedQuestions,
     sendMessage,
     setActiveVisualization,
+    clearChat,
   };
 }

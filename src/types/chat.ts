@@ -40,6 +40,7 @@ export interface Visualization {
   chart?: Chart;
   map?: MapData;
   globalImpact?: GlobalImpactData;
+  type?: 'bar' | 'line' | 'pie' | 'map';
 }
 
 export interface ChatMessage {
