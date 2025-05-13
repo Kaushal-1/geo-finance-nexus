@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { toast } from "@/components/ui/use-toast";
 
@@ -193,11 +192,25 @@ export const alpacaService = {
   getBars: async (symbol: string, timeframe = '1Day', limit = 60) => {
     console.log(`Getting bars for ${symbol} with timeframe ${timeframe}`);
     try {
-      // Map user-friendly timeframes to API format
-      const apiTimeframe = timeframe
-        .replace('Day', 'D')
-        .replace('Week', 'W')
-        .replace('Month', 'M');
+      // Map user-friendly timeframes to API format correctly
+      let apiTimeframe;
+      
+      // Parse the timeframe properly according to Alpaca API requirements
+      // Format should be: {number}{unit} where unit is one of: Min, Hour, Day, Week, Month
+      if (timeframe === '1Day') {
+        apiTimeframe = '1D';
+      } else if (timeframe === '5Day') {
+        // For 5-day, we'll use 1D timeframe and limit to the last 5 days
+        apiTimeframe = '1D';
+        limit = 5;
+      } else if (timeframe === '1Week') {
+        apiTimeframe = '1W';
+      } else if (timeframe === '1Month') {
+        apiTimeframe = '1M';
+      } else {
+        // Default to 1D if unknown timeframe
+        apiTimeframe = '1D';
+      }
       
       const response = await alpacaDataApi.get(`/v2/stocks/${symbol}/bars`, {
         params: {
