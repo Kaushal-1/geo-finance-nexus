@@ -3,7 +3,7 @@ import * as React from "react";
 import {
   toast as sonnerToast,
   ToastT,
-  Toast as SonnerToast,
+  // Remove the incorrect import of 'Toast'
   Toaster as SonnerToaster,
 } from "sonner";
 
@@ -32,7 +32,7 @@ function dispatch(action: { type: "ADD_TOAST"; toast: ToasterToast }) {
   };
 }
 
-interface Toast extends Omit<SonnerToast, "id"> {
+interface Toast extends Omit<ToastT, "id"> {
   id?: string;
   title?: React.ReactNode;
   description?: React.ReactNode;

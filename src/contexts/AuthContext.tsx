@@ -22,9 +22,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log("AuthContext initialization");
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
+        console.log("Auth state changed:", event);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setLoading(false);
@@ -47,15 +50,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log("Got session:", currentSession ? "yes" : "no");
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
     });
 
     return () => {
+      console.log("Unsubscribing from auth state changes");
       subscription.unsubscribe();
     };
-  }, [toast]);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -138,8 +143,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     await supabase.auth.signOut();
   };
 
+  const contextValue = {
+    user,
+    session,
+    loading,
+    signIn,
+    signUp,
+    signOut
+  };
+
+  console.log("AuthProvider rendering, user:", user ? "logged in" : "not logged in");
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
