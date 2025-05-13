@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useTimelineData } from "@/hooks/useTimelineData";
 import { useNewsData } from "@/hooks/useNewsData";
 import { Button } from "@/components/ui/button";
-import { Newspaper } from "lucide-react";
+import { Newspaper, BarChart } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -16,9 +16,12 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import NewsPanel from "@/components/dashboard/NewsPanel";
+import TradingDashboard from "@/components/trading/TradingDashboard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Dashboard = () => {
   const [is3DView, setIs3DView] = useState(true);
+  const [activeTab, setActiveTab] = useState("map");
   const { toast } = useToast();
   const { selectedPeriod, setSelectedPeriod } = useTimelineData();
 
@@ -43,39 +46,68 @@ const Dashboard = () => {
     <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] text-[#f5f7fa] overflow-hidden">
       <DashboardHeader />
       
-      <div className="flex flex-col h-[calc(100vh-120px)] p-4 gap-4">
-        {/* Main Content - Interactive Map */}
-        <div className="flex-1 h-full flex flex-col relative">
-          <div className="relative flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm">
-            <MapVisualization is3DView={is3DView} onViewToggle={handleViewToggle} />
-            
-            {/* Financial News Button */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button 
-                  className="absolute top-4 left-4 bg-teal-600 hover:bg-teal-700 z-10"
-                  size="sm"
-                >
-                  <Newspaper className="mr-2 h-4 w-4" /> Financial News
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-full sm:w-[400px] bg-[#0a0e17] border-r border-white/10">
-                <SheetHeader>
-                  <SheetTitle className="text-white">Financial News</SheetTitle>
-                </SheetHeader>
-                <div className="mt-4 h-[calc(100vh-100px)] overflow-hidden">
-                  <NewsPanel />
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+      <div className="p-4">
+        <div className="mb-4">
+          <Tabs 
+            value={activeTab} 
+            onValueChange={setActiveTab} 
+            className="w-fit"
+          >
+            <TabsList className="bg-[#1a2035]/80 border border-white/10">
+              <TabsTrigger value="map" className="data-[state=active]:bg-teal/80">
+                <BarChart className="mr-2 h-4 w-4" />
+                Market Map
+              </TabsTrigger>
+              <TabsTrigger value="trading" className="data-[state=active]:bg-teal/80">
+                <BarChart className="mr-2 h-4 w-4" />
+                Trading Dashboard
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
         
-        {/* Bottom Market Performance - TradingView Widget */}
-        <div className="h-20 rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm overflow-hidden">
-          <div className="tradingview-widget-container h-full">
-            <div className="tradingview-widget-container__widget h-full"></div>
-          </div>
+        <div className="flex flex-col h-[calc(100vh-180px)] gap-4">
+          <TabsContent value="map" className="flex-1 h-full m-0">
+            {/* Main Content - Interactive Map */}
+            <div className="flex-1 h-full flex flex-col relative">
+              <div className="relative flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm">
+                <MapVisualization is3DView={is3DView} onViewToggle={handleViewToggle} />
+                
+                {/* Financial News Button */}
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button 
+                      className="absolute top-4 left-4 bg-teal-600 hover:bg-teal-700 z-10"
+                      size="sm"
+                    >
+                      <Newspaper className="mr-2 h-4 w-4" /> Financial News
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-full sm:w-[400px] bg-[#0a0e17] border-r border-white/10">
+                    <SheetHeader>
+                      <SheetTitle className="text-white">Financial News</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-4 h-[calc(100vh-100px)] overflow-hidden">
+                      <NewsPanel />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
+            </div>
+            
+            {/* Bottom Market Performance - TradingView Widget */}
+            <div className="h-20 rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm overflow-hidden">
+              <div className="tradingview-widget-container h-full">
+                <div className="tradingview-widget-container__widget h-full"></div>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="trading" className="flex-1 h-full m-0">
+            <div className="h-full overflow-auto rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm p-4">
+              <TradingDashboard />
+            </div>
+          </TabsContent>
         </div>
       </div>
       
