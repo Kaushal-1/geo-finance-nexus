@@ -197,8 +197,8 @@ const WatchlistManager = () => {
           </div>
         ) : watchlists.length > 0 ? (
           <Tabs 
-            value={activeWatchlist || undefined} 
-            onValueChange={setActiveWatchlist || undefined}
+            value={activeWatchlist || watchlists[0]?.id || ""}
+            onValueChange={setActiveWatchlist}
             className="px-1"
           >
             <div className="border-b border-white/10 overflow-x-auto scrollbar-none">

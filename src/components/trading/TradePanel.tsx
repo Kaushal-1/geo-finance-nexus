@@ -96,89 +96,169 @@ const TradePanel = ({ onOrderPlaced }: { onOrderPlaced?: () => void }) => {
             <TabsTrigger value="sell" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">Sell</TabsTrigger>
           </TabsList>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="symbol">Symbol</Label>
-              <Input 
-                id="symbol"
-                placeholder="Enter stock symbol (e.g. AAPL)"
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value)}
-                className="bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20"
-                disabled={loading}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity</Label>
-              <Input 
-                id="quantity"
-                type="number"
-                placeholder="Number of shares"
-                min="1"
-                step="1"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                className="bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20"
-                disabled={loading}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Order Type</Label>
-              <RadioGroup 
-                defaultValue="market" 
-                value={orderType}
-                onValueChange={(value) => setOrderType(value as 'market' | 'limit')}
-                className="flex space-x-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="market" id="market" disabled={loading} />
-                  <Label htmlFor="market">Market</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="limit" id="limit" disabled={loading} />
-                  <Label htmlFor="limit">Limit</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            
-            {orderType === 'limit' && (
+          <TabsContent value="buy">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="limitPrice">Limit Price ($)</Label>
+                <Label htmlFor="symbol-buy">Symbol</Label>
                 <Input 
-                  id="limitPrice"
-                  type="number"
-                  placeholder="Price per share"
-                  step="0.01"
-                  min="0.01"
-                  value={limitPrice}
-                  onChange={(e) => setLimitPrice(e.target.value)}
+                  id="symbol-buy"
+                  placeholder="Enter stock symbol (e.g. AAPL)"
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value)}
                   className="bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20"
                   disabled={loading}
                 />
               </div>
-            )}
-            
-            <Button
-              type="submit"
-              className={`w-full ${
-                side === 'buy' 
-                  ? 'bg-green-600 hover:bg-green-700' 
-                  : 'bg-red-600 hover:bg-red-700'
-              }`}
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                `${side === 'buy' ? 'Buy' : 'Sell'} ${symbol ? symbol.toUpperCase() : 'Shares'}`
+              
+              <div className="space-y-2">
+                <Label htmlFor="quantity-buy">Quantity</Label>
+                <Input 
+                  id="quantity-buy"
+                  type="number"
+                  placeholder="Number of shares"
+                  min="1"
+                  step="1"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  className="bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20"
+                  disabled={loading}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Order Type</Label>
+                <RadioGroup 
+                  defaultValue="market" 
+                  value={orderType}
+                  onValueChange={(value) => setOrderType(value as 'market' | 'limit')}
+                  className="flex space-x-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="market" id="market-buy" disabled={loading} />
+                    <Label htmlFor="market-buy">Market</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="limit" id="limit-buy" disabled={loading} />
+                    <Label htmlFor="limit-buy">Limit</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              
+              {orderType === 'limit' && (
+                <div className="space-y-2">
+                  <Label htmlFor="limitPrice-buy">Limit Price ($)</Label>
+                  <Input 
+                    id="limitPrice-buy"
+                    type="number"
+                    placeholder="Price per share"
+                    step="0.01"
+                    min="0.01"
+                    value={limitPrice}
+                    onChange={(e) => setLimitPrice(e.target.value)}
+                    className="bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20"
+                    disabled={loading}
+                  />
+                </div>
               )}
-            </Button>
-          </form>
+              
+              <Button
+                type="submit"
+                className="w-full bg-green-600 hover:bg-green-700"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  `Buy ${symbol ? symbol.toUpperCase() : 'Shares'}`
+                )}
+              </Button>
+            </form>
+          </TabsContent>
+          
+          <TabsContent value="sell">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="symbol-sell">Symbol</Label>
+                <Input 
+                  id="symbol-sell"
+                  placeholder="Enter stock symbol (e.g. AAPL)"
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value)}
+                  className="bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20"
+                  disabled={loading}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="quantity-sell">Quantity</Label>
+                <Input 
+                  id="quantity-sell"
+                  type="number"
+                  placeholder="Number of shares"
+                  min="1"
+                  step="1"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  className="bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20"
+                  disabled={loading}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Order Type</Label>
+                <RadioGroup 
+                  defaultValue="market" 
+                  value={orderType}
+                  onValueChange={(value) => setOrderType(value as 'market' | 'limit')}
+                  className="flex space-x-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="market" id="market-sell" disabled={loading} />
+                    <Label htmlFor="market-sell">Market</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="limit" id="limit-sell" disabled={loading} />
+                    <Label htmlFor="limit-sell">Limit</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              
+              {orderType === 'limit' && (
+                <div className="space-y-2">
+                  <Label htmlFor="limitPrice-sell">Limit Price ($)</Label>
+                  <Input 
+                    id="limitPrice-sell"
+                    type="number"
+                    placeholder="Price per share"
+                    step="0.01"
+                    min="0.01"
+                    value={limitPrice}
+                    onChange={(e) => setLimitPrice(e.target.value)}
+                    className="bg-black/30 border-white/10 focus:border-teal focus:ring focus:ring-teal/20"
+                    disabled={loading}
+                  />
+                </div>
+              )}
+              
+              <Button
+                type="submit"
+                className="w-full bg-red-600 hover:bg-red-700"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  `Sell ${symbol ? symbol.toUpperCase() : 'Shares'}`
+                )}
+              </Button>
+            </form>
+          </TabsContent>
         </Tabs>
       </CardContent>
     </Card>
