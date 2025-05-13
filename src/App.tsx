@@ -13,7 +13,6 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import ChatResearch from "./pages/ChatResearch";
 import StockDetail from "./pages/StockDetail";
-import TradingDashboardPage from "./pages/TradingDashboardPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Create a client
@@ -34,11 +33,6 @@ const App = () => {
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/trading" element={
-                <ProtectedRoute>
-                  <TradingDashboardPage />
                 </ProtectedRoute>
               } />
               <Route path="/chat-research" element={
