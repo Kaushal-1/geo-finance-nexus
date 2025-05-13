@@ -10,7 +10,8 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  ChartOptions
 } from "chart.js";
 
 // Register Chart.js components
@@ -68,7 +69,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
     ]
   };
   
-  const options = {
+  const options: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
