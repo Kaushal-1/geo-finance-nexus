@@ -105,3 +105,27 @@ export interface PlaceOrderRequest {
   extended_hours?: boolean;
   client_order_id?: string;
 }
+
+// Chart data types
+export interface AlpacaBar {
+  t: string; // timestamp
+  o: number; // open
+  h: number; // high
+  l: number; // low
+  c: number; // close
+  v: number; // volume
+}
+
+export interface AlpacaAsset {
+  id: string;
+  class: string;
+  exchange: string;
+  symbol: string;
+  name: string;
+  status: string;
+  tradable: boolean;
+  marginable: boolean;
+  shortable: boolean;
+  easy_to_borrow: boolean;
+  fractionable: boolean;
+}

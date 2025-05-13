@@ -7,6 +7,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Trading components
+import StockChartPanel from "@/components/trading/StockChartPanel";
 import AccountSummary from "@/components/trading/AccountSummary";
 import PositionsTable from "@/components/trading/PositionsTable";
 import OrdersTable from "@/components/trading/OrdersTable";
@@ -73,6 +74,9 @@ const TradingDashboard = () => {
         </div>
         
         <div className="grid grid-cols-1 gap-6">
+          {/* Stock Chart Panel - New component */}
+          <StockChartPanel />
+          
           {/* Account Summary */}
           <AccountSummary account={account} isLoading={isLoadingAccount} />
           

@@ -12,6 +12,16 @@ const alpacaApi = axios.create({
   }
 });
 
+// Market data API - separate endpoint for bars data
+const alpacaDataApi = axios.create({
+  baseURL: 'https://data.alpaca.markets',
+  headers: {
+    'APCA-API-KEY-ID': 'PKJ1BKJG3HHOXYNCRLZK',
+    'APCA-API-SECRET-KEY': 'l9KdVbejeABLTE8Z6JxcLRQwHebECBnWpiqqPhhd',
+    'Content-Type': 'application/json'
+  }
+});
+
 // Error handler for API requests
 const handleApiError = (error: any, message: string) => {
   console.error(`${message}:`, error);
@@ -176,6 +186,56 @@ export const alpacaService = {
       return true;
     } catch (error) {
       return handleApiError(error, "Failed to delete watchlist");
+    }
+  },
+  
+  // Get bars (candles) for a symbol
+  getBars: async (symbol: string, timeframe = '1Day', limit = 60) => {
+    console.log(`Getting bars for ${symbol} with timeframe ${timeframe}`);
+    try {
+      // Map user-friendly timeframes to API format
+      const apiTimeframe = timeframe
+        .replace('Day', 'D')
+        .replace('Week', 'W')
+        .replace('Month', 'M');
+      
+      const response = await alpacaDataApi.get(`/v2/stocks/${symbol}/bars`, {
+        params: {
+          timeframe: apiTimeframe,
+          limit: limit,
+          adjustment: 'all',
+        }
+      });
+      
+      console.log(`Received bars data for ${symbol}:`, response.data);
+      return response.data.bars;
+    } catch (error) {
+      return handleApiError(error, `Failed to fetch stock data for ${symbol}`);
+    }
+  },
+  
+  // Search for assets
+  searchAssets: async (query: string) => {
+    console.log(`Searching assets matching "${query}"`);
+    try {
+      const response = await alpacaApi.get('/v2/assets', {
+        params: {
+          status: 'active',
+          asset_class: 'us_equity'
+        }
+      });
+      
+      // Filter the assets by query
+      const matches = response.data
+        .filter((asset: any) => 
+          asset.symbol.includes(query.toUpperCase()) || 
+          (asset.name && asset.name.toLowerCase().includes(query.toLowerCase()))
+        )
+        .slice(0, 10);
+      
+      return matches;
+    } catch (error) {
+      return handleApiError(error, "Failed to search assets");
     }
   }
 };
