@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Lightbulb, Send, RefreshCw, Ban, AlertTriangle, ArrowUpRight } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
 
 import { useToast } from "@/components/ui/use-toast";
 import { useChatState } from "@/hooks/useChatState";
 import { usePortfolioContext } from "@/hooks/usePortfolioContext";
+import SuggestedQuestions from "@/components/chat/SuggestedQuestions";
 import {
   Select,
   SelectContent,
@@ -38,6 +40,7 @@ const ChatResearch = () => {
   const { toast } = useToast();
   const [inputText, setInputText] = useState("");
   const [showPortfolioContext, setShowPortfolioContext] = useState(true);
+  const [displayedSuggestions, setDisplayedSuggestions] = useState<string[]>([]);
 
   // Get portfolio context data from Alpaca
   const { 
@@ -61,6 +64,17 @@ const ChatResearch = () => {
     clearChat,
   } = useChatState();
 
+  // Update displayed suggestions whenever suggestedQuestions changes
+  useEffect(() => {
+    if (suggestedQuestions.length > 0) {
+      // Shuffle the array and pick 2 random questions
+      const shuffled = [...suggestedQuestions].sort(() => 0.5 - Math.random());
+      setDisplayedSuggestions(shuffled.slice(0, 2));
+    } else {
+      setDisplayedSuggestions([]);
+    }
+  }, [suggestedQuestions]);
+
   useEffect(() => {
     if (apiKey) {
       localStorage.setItem("openai_api_key", apiKey);
@@ -68,20 +82,6 @@ const ChatResearch = () => {
       localStorage.removeItem("openai_api_key");
     }
   }, [apiKey]);
-
-  const formatApiResponse = (response: string): string => {
-    // Remove markdown syntax: ###, ##, **, *, etc.
-    let formatted = response
-      .replace(/#+\s?/g, '')          // Remove headers like ###, ##
-      .replace(/\*\*(.*?)\*\*/g, '$1') // Bold syntax
-      .replace(/\*(.*?)\*/g, '$1');    // Italic or bullet symbols
-  
-    // Capitalize the first letter of each sentence
-    formatted = formatted.replace(/(?:^|[.!?]\s+)([a-z])/g, (match, p1) => p1.toUpperCase());
-  
-    return formatted;
-  };
-  
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -119,28 +119,24 @@ const ChatResearch = () => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Function to render message content with proper formatting
+  const removeQuestion = (index: number) => {
+    setDisplayedSuggestions(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Function to render message content with proper formatting using ReactMarkdown
   const renderMessageContent = (content: string, sender: 'user' | 'ai', sources?: any[]) => {
     if (sender === 'user') {
       return <p className="whitespace-pre-wrap">{content}</p>;
     }
 
-    // For AI messages, replace markdown with proper HTML
-    const formattedContent = content
-      // Replace headers
-      .replace(/## (.*?)(\n|$)/g, '<h2 class="text-lg font-semibold mt-4 mb-2">$1</h2>')
-      .replace(/### (.*?)(\n|$)/g, '<h3 class="text-md font-semibold mt-3 mb-2">$1</h3>')
-      // Replace bold text
-      .replace(/\*\*(.*?)\*\*/g, '<span class="font-bold">$1</span>')
-      // Replace link references [1][2] with superscript
-      .replace(/\[(\d+)\]/g, '<sup class="text-blue-400 ml-0.5">[$1]</sup>');
-      
     return (
       <>
-        <div 
-          className="whitespace-pre-wrap text-gray-100" 
-          dangerouslySetInnerHTML={{ __html: formattedContent }}
-        />
+        <ReactMarkdown 
+          className="whitespace-pre-wrap text-gray-100 prose prose-invert prose-headings:my-3 prose-h2:text-lg prose-h2:font-semibold prose-h3:text-md prose-h3:font-semibold prose-p:mb-2"
+        >
+          {content}
+        </ReactMarkdown>
+        
         {sources && sources.length > 0 && (
           <div className="mt-4 pt-2 border-t border-gray-700">
             <p className="text-sm text-gray-400 mb-1">Sources:</p>
@@ -385,7 +381,7 @@ const ChatResearch = () => {
                       </p>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-w-md mx-auto">
-                        {suggestedQuestions.map((question, index) => (
+                        {displayedSuggestions.map((question, index) => (
                           <Button
                             key={index}
                             variant="outline"
@@ -427,22 +423,14 @@ const ChatResearch = () => {
               </ScrollArea>
 
               {/* Suggested questions after messages */}
-              {messages.length > 0 && suggestedQuestions.length > 0 && !isLoading && (
+              {messages.length > 0 && displayedSuggestions.length > 0 && !isLoading && (
                 <div className="mb-4 mt-2">
                   <p className="text-sm text-gray-400 mb-2">Suggested questions:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {suggestedQuestions.map((question, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => setInputText(question)}
-                      >
-                        {question}
-                      </Button>
-                    ))}
-                  </div>
+                  <SuggestedQuestions 
+                    questions={displayedSuggestions} 
+                    onSelectQuestion={setInputText} 
+                    onRemoveQuestion={removeQuestion}
+                  />
                 </div>
               )}
 

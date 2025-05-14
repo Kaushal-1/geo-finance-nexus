@@ -84,7 +84,7 @@ export function useChatState() {
         setActiveVisualization(null);
       }
 
-      // Update suggested questions
+      // Update suggested questions - limit to 4 random ones
       setSuggestedQuestions(newSuggestions);
 
     } catch (error) {
@@ -107,11 +107,10 @@ export function useChatState() {
   // Load suggested questions on initial load
   useEffect(() => {
     if (messages.length === 0) {
+      // Only 2 initial suggested questions
       setSuggestedQuestions([
         "How will rising interest rates affect tech stocks?",
-        "Compare Apple and Microsoft's performance this quarter",
-        "Explain the impact of Fed announcements on banking stocks",
-        "What regions are affected by semiconductor shortages?"
+        "Compare Apple and Microsoft's performance this quarter"
       ]);
     }
   }, [messages]);
@@ -120,12 +119,10 @@ export function useChatState() {
   const clearChat = useCallback(() => {
     setMessages([]);
     setActiveVisualization(null);
-    // Reset suggested questions to initial state
+    // Reset suggested questions to initial state - only 2
     setSuggestedQuestions([
       "How will rising interest rates affect tech stocks?",
-      "Compare Apple and Microsoft's performance this quarter",
-      "Explain the impact of Fed announcements on banking stocks",
-      "What regions are affected by semiconductor shortages?"
+      "Compare Apple and Microsoft's performance this quarter"
     ]);
   }, []);
 
