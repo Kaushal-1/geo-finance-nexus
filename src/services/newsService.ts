@@ -64,6 +64,106 @@ export async function fetchFinancialNews(region = 'global', topic = 'financial m
   }
 }
 
+// New function to fetch country-specific stock news
+export async function fetchCountryStockNews(countries) {
+  try {
+    const apiKey = getPerplexityApiKey();
+    
+    if (!apiKey) {
+      throw new Error('Perplexity API key is not set');
+    }
+    
+    // Create an array to store results
+    const results = [];
+    
+    // Process each country with a delay to avoid rate limits
+    for (const country of countries) {
+      try {
+        console.log(`Fetching stock news for ${country.name}`);
+        
+        const response = await fetch('https://api.perplexity.ai/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'llama-3.1-sonar-small-128k-online',
+            messages: [
+              {
+                role: 'system',
+                content: 'You are a financial expert that provides accurate and concise information about stock markets and their impact on specific countries. Format your response as structured JSON.'
+              },
+              {
+                role: 'user',
+                content: `Provide recent news events in ${country.name} that have impacted major stocks like MSFT, AAPL, and GOOGL with citations. Format your response as structured JSON with the following format:
+                {
+                  "countryName": "${country.name}",
+                  "countryCode": "${country.code}",
+                  "latitude": ${country.lat},
+                  "longitude": ${country.lng},
+                  "news": [
+                    {
+                      "summary": "Brief summary of news event and its stock impact",
+                      "citations": ["URL to source 1", "URL to source 2"]
+                    }
+                  ]
+                }`
+              }
+            ],
+            temperature: 0.2,
+            max_tokens: 1000
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content;
+        
+        if (content) {
+          try {
+            // Extract JSON from the response
+            const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || 
+                              content.match(/{[\s\S]*}/) || 
+                              null;
+            
+            let parsedData;
+            
+            if (jsonMatch) {
+              parsedData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+            } else {
+              parsedData = JSON.parse(content);
+            }
+            
+            // Validate the structure
+            if (parsedData && 
+                parsedData.countryName && 
+                parsedData.news && 
+                Array.isArray(parsedData.news)) {
+              results.push(parsedData);
+            }
+          } catch (parseError) {
+            console.error('Failed to parse JSON for', country.name, parseError);
+          }
+        }
+      } catch (countryError) {
+        console.error(`Error fetching news for ${country.name}:`, countryError);
+      }
+      
+      // Add delay between requests to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    
+    return results;
+  } catch (error) {
+    console.error('Error fetching country stock news:', error);
+    return [];
+  }
+}
+
 // Get impact color based on impact level
 function getImpactColor(impact: string): string {
   switch(impact) {

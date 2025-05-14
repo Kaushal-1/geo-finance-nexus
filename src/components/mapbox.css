@@ -1,207 +1,187 @@
 
+/* Custom Mapbox Styling */
+
+.mapboxgl-popup {
+  z-index: 1000;
+}
+
+.mapboxgl-popup-content {
+  background: rgba(26, 32, 53, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px !important;
+  color: white;
+  padding: 16px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+}
+
+.mapboxgl-popup-close-button {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  right: 8px;
+  top: 8px;
+}
+
+.mapboxgl-popup-close-button:hover {
+  color: white;
+  background: transparent;
+}
+
+.mapboxgl-popup-tip {
+  border-top-color: rgba(26, 32, 53, 0.95) !important;
+  border-bottom-color: rgba(26, 32, 53, 0.95) !important;
+}
+
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip {
+  border-bottom-color: rgba(26, 32, 53, 0.95) !important;
+}
+
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+  border-top-color: rgba(26, 32, 53, 0.95) !important;
+}
+
+.mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+  border-right-color: rgba(26, 32, 53, 0.95) !important;
+}
+
+.mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+  border-left-color: rgba(26, 32, 53, 0.95) !important;
+}
+
 .financial-center-marker {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(0, 184, 212, 0.5);
-  position: relative;
-  transition: transform 0.2s ease;
-  z-index: 1;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0.5);
+  animation: none;
 }
 
-.financial-center-marker:hover {
-  transform: scale(1.2);
-  z-index: 2;
-}
-
-.financial-center-marker .pulse {
-  position: absolute;
-  width: 100%;
-  height: 100%;
+.country-news-marker {
   border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 0 rgba(249, 115, 22, 0.5);
   animation: pulse 2s infinite;
-  opacity: 0.7;
-  z-index: -1;
+}
+
+.pulse {
+  display: block;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
   0% {
-    transform: scale(1);
-    opacity: 0.7;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.5);
   }
   70% {
-    transform: scale(2);
-    opacity: 0;
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
   }
   100% {
-    transform: scale(1);
-    opacity: 0;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
   }
 }
 
-.financial-center-popup {
-  background-color: rgba(26, 32, 53, 0.9) !important;
-  border: 1px solid rgba(0, 184, 212, 0.3) !important;
-  border-radius: 8px !important;
-  backdrop-filter: blur(10px) !important;
-  padding: 0 !important;
-  max-width: 300px;
-  color: #f5f7fa !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
-  animation: popup-fade-in 0.3s ease-out;
-}
-
-@keyframes popup-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.mapboxgl-popup-content {
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-
-.mapboxgl-popup-close-button {
-  color: white !important;
-  font-size: 18px !important;
-  padding: 5px 8px !important;
-  right: 5px !important;
-  top: 5px !important;
-  background-color: transparent !important;
-  border-radius: 50% !important;
-  transition: background-color 0.2s ease !important;
-}
-
-.mapboxgl-popup-close-button:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-.mapboxgl-popup-tip {
-  display: none !important;
-}
-
-.popup-content {
-  padding: 12px;
-}
-
-.popup-title {
-  font-size: 16px;
+.financial-center-popup .popup-title,
+.country-news-popup .popup-title {
+  font-size: 1.1rem;
   font-weight: 600;
-  margin: 0 0 8px 0;
-  color: #ffffff;
+  margin-bottom: 0.75rem;
+  color: #fff;
 }
 
-.popup-data {
+.financial-center-popup .popup-data {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 4px;
-  font-size: 12px;
+  margin-bottom: 0.5rem;
 }
 
-.popup-label {
-  color: #a0aec0;
+.financial-center-popup .popup-label {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
 }
 
-.popup-value {
-  font-family: 'Roboto Mono', monospace;
+.financial-center-popup .popup-value {
   font-weight: 500;
 }
 
-.popup-value.positive {
+.financial-center-popup .positive {
   color: #00e676;
 }
 
-.popup-value.negative {
+.financial-center-popup .negative {
   color: #ff5252;
 }
 
-.news-items {
-  max-height: 150px;
-  overflow-y: auto;
-  padding-right: 5px;
+.financial-center-popup .news-items {
+  margin-top: 0.75rem;
 }
 
-.news-items::-webkit-scrollbar {
-  width: 4px;
+.financial-center-popup .news-item {
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
 }
 
-.news-items::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.2);
+/* Country news popup specific styles */
+.country-news-popup .news-item {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.country-news-popup .news-item:last-child {
+  border-bottom: none;
+}
+
+.country-news-popup .citation-links {
+  margin-top: 0.35rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.country-news-popup .citation-links a {
+  color: #4fd1c5;
+  text-decoration: none;
+  transition: color 0.2s;
+  font-size: 0.75rem;
+}
+
+.country-news-popup .citation-links a:hover {
+  color: #2dd4bf;
+  text-decoration: underline;
+}
+
+/* Attribution positioning and style */
+.mapboxgl-ctrl-bottom-left .mapboxgl-ctrl {
+  margin: 0 0 8px 8px;
+  background: rgba(10, 14, 23, 0.7);
   border-radius: 4px;
 }
 
-.news-item {
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: 6px;
+.mapboxgl-ctrl-bottom-left .mapboxgl-ctrl-attrib {
+  padding: 2px 5px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.news-item:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-  padding-bottom: 0;
+.mapboxgl-ctrl-bottom-left .mapboxgl-ctrl-attrib a {
+  color: rgba(255, 255, 255, 0.6);
 }
 
-/* Make Mapbox attribution more elegant */
-.mapboxgl-ctrl-bottom-left .mapboxgl-ctrl,
-.mapboxgl-ctrl-bottom-right .mapboxgl-ctrl {
-  background: rgba(10, 14, 23, 0.7) !important;
-  backdrop-filter: blur(5px) !important;
-  border-radius: 4px !important;
-  margin: 10px !important;
-}
-
-.mapboxgl-ctrl-attrib-inner a {
-  color: rgba(255, 255, 255, 0.7) !important;
-  transition: color 0.2s ease;
-}
-
-.mapboxgl-ctrl-attrib-inner a:hover {
-  color: #fff !important;
-}
-
-/* Customize navigation controls */
+/* Navigation controls */
 .mapboxgl-ctrl-group {
   background: rgba(26, 32, 53, 0.8) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(5px) !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
 }
 
-.mapboxgl-ctrl button {
-  color: white !important;
+.mapboxgl-ctrl-group button {
+  background-color: transparent;
+  color: white;
 }
 
-.mapboxgl-ctrl button:not(:disabled):hover {
-  background-color: rgba(0, 184, 212, 0.2) !important;
-}
-
-/* Mobile optimization */
-@media (max-width: 640px) {
-  .financial-center-popup {
-    max-width: 250px !important;
-  }
-  
-  .popup-title {
-    font-size: 14px;
-  }
-  
-  .popup-data {
-    font-size: 10px;
-  }
-  
-  .news-items {
-    max-height: 100px;
-  }
+.mapboxgl-ctrl-group button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }

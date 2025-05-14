@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import MapVisualization from "@/components/dashboard/MapVisualization";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { useToast } from "@/components/ui/use-toast";
@@ -57,7 +57,7 @@ const Dashboard = () => {
                 <SheetHeader>
                   <SheetTitle className="text-white">Financial News</SheetTitle>
                 </SheetHeader>
-                <div className="mt-4 h-[calc(100vh-100px)] overflow-hidden">
+                <div className="mt-4 h-[calc(100vh-100px)] overflow-auto">
                   <NewsPanel />
                 </div>
               </SheetContent>

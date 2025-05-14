@@ -1,10 +1,10 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { finnhubService } from '@/services/finnhubService';
 import { useToast } from '@/components/ui/use-toast';
-import { fetchFinancialNews } from '@/services/newsService';
+import { fetchFinancialNews, fetchCountryStockNews } from '@/services/newsService';
+import { cn } from '@/lib/utils';
 
 // Extend the Window interface to include mapboxgl
 declare global {
@@ -54,6 +54,17 @@ interface MarketData {
   };
 }
 
+interface CountryNewsData {
+  countryName: string;
+  countryCode: string;
+  latitude: number;
+  longitude: number;
+  news: {
+    summary: string;
+    citations: string[];
+  }[];
+}
+
 const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -61,6 +72,7 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
   const [marketData, setMarketData] = useState<MarketData>({});
   const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({});
   const [countryNews, setCountryNews] = useState<{[country: string]: NewsItem[]}>({});
+  const [countryStockNews, setCountryStockNews] = useState<CountryNewsData[]>([]);
   const { toast } = useToast();
   
   // Financial centers data with country names for news fetching
@@ -76,8 +88,9 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
     { name: "São Paulo", countryName: "Brazil", coordinates: [-46.6333, -23.5505], performance: 0, marketSize: 5.9, symbol: "^BVSP" }
   ];
 
-  // Fetch news for each country
+  // Fetch news for each country and country-specific stock news
   useEffect(() => {
+    // Fetch regular financial news for countries
     const fetchNewsForCountries = async () => {
       const newsMap: {[country: string]: NewsItem[]} = {};
       
@@ -99,12 +112,48 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
       
       setCountryNews(newsMap);
     };
+
+    // Fetch country-specific stock news using Perplexity
+    const fetchStockNewsForCountries = async () => {
+      try {
+        // Fetch for all major countries at once to minimize API calls
+        const majorCountries = [
+          {name: "United States", code: "US", lat: 37.0902, lng: -95.7129},
+          {name: "United Kingdom", code: "UK", lat: 55.3781, lng: -3.4360},
+          {name: "Japan", code: "JP", lat: 36.2048, lng: 138.2529},
+          {name: "China", code: "CN", lat: 35.8617, lng: 104.1954},
+          {name: "Germany", code: "DE", lat: 51.1657, lng: 10.4515},
+          {name: "India", code: "IN", lat: 20.5937, lng: 78.9629},
+          {name: "Australia", code: "AU", lat: -25.2744, lng: 133.7751},
+          {name: "Brazil", code: "BR", lat: -14.2350, lng: -51.9253}
+        ];
+        
+        const newsData = await fetchCountryStockNews(majorCountries);
+        if (newsData && newsData.length > 0) {
+          setCountryStockNews(newsData);
+          console.log("Received country stock news data:", newsData);
+        }
+      } catch (err) {
+        console.error("Error fetching country stock news:", err);
+        toast({
+          title: "Error fetching country news",
+          description: "Could not load country-specific stock news. Some features may be limited.",
+          variant: "destructive",
+        });
+      }
+    };
     
     fetchNewsForCountries();
+    fetchStockNewsForCountries();
     
     // Refresh news every 30 minutes
     const interval = setInterval(fetchNewsForCountries, 1800000);
-    return () => clearInterval(interval);
+    const stockNewsInterval = setInterval(fetchStockNewsForCountries, 3600000); // Refresh stock news hourly
+    
+    return () => {
+      clearInterval(interval);
+      clearInterval(stockNewsInterval);
+    };
   }, []);
 
   // Fetch market data with reduced frequency
@@ -195,7 +244,7 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
         center: [0, 20],
         zoom: 1.5,
         projection: 'globe',
-        attributionControl: false // Hide attribution control
+        attributionControl: false // Hide default attribution control
       });
 
       // Add navigation control to bottom-right
@@ -248,6 +297,12 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
         }
         
         addConnectionLines(map.current);
+        
+        // Add country stock news markers
+        if (countryStockNews.length > 0) {
+          addCountryNewsMarkers(map.current, countryStockNews);
+        }
+        
         setMapLoaded(true);
         
         toast({
@@ -307,11 +362,91 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
     }
   }, []);
 
+  // Effect to add country news markers when data is available
+  useEffect(() => {
+    if (map.current && mapLoaded && countryStockNews.length > 0) {
+      addCountryNewsMarkers(map.current, countryStockNews);
+    }
+  }, [countryStockNews, mapLoaded]);
+
+  // Add country news markers to the map
+  const addCountryNewsMarkers = (map: mapboxgl.Map, newsData: CountryNewsData[]) => {
+    console.log("Adding country news markers:", newsData);
+    
+    newsData.forEach(country => {
+      if (!country.news || country.news.length === 0) return;
+      
+      // Create marker element
+      const el = document.createElement('div');
+      el.className = 'country-news-marker';
+      el.style.backgroundColor = '#F97316';
+      el.style.width = '12px';
+      el.style.height = '12px';
+      el.style.borderRadius = '50%';
+      el.style.cursor = 'pointer';
+      el.style.boxShadow = '0 0 10px 2px rgba(249, 115, 22, 0.6)';
+      
+      // Create popup content with clickable citations
+      const popup = new mapboxgl.Popup({ 
+        offset: 25,
+        closeButton: true,
+        closeOnClick: false,
+        maxWidth: '300px',
+        className: 'country-news-popup'
+      });
+      
+      const popupContent = document.createElement('div');
+      popupContent.className = 'popup-content';
+      popupContent.innerHTML = `
+        <h3 class="popup-title">${country.countryName} Stock News</h3>
+        <div class="news-items space-y-2">
+          ${country.news.map(item => `
+            <div class="news-item">
+              <p class="text-sm">${item.summary}</p>
+              <div class="citation-links">
+                ${item.citations.map((url, idx) => `
+                  <a href="${url}" target="_blank" rel="noopener noreferrer" 
+                     class="text-xs font-medium text-teal-400 hover:text-teal-300 transition-colors">
+                    Source ${idx + 1}
+                  </a>
+                `).join(' | ')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      
+      popup.setDOMContent(popupContent);
+      
+      // Add marker to map
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat([country.longitude, country.latitude])
+        .setPopup(popup)
+        .addTo(map);
+        
+      // Store reference to marker
+      markersRef.current[`country-${country.countryCode}`] = marker;
+    });
+  };
+
   // Update markers with real-time data
   const updateMarkers = (map: mapboxgl.Map, data: MarketData) => {
     // Remove existing markers
-    Object.values(markersRef.current).forEach(marker => marker.remove());
-    markersRef.current = {};
+    Object.values(markersRef.current).forEach(marker => {
+      // Only remove financial center markers (not country news markers)
+      if (!marker.getElement().className.includes('country-news-marker')) {
+        marker.remove();
+      }
+    });
+    
+    // Filter markers object to keep only country news markers
+    const filteredMarkers: { [key: string]: mapboxgl.Marker } = {};
+    Object.entries(markersRef.current).forEach(([key, marker]) => {
+      if (marker.getElement().className.includes('country-news-marker')) {
+        filteredMarkers[key] = marker;
+      }
+    });
+    markersRef.current = filteredMarkers;
     
     // Add markers with real-time data
     financialCenters.forEach(center => {
@@ -573,7 +708,7 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
     });
   };
 
-  return <div ref={mapContainer} className={`h-full w-full ${className || ''}`} />;
+  return <div ref={mapContainer} className={cn('h-full w-full', className)} />;
 };
 
 export default MapboxGlobe;
