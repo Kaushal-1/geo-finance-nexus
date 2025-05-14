@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -132,7 +133,10 @@ const ChatResearch = () => {
     return (
       <>
         <ReactMarkdown 
-          className="whitespace-pre-wrap text-gray-100 prose prose-invert prose-headings:my-3 prose-h2:text-lg prose-h2:font-semibold prose-h3:text-md prose-h3:font-semibold prose-p:mb-2"
+          className="prose prose-invert prose-headings:my-3 prose-h2:text-lg prose-h2:font-semibold prose-h3:text-md prose-h3:font-semibold prose-p:mb-2"
+          components={{
+            p: ({ children }) => <p className="whitespace-pre-wrap text-gray-100 mb-2">{children}</p>
+          }}
         >
           {content}
         </ReactMarkdown>
