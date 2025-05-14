@@ -28,6 +28,11 @@ serve(async (req) => {
       }
     );
 
+    // Ensure PERPLEXITY_API_KEY is available
+    if (!Deno.env.get('PERPLEXITY_API_KEY')) {
+      console.error('PERPLEXITY_API_KEY environment variable not set!');
+    }
+
     // Initialize services
     const tradingService = new TradingService();
     const alertService = new AlertService(supabaseClient);
