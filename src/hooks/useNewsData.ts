@@ -3,12 +3,14 @@ import { useState, useEffect } from 'react';
 import { finnhubService } from '@/services/finnhubService';
 import { useToast } from '@/components/ui/use-toast';
 import { mockNewsData } from '@/services/newsService';
+import { fetchFinancialNews } from '@/services/newsService';
 
 export interface NewsItem {
   id: string;
   title: string;
   summary: string;
   source: string;
+  sourceUrl: string;
   url: string;
   timestamp: string;
   image?: string;
@@ -18,7 +20,7 @@ export interface NewsItem {
   impactColor: string;
 }
 
-export function useNewsData() {
+export function useNewsData(region: string = 'global') {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [filteredNews, setFilteredNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -27,7 +29,7 @@ export function useNewsData() {
   const { toast } = useToast();
 
   // Available news categories
-  const categories = ['All', 'Markets', 'Economy', 'Technology', 'Crypto'];
+  const categories = ['All', 'Markets', 'Economy', 'Policy', 'Technology', 'Crypto'];
 
   useEffect(() => {
     let isMounted = true;
@@ -37,12 +39,23 @@ export function useNewsData() {
         setLoading(true);
         setError(null);
         
-        // Get news from Finnhub API
-        const newsData = await finnhubService.getMarketNews();
+        // Try to fetch news from Perplexity Sonar API first
+        let newsData = await fetchFinancialNews(region);
+        
+        // If no data or error, fall back to Finnhub API
+        if (!newsData || newsData.length === 0) {
+          newsData = await finnhubService.getMarketNews();
+        }
         
         if (!isMounted) return;
         
-        setNews(newsData);
+        // Process and add color coding for impact levels
+        const processedNews = newsData.map((item: any) => ({
+          ...item,
+          impactColor: item.impact === 'High' ? '#ff5252' : item.impact === 'Medium' ? '#7b61ff' : '#00b8d4'
+        }));
+        
+        setNews(processedNews);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching news:', err);
@@ -75,7 +88,7 @@ export function useNewsData() {
       isMounted = false;
       clearInterval(pollInterval);
     };
-  }, []);
+  }, [region]);
   
   // Filter news when selected category or news items change
   useEffect(() => {

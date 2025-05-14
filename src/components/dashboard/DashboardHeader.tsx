@@ -27,8 +27,11 @@ const DashboardHeader = () => {
   return (
     <div className="border-b border-white/10 bg-black/20 p-4 backdrop-blur-sm">
       <div className="container mx-auto flex flex-col items-center justify-between sm:flex-row">
-        {/* Logo and Title */}
-        <div className="flex items-center gap-2 mb-4 sm:mb-0">
+        {/* Logo and Title - Made Clickable */}
+        <div 
+          className="flex items-center gap-2 mb-4 sm:mb-0 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => navigate('/')}
+        >
           <Globe className="h-6 w-6 text-teal-400" />
           <h1 className="text-xl font-bold">GeoFinance</h1>
         </div>

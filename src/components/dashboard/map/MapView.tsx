@@ -24,7 +24,7 @@ const MapView: React.FC<MapViewProps> = ({ is3DView }) => {
       if (!isSupported) {
         toast({
           title: "WebGL not supported",
-          description: "Your browser does not support WebGL, which is required for the 3D globe. Falling back to 2D view.",
+          description: "Your browser does not support WebGL, which is required for the 3D globe. Please try a different browser.",
           variant: "destructive",
         });
       }
@@ -42,13 +42,13 @@ const MapView: React.FC<MapViewProps> = ({ is3DView }) => {
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {is3DView && isWebGLSupported ? (
+      {isWebGLSupported ? (
         <MapboxGlobe className="w-full h-full" />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-[#1a2035]">
           <Skeleton className="w-4/5 h-4/5 rounded-xl bg-white/5" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <p className="text-white/50 text-lg">2D Map View (Coming Soon)</p>
+            <p className="text-white/50 text-lg">Map Visualization Unavailable</p>
           </div>
         </div>
       )}

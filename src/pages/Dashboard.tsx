@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import MapVisualization from "@/components/dashboard/MapVisualization";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { useToast } from "@/components/ui/use-toast";
@@ -18,9 +19,10 @@ import {
 import NewsPanel from "@/components/dashboard/NewsPanel";
 
 const Dashboard = () => {
-  const [is3DView, setIs3DView] = useState(true);
+  const [is3DView] = useState(true); // Keep as true, but no longer toggleable
   const { toast } = useToast();
   const { selectedPeriod, setSelectedPeriod } = useTimelineData();
+  const navigate = useNavigate();
 
   // Initial load toast
   useEffect(() => {
@@ -31,14 +33,6 @@ const Dashboard = () => {
     });
   }, []);
 
-  const handleViewToggle = () => {
-    setIs3DView(prev => !prev);
-    toast({
-      title: `Switched to ${!is3DView ? "3D Globe" : "2D Map"} view`,
-      duration: 2000
-    });
-  };
-
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] text-[#f5f7fa] overflow-hidden">
       <DashboardHeader />
@@ -47,7 +41,7 @@ const Dashboard = () => {
         {/* Main Content - Interactive Map */}
         <div className="flex-1 h-full flex flex-col relative">
           <div className="relative flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm">
-            <MapVisualization is3DView={is3DView} onViewToggle={handleViewToggle} />
+            <MapVisualization />
             
             {/* Financial News Button */}
             <Sheet>

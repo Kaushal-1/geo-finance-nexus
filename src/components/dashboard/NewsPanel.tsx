@@ -1,38 +1,52 @@
 
 import React, { useState } from 'react';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronUp, ChevronDown, ExternalLink } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Separator } from "@/components/ui/separator";
 import { Button } from '@/components/ui/button';
 import { useNewsData } from '@/hooks/useNewsData';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const NewsItem = ({ item }: { item: any }) => (
-  <div className="p-3 border border-white/10 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 animate-fade-in">
-    <div className="flex justify-between items-start mb-1">
-      <h3 className="font-medium text-white text-sm">{item.title}</h3>
-      <span 
-        className="ml-2 text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap" 
-        style={{ backgroundColor: `${item.impactColor}30`, color: item.impactColor }}
-      >
-        {item.impact}
-      </span>
-    </div>
-    
-    <p className="text-[#a0aec0] text-xs mb-2 line-clamp-2">{item.summary}</p>
-    
-    <div className="flex justify-between items-center text-[10px]">
-      <div className="flex items-center">
-        <span className="text-white">{item.source}</span>
-        <span className="mx-1 text-[#a0aec0]">•</span>
-        <span className={`${item.credibilityScore > 90 ? 'text-[#00e676]' : 'text-[#a0aec0]'}`}>
-          {item.credibilityScore}% reliable
+const NewsItem = ({ item }: { item: any }) => {
+  const handleNewsClick = () => {
+    // Open in new tab with smooth transition effect
+    const newWindow = window.open(item.sourceUrl, '_blank');
+    if (newWindow) newWindow.focus();
+  };
+
+  return (
+    <div 
+      className="p-3 border border-white/10 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-300 animate-fade-in cursor-pointer group"
+      onClick={handleNewsClick}
+    >
+      <div className="flex justify-between items-start mb-1">
+        <h3 className="font-medium text-white text-sm group-hover:text-teal-400 transition-colors">{item.title}</h3>
+        <span 
+          className="ml-2 text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap" 
+          style={{ backgroundColor: `${item.impactColor}30`, color: item.impactColor }}
+        >
+          {item.impact}
         </span>
       </div>
-      <span className="text-[#a0aec0]">{item.timestamp}</span>
+      
+      <p className="text-[#a0aec0] text-xs mb-2 line-clamp-2">{item.summary}</p>
+      
+      <div className="flex justify-between items-center text-[10px]">
+        <div className="flex items-center">
+          <span className="text-white">{item.source}</span>
+          <span className="mx-1 text-[#a0aec0]">•</span>
+          <span className={`${item.credibilityScore > 90 ? 'text-[#00e676]' : 'text-[#a0aec0]'}`}>
+            {item.credibilityScore}% reliable
+          </span>
+        </div>
+        <div className="flex items-center text-[#a0aec0] opacity-0 group-hover:opacity-100 transition-opacity">
+          <ExternalLink className="h-3 w-3 mr-1" />
+          <span>View Source</span>
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const NewsPanel = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -79,7 +93,7 @@ const NewsPanel = () => {
               className={`
                 text-xs py-1 h-auto
                 ${selectedCategory === category 
-                  ? 'bg-teal text-white' 
+                  ? 'bg-teal-600 text-white hover:bg-teal-700' 
                   : 'bg-transparent border-white/10 text-[#a0aec0] hover:text-white hover:bg-white/10'}
               `}
               onClick={() => setSelectedCategory(category)}
@@ -121,8 +135,13 @@ const NewsPanel = () => {
       </div>
       
       <div className="p-4 border-t border-white/10">
-        <Button variant="outline" className="w-full bg-transparent border-white/10 text-[#a0aec0] hover:text-white hover:bg-white/10">
-          View All News
+        <Button 
+          variant="outline" 
+          className="w-full bg-transparent border-white/10 text-[#a0aec0] hover:text-white hover:bg-white/10"
+          onClick={() => window.open('https://finnhub.io/news', '_blank')}
+        >
+          <ExternalLink className="h-4 w-4 mr-2" />
+          View All Financial News
         </Button>
       </div>
     </Card>

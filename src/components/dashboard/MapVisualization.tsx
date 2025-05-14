@@ -1,26 +1,14 @@
 
 import React from "react";
 import MapView from "./map/MapView";
-import MapControls from "./map/MapControls";
 import MapLegend from "./map/MapLegend";
 import MapInfoCard from "./map/MapInfoCard";
 
-interface MapVisualizationProps {
-  is3DView: boolean;
-  onViewToggle: () => void;
-}
-
-const MapVisualization: React.FC<MapVisualizationProps> = ({ 
-  is3DView, 
-  onViewToggle 
-}) => {
+const MapVisualization: React.FC = () => {
   return (
     <div className="relative w-full h-full">
-      {/* Map Container */}
-      <MapView is3DView={is3DView} />
-
-      {/* Map Controls */}
-      <MapControls is3DView={is3DView} onViewToggle={onViewToggle} />
+      {/* Map Container - Always 3D */}
+      <MapView is3DView={true} />
 
       {/* Legend */}
       <MapLegend />

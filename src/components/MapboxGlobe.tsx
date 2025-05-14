@@ -1,25 +1,15 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { finnhubService } from '@/services/finnhubService';
 import { useToast } from '@/components/ui/use-toast';
+import { fetchFinancialNews } from '@/services/newsService';
 
 // Extend the Window interface to include mapboxgl
 declare global {
   interface Window {
     mapboxgl: typeof mapboxgl;
-  }
-}
-
-// Add GeoJSON type definitions
-namespace GeoJSON {
-  export interface Feature {
-    type: string;
-    properties: any;
-    geometry: {
-      type: string;
-      coordinates: number[][];
-    };
   }
 }
 
@@ -37,10 +27,20 @@ interface MapboxGlobeProps {
 
 interface FinancialCenter {
   name: string;
+  countryName: string;
   coordinates: [number, number];
   performance: number;
   marketSize: number;
   symbol: string;
+  news?: NewsItem[];
+}
+
+interface NewsItem {
+  title: string;
+  summary: string;
+  url: string;
+  source: string;
+  timestamp: string;
 }
 
 interface MarketData {
@@ -54,35 +54,58 @@ interface MarketData {
   };
 }
 
-// Define a more specific type for Finnhub quote responses
-interface FinnhubQuoteResult {
-  symbol: string;
-  name: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  open: number;
-  high: number;
-  low: number;
-  prevClose: number;
-  timestamp: Date;
-  error?: boolean;
-}
-
 const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [marketData, setMarketData] = useState<MarketData>({});
   const markersRef = useRef<{ [key: string]: mapboxgl.Marker }>({});
+  const [countryNews, setCountryNews] = useState<{[country: string]: NewsItem[]}>({});
   const { toast } = useToast();
   
-  // Financial centers data - reduced number to minimize API calls
+  // Financial centers data with country names for news fetching
   const financialCenters: FinancialCenter[] = [
-    { name: "New York", coordinates: [-74.0060, 40.7128], performance: 0, marketSize: 26.3, symbol: "^GSPC" },
-    { name: "London", coordinates: [-0.1278, 51.5074], performance: 0, marketSize: 20.1, symbol: "^FTSE" },
-    { name: "Tokyo", coordinates: [139.6503, 35.6762], performance: 0, marketSize: 18.5, symbol: "^N225" }
+    { name: "New York", countryName: "United States", coordinates: [-74.0060, 40.7128], performance: 0, marketSize: 26.3, symbol: "^GSPC" },
+    { name: "London", countryName: "United Kingdom", coordinates: [-0.1278, 51.5074], performance: 0, marketSize: 20.1, symbol: "^FTSE" },
+    { name: "Tokyo", countryName: "Japan", coordinates: [139.6503, 35.6762], performance: 0, marketSize: 18.5, symbol: "^N225" },
+    { name: "Shanghai", countryName: "China", coordinates: [121.4737, 31.2304], performance: 0, marketSize: 15.7, symbol: "^SSE" },
+    { name: "Hong Kong", countryName: "Hong Kong", coordinates: [114.1694, 22.3193], performance: 0, marketSize: 12.8, symbol: "^HSI" },
+    { name: "Frankfurt", countryName: "Germany", coordinates: [8.6821, 50.1109], performance: 0, marketSize: 9.5, symbol: "^GDAXI" },
+    { name: "Sydney", countryName: "Australia", coordinates: [151.2093, -33.8688], performance: 0, marketSize: 7.2, symbol: "^AXJO" },
+    { name: "Mumbai", countryName: "India", coordinates: [72.8777, 19.0760], performance: 0, marketSize: 8.4, symbol: "^BSESN" },
+    { name: "São Paulo", countryName: "Brazil", coordinates: [-46.6333, -23.5505], performance: 0, marketSize: 5.9, symbol: "^BVSP" }
   ];
+
+  // Fetch news for each country
+  useEffect(() => {
+    const fetchNewsForCountries = async () => {
+      const newsMap: {[country: string]: NewsItem[]} = {};
+      
+      for (const center of financialCenters) {
+        try {
+          console.log(`Fetching news for ${center.countryName}`);
+          const news = await fetchFinancialNews(center.countryName, 'financial markets');
+          
+          if (news && news.length > 0) {
+            newsMap[center.countryName] = news.slice(0, 3); // Limit to 3 news items per country
+          }
+          
+          // Add delay between requests to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        } catch (err) {
+          console.error(`Error fetching news for ${center.countryName}:`, err);
+        }
+      }
+      
+      setCountryNews(newsMap);
+    };
+    
+    fetchNewsForCountries();
+    
+    // Refresh news every 30 minutes
+    const interval = setInterval(fetchNewsForCountries, 1800000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Fetch market data with reduced frequency
   useEffect(() => {
@@ -171,11 +194,21 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
         style: 'mapbox://styles/mapbox/dark-v11',
         center: [0, 20],
         zoom: 1.5,
-        projection: 'globe'
+        projection: 'globe',
+        attributionControl: false // Hide attribution control
       });
 
-      // Add navigation control
-      map.current.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+      // Add navigation control to bottom-right
+      map.current.addControl(new mapboxgl.NavigationControl({
+        showCompass: false,
+        visualizePitch: false
+      }), 'bottom-right');
+      
+      // Add attribution in a more elegant way
+      map.current.addControl(new mapboxgl.AttributionControl({
+        compact: true,
+        customAttribution: 'Powered by MapBox | GeoFinance 2025'
+      }), 'bottom-left');
 
       // Handle map load event
       map.current.on('load', () => {
@@ -308,47 +341,83 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
       // Pulse effect
       el.innerHTML = `<div class="pulse" style="background-color: ${color};"></div>`;
       
-      // Add popup with live data
+      // Get country news
+      const news = countryNews[center.countryName] || [];
+      center.news = news;
+      
+      // Add popup with live data and news
       let popupContent;
+      
+      // Start with the main financial center information
+      let mainContent = `
+        <div class="popup-content">
+          <h3 class="popup-title">${center.name}, ${center.countryName}</h3>
+      `;
+      
       if (!marketInfo || marketInfo.error) {
-        popupContent = `
-          <div class="popup-content">
-            <h3 class="popup-title">${center.name}</h3>
-            <div class="popup-data">
-              <span class="popup-label">Status:</span>
-              <span class="popup-value">Data unavailable</span>
-            </div>
-            <div class="popup-data">
-              <span class="popup-label">Market Size:</span>
-              <span class="popup-value">$${center.marketSize.toFixed(1)}T</span>
-            </div>
+        mainContent += `
+          <div class="popup-data">
+            <span class="popup-label">Status:</span>
+            <span class="popup-value">Data unavailable</span>
+          </div>
+          <div class="popup-data">
+            <span class="popup-label">Market Size:</span>
+            <span class="popup-value">$${center.marketSize.toFixed(1)}T</span>
           </div>
         `;
       } else {
-        popupContent = `
-          <div class="popup-content">
-            <h3 class="popup-title">${center.name}</h3>
-            <div class="popup-data">
-              <span class="popup-label">Price:</span>
-              <span class="popup-value">${marketInfo.price.toFixed(2)}</span>
+        mainContent += `
+          <div class="popup-data">
+            <span class="popup-label">Price:</span>
+            <span class="popup-value">${marketInfo.price.toFixed(2)}</span>
+          </div>
+          <div class="popup-data">
+            <span class="popup-label">Performance:</span>
+            <span class="popup-value ${marketInfo.change >= 0 ? 'positive' : 'negative'}">
+              ${marketInfo.change >= 0 ? '+' : ''}${marketInfo.changePercent.toFixed(2)}%
+            </span>
+          </div>
+          <div class="popup-data">
+            <span class="popup-label">Market Size:</span>
+            <span class="popup-value">$${center.marketSize.toFixed(1)}T</span>
+          </div>
+        `;
+      }
+      
+      // Add news section if available
+      let newsContent = '';
+      if (news && news.length > 0) {
+        newsContent = `
+          <div class="mt-3 pt-3 border-t border-white/10">
+            <h4 class="text-sm font-semibold text-white mb-2">Latest News</h4>
+            <div class="news-items space-y-2">
+        `;
+        
+        news.forEach((item) => {
+          newsContent += `
+            <div class="news-item">
+              <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="text-xs font-medium text-teal-400 hover:text-teal-300 transition-colors">
+                ${item.title}
+              </a>
+              <p class="text-[10px] text-white/60">${item.source}</p>
             </div>
-            <div class="popup-data">
-              <span class="popup-label">Performance:</span>
-              <span class="popup-value ${marketInfo.change >= 0 ? 'positive' : 'negative'}">
-                ${marketInfo.change >= 0 ? '+' : ''}${marketInfo.changePercent.toFixed(2)}%
-              </span>
-            </div>
-            <div class="popup-data">
-              <span class="popup-label">Market Size:</span>
-              <span class="popup-value">$${center.marketSize.toFixed(1)}T</span>
+          `;
+        });
+        
+        newsContent += `
             </div>
           </div>
         `;
       }
       
+      // Combine the main content and news content
+      popupContent = mainContent + newsContent + '</div>';
+      
       const popup = new mapboxgl.Popup({ 
         offset: 25,
-        closeButton: false,
+        closeButton: true,
+        closeOnClick: false,
+        maxWidth: '300px',
         className: 'financial-center-popup'
       }).setHTML(popupContent);
       
@@ -379,14 +448,13 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
       // Pulse effect
       el.innerHTML = `<div class="pulse" style="background-color: #90a4ae;"></div>`;
       
-      // Add popup with static data
-      const popup = new mapboxgl.Popup({ 
-        offset: 25,
-        closeButton: false,
-        className: 'financial-center-popup'
-      }).setHTML(
-        `<div class="popup-content">
-          <h3 class="popup-title">${center.name}</h3>
+      // Get country news
+      const news = countryNews[center.countryName] || [];
+      
+      // Add popup with static data and news if available
+      let popupContent = `
+        <div class="popup-content">
+          <h3 class="popup-title">${center.name}, ${center.countryName}</h3>
           <div class="popup-data">
             <span class="popup-label">Status:</span>
             <span class="popup-value">Data unavailable</span>
@@ -395,8 +463,42 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
             <span class="popup-label">Market Size:</span>
             <span class="popup-value">$${center.marketSize.toFixed(1)}T</span>
           </div>
-        </div>`
-      );
+      `;
+      
+      // Add news section if available
+      if (news && news.length > 0) {
+        popupContent += `
+          <div class="mt-3 pt-3 border-t border-white/10">
+            <h4 class="text-sm font-semibold text-white mb-2">Latest News</h4>
+            <div class="news-items space-y-2">
+        `;
+        
+        news.forEach((item) => {
+          popupContent += `
+            <div class="news-item">
+              <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="text-xs font-medium text-teal-400 hover:text-teal-300 transition-colors">
+                ${item.title}
+              </a>
+              <p class="text-[10px] text-white/60">${item.source}</p>
+            </div>
+          `;
+        });
+        
+        popupContent += `
+            </div>
+          </div>
+        `;
+      }
+      
+      popupContent += `</div>`;
+      
+      const popup = new mapboxgl.Popup({ 
+        offset: 25,
+        closeButton: true,
+        closeOnClick: false,
+        maxWidth: '300px',
+        className: 'financial-center-popup'
+      }).setHTML(popupContent);
       
       // Create and add the marker
       new mapboxgl.Marker(el)
@@ -414,12 +516,11 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
       ['London', 'Frankfurt'],
       ['New York', 'Hong Kong'],
       ['Tokyo', 'Hong Kong'],
-      ['Singapore', 'Hong Kong'],
-      ['London', 'Dubai'],
       ['Shanghai', 'Tokyo'],
-      ['Mumbai', 'Dubai'],
-      ['Singapore', 'Sydney'],
-      ['New York', 'São Paulo']
+      ['Frankfurt', 'Mumbai'],
+      ['Sydney', 'Tokyo'],
+      ['São Paulo', 'New York'],
+      ['Mumbai', 'Hong Kong']
     ];
     
     // Find center by name
@@ -455,7 +556,7 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
               ]
             }
           };
-        }).filter(Boolean) as GeoJSON.Feature[]
+        }).filter(Boolean) as any[]
       }
     });
     
@@ -468,22 +569,6 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
         'line-color': ['get', 'color'],
         'line-width': 1.5,
         'line-opacity': 0.7
-      }
-    });
-    
-    // Add animated arrows along the lines
-    map.addLayer({
-      id: 'connection-arrows',
-      type: 'symbol',
-      source: 'connections',
-      layout: {
-        'symbol-placement': 'line',
-        'symbol-spacing': 150,
-        'icon-image': 'arrow',
-        'icon-size': 0.5,
-        'icon-rotate': 90,
-        'icon-allow-overlap': true,
-        'icon-ignore-placement': true
       }
     });
   };
