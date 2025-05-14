@@ -250,5 +250,15 @@ export const alpacaService = {
     } catch (error) {
       return handleApiError(error, "Failed to search assets");
     }
+  },
+  
+  // Get portfolio history
+  getPortfolioHistory: async (period = '1M', timeframe = '1D') => {
+    try {
+      const response = await alpacaApi.get(`/v2/account/portfolio/history?period=${period}&timeframe=${timeframe}`);
+      return response.data;
+    } catch (error) {
+      return handleApiError(error, "Failed to fetch portfolio history");
+    }
   }
 };

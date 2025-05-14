@@ -14,7 +14,7 @@ export function useChatState() {
   // Helper to generate a unique ID
   const generateId = () => `id-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (content: string, portfolioContext: any = null) => {
     try {
       // Add user message
       const userMessage: ChatMessage = {
@@ -62,9 +62,9 @@ export function useChatState() {
         setActiveVisualization(loadingVisualization);
       }
 
-      // Generate AI response
+      // Generate AI response with portfolio context
       const { message: aiMessage, visualization, suggestedQuestions: newSuggestions } = 
-        await generateResponse(content, messages);
+        await generateResponse(content, messages, portfolioContext);
 
       // Update state with AI response
       setMessages(prevMessages => [...prevMessages, {

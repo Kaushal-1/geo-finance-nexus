@@ -17,9 +17,22 @@ export const setPerplexityApiKey = (key: string) => {
   console.log('API key is hardcoded, this function is deprecated');
 };
 
-// Helper function to generate a response with the Perplexity API
-async function fetchPerplexityResponse(query: string) {
+// Helper function to generate a response with the Perplexity API, now with portfolio context
+async function fetchPerplexityResponse(query: string, portfolioContext: any = null) {
   try {
+    // Prepare system message with portfolio context if available
+    let systemMessage = 'You are a financial analyst assistant that provides accurate, helpful information about markets, stocks, and economic events. Include relevant facts, data, and context in your answers. Format your responses in a clean, scannable style with clear section headers, bold for important points, and properly attributed sources.';
+    
+    if (portfolioContext) {
+      systemMessage += `\n\nThe user has the following portfolio information from Alpaca:
+      - Total Equity: $${portfolioContext.totalEquity?.toLocaleString() || 'N/A'}
+      - Portfolio Change: ${portfolioContext.portfolioChange}%
+      - Number of Positions: ${portfolioContext.totalPositions}
+      - Largest Position: ${portfolioContext.largestPosition}
+      
+      Consider this portfolio context when providing financial advice and insights. Personalize your response based on their holdings when relevant.`;
+    }
+    
     // Using newer chat completions API for better responses
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -32,7 +45,7 @@ async function fetchPerplexityResponse(query: string) {
         messages: [
           {
             role: 'system',
-            content: 'You are a financial analyst assistant that provides accurate, helpful information about markets, stocks, and economic events. Include relevant facts, data, and context in your answers. Be concise but thorough.'
+            content: systemMessage
           },
           {
             role: 'user',
@@ -192,10 +205,38 @@ function createSourceCitations(responseJson: any): SourceCitation[] {
   }
 }
 
+// New function to generate portfolio-specific suggested questions
+function generatePortfolioQuestions(message: string, history: ChatMessage[], portfolioContext: any): string[] {
+  if (!portfolioContext) {
+    return generateSuggestedQuestions(message, history);
+  }
+  
+  const questions = [];
+  const lowerMessage = message.toLowerCase();
+  
+  // If they have a largest position, suggest a question about it
+  if (portfolioContext.largestPosition) {
+    questions.push(`What's the latest news on ${portfolioContext.largestPosition}?`);
+    questions.push(`What is the outlook for ${portfolioContext.largestPosition} in the next quarter?`);
+  }
+  
+  // Portfolio analysis suggestions
+  questions.push("How is my portfolio performing compared to the broader market?");
+  questions.push("What's my sector exposure and should I be concerned about concentration risk?");
+  questions.push("How would a 0.25% Fed rate change impact my current holdings?");
+  
+  // Keep only unique questions
+  const uniqueQuestions = Array.from(new Set(questions));
+  
+  // Return at most 4 questions
+  return uniqueQuestions.slice(0, 4);
+}
+
 // Main function to generate AI responses
 export async function generateResponse(
   message: string, 
-  history: ChatMessage[]
+  history: ChatMessage[],
+  portfolioContext: any = null
 ): Promise<{
   message: ChatMessage;
   visualization: Visualization | null;
@@ -205,8 +246,8 @@ export async function generateResponse(
     // Analyze if visualization is needed
     const visualizationAnalysis = analyzeForVisualization(message);
     
-    // Fetch data from Perplexity
-    const perplexityResponse = await fetchPerplexityResponse(message);
+    // Fetch data from Perplexity with portfolio context
+    const perplexityResponse = await fetchPerplexityResponse(message, portfolioContext);
     console.log('Perplexity API response:', perplexityResponse);
     
     // Extract content from response
@@ -214,10 +255,11 @@ export async function generateResponse(
     
     // Create a simplified response if Perplexity doesn't provide good data
     const fallbackResponse = 
-      "Based on recent financial data and market analysis, " +
-      "this question relates to important market dynamics. " +
+      "**Key Insight**: Based on recent financial data and market analysis, this question relates to important market dynamics.\n\n" +
+      "## Market context\n\n" +
       "Several factors are currently influencing this situation, including " +
-      "interest rate policies, global trade conditions, and sector-specific trends. " +
+      "**interest rate policies**, global trade conditions, and sector-specific trends.\n\n" +
+      "## Portfolio implications\n\n" +
       "Would you like me to analyze a specific aspect in more detail?";
     
     const aiResponseContent = responseContent || fallbackResponse;
@@ -292,8 +334,14 @@ export async function generateResponse(
       }
     }
     
-    // Generate suggested follow-up questions
-    const suggestedQuestions = generateSuggestedQuestions(message, history);
+    // Generate portfolio-aware suggested follow-up questions
+    let suggestedQuestions: string[] = [];
+    
+    if (portfolioContext) {
+      suggestedQuestions = generatePortfolioQuestions(message, history, portfolioContext);
+    } else {
+      suggestedQuestions = generateSuggestedQuestions(message, history);
+    }
     
     return {
       message: aiMessage,
