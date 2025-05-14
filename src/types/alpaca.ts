@@ -1,4 +1,3 @@
-
 // Account types
 export interface AlpacaAccount {
   id: string;
@@ -102,8 +101,7 @@ export interface PlaceOrderRequest {
   time_in_force: 'day' | 'gtc' | 'ioc' | 'fok';
   limit_price?: number;
   stop_price?: number;
-  extended_hours?: boolean;
-  client_order_id?: string;
+  telegram_chat_id?: string;
 }
 
 // Chart data types
@@ -128,4 +126,16 @@ export interface AlpacaAsset {
   shortable: boolean;
   easy_to_borrow: boolean;
   fractionable: boolean;
+}
+
+// Add interface for price alerts
+export interface PriceAlert {
+  id?: string;
+  symbol: string;
+  condition: 'price_above' | 'price_below';
+  threshold: number;
+  telegram_chat_id?: string | null;
+  created_at?: string;
+  triggered_at?: string | null;
+  active?: boolean;
 }

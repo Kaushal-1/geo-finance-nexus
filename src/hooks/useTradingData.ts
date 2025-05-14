@@ -1,7 +1,6 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { alpacaService } from "@/services/alpacaService";
-import { AlpacaAccount, AlpacaPosition, AlpacaOrder, PlaceOrderRequest, AlpacaWatchlist } from "@/types/alpaca";
+import { AlpacaAccount, AlpacaPosition, AlpacaOrder, PlaceOrderRequest, AlpacaWatchlist, PriceAlert } from "@/types/alpaca";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -208,7 +207,7 @@ export const useTradingData = () => {
     await fetchWatchlists();
   }, [fetchWatchlists]);
 
-  // New function to create a price alert
+  // Handle price alert creation
   const handleCreatePriceAlert = async (symbol: string, condition: 'price_above' | 'price_below', threshold: number, telegramChatId?: string) => {
     try {
       // Create alert in the database
@@ -256,7 +255,7 @@ export const useTradingData = () => {
     }
   };
 
-  // New function to list price alerts
+  // Get price alerts
   const handleGetPriceAlerts = async (telegramChatId?: string) => {
     try {
       let query = supabase
@@ -283,7 +282,7 @@ export const useTradingData = () => {
     }
   };
 
-  // New function to delete price alert
+  // Delete price alert
   const handleDeletePriceAlert = async (alertId: string, telegramChatId?: string) => {
     try {
       let query = supabase

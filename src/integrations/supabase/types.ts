@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      price_alerts: {
+        Row: {
+          active: boolean
+          condition: string
+          created_at: string
+          id: string
+          symbol: string
+          telegram_chat_id: string | null
+          threshold: number
+          triggered_at: string | null
+        }
+        Insert: {
+          active?: boolean
+          condition: string
+          created_at?: string
+          id?: string
+          symbol: string
+          telegram_chat_id?: string | null
+          threshold: number
+          triggered_at?: string | null
+        }
+        Update: {
+          active?: boolean
+          condition?: string
+          created_at?: string
+          id?: string
+          symbol?: string
+          telegram_chat_id?: string | null
+          threshold?: number
+          triggered_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
