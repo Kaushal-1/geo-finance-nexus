@@ -231,7 +231,9 @@ const ChatResearch = () => {
                       </div>
                     ) : portfolioError ? (
                       <div className="text-center py-8">
-                        <AlertTriangle className="h-8 w-8 mx-auto text-red-400 mb-2" />
+                        <div className="flex justify-center">
+                          <AlertTriangle className="h-8 w-8 text-red-400 mb-2" />
+                        </div>
                         <p className="text-red-400">{portfolioError}</p>
                         <Button 
                           variant="outline" 
