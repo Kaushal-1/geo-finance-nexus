@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { alpacaService } from "@/services/alpacaService";
 import { AlpacaAccount, AlpacaPosition, AlpacaOrder, PlaceOrderRequest, AlpacaWatchlist } from "@/types/alpaca";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useTradingData = () => {
   const [account, setAccount] = useState<AlpacaAccount | null>(null);
@@ -101,11 +102,27 @@ export const useTradingData = () => {
         fetchOrders();
         fetchPositions();
         fetchAccount();
+        
+        // If this order is linked to Telegram, notify
+        if (orderData.telegram_chat_id) {
+          await notifyTelegramOrderPlaced(orderData.telegram_chat_id, result.id, orderData.symbol, orderData.qty, orderData.side);
+        }
+        
         return result;
       }
       return null;
     } finally {
       setIsProcessingOrder(false);
+    }
+  };
+
+  const notifyTelegramOrderPlaced = async (chatId: string, orderId: string, symbol: string, qty: number, side: string) => {
+    try {
+      // Here we would call our Telegram notification service
+      console.log(`Would notify Telegram chat ${chatId} about ${side} order for ${qty} shares of ${symbol}, order ID: ${orderId}`);
+      // This is a placeholder - in production, you would call your edge function here
+    } catch (error) {
+      console.error("Error notifying Telegram about order:", error);
     }
   };
 
@@ -191,6 +208,128 @@ export const useTradingData = () => {
     await fetchWatchlists();
   }, [fetchWatchlists]);
 
+  // New function to create a price alert
+  const handleCreatePriceAlert = async (symbol: string, condition: 'price_above' | 'price_below', threshold: number, telegramChatId?: string) => {
+    try {
+      // Create alert in the database
+      const { data, error } = await supabase
+        .from('price_alerts')
+        .insert([
+          {
+            symbol,
+            condition,
+            threshold,
+            telegram_chat_id: telegramChatId || null,
+            created_at: new Date().toISOString(),
+            active: true
+          }
+        ])
+        .select();
+
+      if (error) {
+        console.error("Error creating price alert:", error);
+        toast({
+          title: "Error",
+          description: "Failed to create price alert. Please try again.",
+          duration: 5000,
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      toast({
+        title: "Alert Created",
+        description: `Alert created for ${symbol} when price goes ${condition === 'price_above' ? 'above' : 'below'} $${threshold}`,
+        duration: 3000,
+      });
+
+      return data[0];
+    } catch (error) {
+      console.error("Error creating price alert:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create price alert. Please try again.",
+        duration: 5000,
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  // New function to list price alerts
+  const handleGetPriceAlerts = async (telegramChatId?: string) => {
+    try {
+      let query = supabase
+        .from('price_alerts')
+        .select('*')
+        .eq('active', true);
+        
+      // If telegramChatId is provided, filter by it
+      if (telegramChatId) {
+        query = query.eq('telegram_chat_id', telegramChatId);
+      }
+      
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching price alerts:", error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error("Error fetching price alerts:", error);
+      return [];
+    }
+  };
+
+  // New function to delete price alert
+  const handleDeletePriceAlert = async (alertId: string, telegramChatId?: string) => {
+    try {
+      let query = supabase
+        .from('price_alerts')
+        .delete();
+        
+      // Basic condition
+      query = query.eq('id', alertId);
+      
+      // If telegramChatId is provided, add it as an additional condition
+      if (telegramChatId) {
+        query = query.eq('telegram_chat_id', telegramChatId);
+      }
+      
+      const { error } = await query;
+
+      if (error) {
+        console.error("Error deleting price alert:", error);
+        toast({
+          title: "Error",
+          description: "Failed to delete price alert. Please try again.",
+          duration: 5000,
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      toast({
+        title: "Alert Deleted",
+        description: "Price alert has been deleted successfully.",
+        duration: 3000,
+      });
+
+      return true;
+    } catch (error) {
+      console.error("Error deleting price alert:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete price alert. Please try again.",
+        duration: 5000,
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   return {
     account,
     positions,
@@ -209,6 +348,9 @@ export const useTradingData = () => {
     removeFromWatchlist: handleRemoveFromWatchlist,
     deleteWatchlist: handleDeleteWatchlist,
     refreshWatchlists: handleRefreshWatchlists,
+    createPriceAlert: handleCreatePriceAlert,
+    getPriceAlerts: handleGetPriceAlerts, 
+    deletePriceAlert: handleDeletePriceAlert,
     refreshAll: useCallback(async () => {
       fetchAccount();
       fetchPositions();
