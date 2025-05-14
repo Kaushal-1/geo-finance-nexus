@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Lightbulb, Send, RefreshCw, Ban, Alert, ArrowUpRight } from "lucide-react";
+import { Lightbulb, Send, RefreshCw, Ban, AlertTriangle, ArrowUpRight } from "lucide-react";
 
 import { useToast } from "@/components/ui/use-toast";
 import { useChatState } from "@/hooks/useChatState";
@@ -236,7 +235,7 @@ const ChatResearch = () => {
                       </div>
                     ) : portfolioError ? (
                       <div className="text-center py-8">
-                        <Alert className="h-8 w-8 mx-auto text-red-400 mb-2" />
+                        <AlertTriangle className="h-8 w-8 mx-auto text-red-400 mb-2" />
                         <p className="text-red-400">{portfolioError}</p>
                         <Button 
                           variant="outline" 
