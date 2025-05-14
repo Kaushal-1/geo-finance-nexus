@@ -1,4 +1,3 @@
-
 import { TradingService } from "./trading-service.ts";
 import { AlertService } from "./alert-service.ts";
 
@@ -6,14 +5,20 @@ export class TelegramBot {
   private tradingService: TradingService;
   private alertService: AlertService;
   private BOT_TOKEN: string;
+  private SONAR_API_KEY: string;
 
   constructor(tradingService: TradingService, alertService: AlertService) {
     this.tradingService = tradingService;
     this.alertService = alertService;
     this.BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') || '';
+    this.SONAR_API_KEY = Deno.env.get('PERPLEXITY_API_KEY') || '';
     
     if (!this.BOT_TOKEN) {
       console.error('❌ Telegram BOT_TOKEN is missing!');
+    }
+    
+    if (!this.SONAR_API_KEY) {
+      console.error('❌ Sonar API key is missing!');
     }
   }
 
@@ -57,6 +62,9 @@ export class TelegramBot {
         case '/alert':
           await this.handleAlertCommand(chatId, parts);
           break;
+        case '/chat':
+          await this.handleChatCommand(chatId, parts);
+          break;
         default:
           await this.sendMessage(chatId, "Unknown command. Send /help to see available commands.");
       }
@@ -81,10 +89,14 @@ Available commands:
 /alert list - List your active alerts
 /alert delete ALERT_ID - Delete an alert
 
+<b>AI Assistant:</b>
+/chat YOUR_QUESTION - Chat with AI about finance & markets
+
 Examples:
 /buy AAPL 10 150
 /sell TSLA 5
 /alert create AAPL price_below 140
+/chat What's the outlook for tech stocks?
 `;
     await this.sendMessage(chatId, helpText);
   }
@@ -320,5 +332,76 @@ ${emoji} <b>Stock Price Alert</b>
 `;
 
     await this.sendMessage(parseInt(chatId, 10), message);
+  }
+
+  async handleChatCommand(chatId: number, parts: string[]): Promise<void> {
+    // Expected format: /chat [user's question]
+    if (parts.length < 2) {
+      await this.sendMessage(chatId, "Usage: /chat YOUR_QUESTION\nExample: /chat What's the current market trend?");
+      return;
+    }
+
+    // Get the question (everything after /chat)
+    const question = parts.slice(1).join(' ');
+    
+    // Let the user know we're processing
+    await this.sendMessage(chatId, `Processing your question: "${question}"\nPlease wait a moment...`);
+    
+    try {
+      // Get response from the Sonar API
+      const response = await this.getSonarResponse(question);
+      
+      // Send the response back to the user
+      await this.sendMessage(chatId, response);
+    } catch (error) {
+      console.error('Error getting Sonar response:', error);
+      await this.sendMessage(chatId, `❌ Sorry, I couldn't process your question. Error: ${error.message}`);
+    }
+  }
+
+  async getSonarResponse(question: string): Promise<string> {
+    if (!this.SONAR_API_KEY) {
+      throw new Error("Sonar API key is not configured");
+    }
+
+    try {
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.SONAR_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-sonar-small-128k-online',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a financial analyst assistant that provides accurate, helpful information about markets, stocks, and economic events. Include relevant facts, data, and context in your answers. Format your responses in a clean, scannable style for Telegram.'
+            },
+            {
+              role: 'user',
+              content: question
+            }
+          ],
+          temperature: 0.2,
+          max_tokens: 800,
+          search_recency_filter: 'month',
+          frequency_penalty: 1,
+          presence_penalty: 0
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Sonar API error response:', errorText);
+        throw new Error(`API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data.choices[0].message.content;
+    } catch (error) {
+      console.error('Error fetching from Sonar API:', error);
+      throw error;
+    }
   }
 }
