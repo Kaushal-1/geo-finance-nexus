@@ -1,7 +1,6 @@
-
 import React from "react";
 
-// Define the props interface
+// Define the props interface with strict typing for value
 interface TechnicalIndicatorGaugeProps {
   title: string;
   value: "Strong buy" | "Buy" | "Neutral" | "Sell" | "Strong sell";

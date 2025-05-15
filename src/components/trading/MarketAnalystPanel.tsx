@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -96,11 +95,14 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
     else oscillatorsNeutral += 0;
     
     // Determine oscillators rating
-    const oscillatorsValue = oscillatorsSell > oscillatorsBuy 
-      ? (oscillatorsSell >= oscillatorsBuy * 2 ? "Strong sell" : "Sell")
-      : oscillatorsBuy > oscillatorsSell
-        ? (oscillatorsBuy >= oscillatorsSell * 2 ? "Strong buy" : "Buy")
-        : "Neutral";
+    let oscillatorsValue: "Strong buy" | "Buy" | "Neutral" | "Sell" | "Strong sell";
+    if (oscillatorsSell > oscillatorsBuy) {
+      oscillatorsValue = oscillatorsSell >= oscillatorsBuy * 2 ? "Strong sell" : "Sell";
+    } else if (oscillatorsBuy > oscillatorsSell) {
+      oscillatorsValue = oscillatorsBuy >= oscillatorsSell * 2 ? "Strong buy" : "Buy";
+    } else {
+      oscillatorsValue = "Neutral";
+    }
     
     // Moving Averages analysis
     let maSell = 0;
@@ -120,11 +122,14 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
     else if (metrics.ma50 < metrics.ma200) maSell += 0;
     
     // Determine MA rating
-    const maValue = maSell > maBuy 
-      ? (maSell >= maBuy * 1.5 ? "Strong sell" : "Sell")
-      : maBuy > maSell
-        ? (maBuy >= maSell * 1.5 ? "Strong buy" : "Buy")
-        : "Neutral";
+    let maValue: "Strong buy" | "Buy" | "Neutral" | "Sell" | "Strong sell";
+    if (maSell > maBuy) {
+      maValue = maSell >= maBuy * 1.5 ? "Strong sell" : "Sell";
+    } else if (maBuy > maSell) {
+      maValue = maBuy >= maSell * 1.5 ? "Strong buy" : "Buy";
+    } else {
+      maValue = "Neutral";
+    }
     
     // MACD analysis
     let macdSell = 0;
@@ -140,11 +145,14 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
     else if (metrics.macdHistogram < 0) macdSell += 0;
     
     // Determine MACD rating
-    const macdValue = macdSell > macdBuy 
-      ? (macdSell >= macdBuy * 1.5 ? "Strong sell" : "Sell")
-      : macdBuy > macdSell
-        ? (macdBuy >= macdSell * 1.5 ? "Strong buy" : "Buy")
-        : "Neutral";
+    let macdValue: "Strong buy" | "Buy" | "Neutral" | "Sell" | "Strong sell";
+    if (macdSell > macdBuy) {
+      macdValue = macdSell >= macdBuy * 1.5 ? "Strong sell" : "Sell";
+    } else if (macdBuy > macdSell) {
+      macdValue = macdBuy >= macdSell * 1.5 ? "Strong buy" : "Buy";
+    } else {
+      macdValue = "Neutral";
+    }
     
     return {
       oscillators: { value: oscillatorsValue, sellCount: oscillatorsSell, neutralCount: oscillatorsNeutral, buyCount: oscillatorsBuy },
@@ -426,10 +434,10 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
                   title="Summary" 
                   value={
                     indicatorRatings.ma.buyCount > indicatorRatings.oscillators.buyCount + indicatorRatings.macd.buyCount
-                      ? "Strong buy"
+                      ? "Strong buy" as const
                       : indicatorRatings.ma.buyCount + indicatorRatings.oscillators.buyCount + indicatorRatings.macd.buyCount > 15
-                      ? "Buy"
-                      : "Neutral"
+                      ? "Buy" as const
+                      : "Neutral" as const
                   }
                   sellCount={0}
                   neutralCount={9}
