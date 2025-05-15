@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Send, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { useChatState } from '@/hooks/useChatState';
-import { ChatMessage as ChatMessageType } from '@/types/chat'; 
+import { ChatMessage } from '@/types/chat';
+import { generateResponse } from '@/services/chatService';
 import SuggestedQuestions from '@/components/chat/SuggestedQuestions';
 import ChatMessage from '@/components/chat/ChatMessage';
 import VisualizationPanel from '@/components/chat/VisualizationPanel';
@@ -20,16 +21,18 @@ const ChatResearch = () => {
   const navigate = useNavigate();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { portfolioSummary } = usePortfolioContext(); // Using portfolioSummary instead of portfolioContext
+  const { portfolioContext } = usePortfolioContext();
   
   const { 
     messages, 
     loading, 
     activeVisualization, 
     suggestedQuestions, 
-    sendMessage,
+    addUserMessage, 
+    addAIMessage, 
     setActiveVisualization,
-    clearChat
+    setLoading,
+    setSuggestedQuestions
   } = useChatState();
   
   const [input, setInput] = useState('');
@@ -53,25 +56,64 @@ const ChatResearch = () => {
   // Initial welcome message
   useEffect(() => {
     if (messages.length === 0) {
-      // Create welcome message
-      sendMessage("👋 Welcome to the AI Financial Research Assistant! I can help you analyze stocks, understand market trends, and provide insights on economic data. What would you like to know today?");
+      const welcomeMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        sender: 'ai',
+        content: "👋 Welcome to the AI Financial Research Assistant! I can help you analyze stocks, understand market trends, and provide insights on economic data. What would you like to know today?",
+        timestamp: new Date(),
+        sentiment: 'neutral'
+      };
+      addAIMessage(welcomeMessage);
       
       // Set initial suggested questions
-      const initialQuestions = [
+      setSuggestedQuestions([
         "How is the technology sector performing this month?",
         "What's the outlook for inflation in 2025?",
         "Analyze the recent performance of AAPL stock",
         "What are the top-performing ETFs for sustainable investing?"
-      ];
-      
-      // Direct update is not needed as the sendMessage function will handle this
+      ]);
     }
-  }, [messages.length, sendMessage]);
+  }, [messages.length, addAIMessage, setSuggestedQuestions]);
   
   const handleSendMessage = async () => {
     if (input.trim() && !loading) {
-      await sendMessage(input, portfolioSummary);
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        sender: 'user',
+        content: input,
+        timestamp: new Date()
+      };
+      
+      addUserMessage(userMessage);
       setInput('');
+      setLoading(true);
+      
+      try {
+        const response = await generateResponse(
+          input, 
+          messages,
+          portfolioContext // Pass portfolio context for personalized responses
+        );
+        
+        addAIMessage(response.message);
+        
+        if (response.visualization) {
+          setActiveVisualization(response.visualization);
+        }
+        
+        if (response.suggestedQuestions) {
+          setSuggestedQuestions(response.suggestedQuestions);
+        }
+      } catch (error) {
+        console.error('Error generating response:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to generate a response. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
     }
   };
   
@@ -108,6 +150,7 @@ const ChatResearch = () => {
                     <ChatMessage 
                       key={message.id} 
                       message={message} 
+                      setActiveVisualization={setActiveVisualization}
                     />
                   ))}
                   {loading && (
@@ -143,7 +186,7 @@ const ChatResearch = () => {
                   {suggestedQuestions.length > 0 && (
                     <SuggestedQuestions 
                       questions={suggestedQuestions} 
-                      onSelectQuestion={handleQuestionClick} 
+                      onQuestionClick={handleQuestionClick} 
                     />
                   )}
                 </div>
@@ -154,9 +197,8 @@ const ChatResearch = () => {
             {activeVisualization && (
               <div className="md:w-1/2 h-full overflow-hidden">
                 <VisualizationPanel 
+                  visualization={activeVisualization} 
                   onClose={() => setActiveVisualization(null)}
-                  title={activeVisualization.title}
-                  chartType={activeVisualization.type}
                 />
               </div>
             )}
