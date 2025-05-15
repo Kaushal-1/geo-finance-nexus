@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { toast } from "@/components/ui/use-toast";
@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 // Trading components
 import StockChartPanel from "@/components/trading/StockChartPanel";
+import MarketAnalystPanel from "@/components/trading/MarketAnalystPanel";
 import AccountSummary from "@/components/trading/AccountSummary";
 import PositionsTable from "@/components/trading/PositionsTable";
 import OrdersTable from "@/components/trading/OrdersTable";
@@ -19,6 +20,7 @@ import { useTradingData } from "@/hooks/useTradingData";
 
 const TradingDashboard = () => {
   const isMobile = useIsMobile();
+  const [currentSymbol, setCurrentSymbol] = useState("AAPL");
   
   const { 
     account,
@@ -58,6 +60,11 @@ const TradingDashboard = () => {
     console.log("Watchlists updated:", watchlists);
   }, [watchlists]);
 
+  // Handle symbol change from chart
+  const handleSymbolChange = (symbol: string) => {
+    setCurrentSymbol(symbol);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0e17] to-[#131b2e]">
       <DashboardHeader />
@@ -79,7 +86,10 @@ const TradingDashboard = () => {
         
         <div className="grid grid-cols-1 gap-4 sm:gap-6">
           {/* Stock Chart Panel */}
-          <StockChartPanel />
+          <StockChartPanel onSymbolChange={handleSymbolChange} />
+          
+          {/* AI Market Analyst Panel */}
+          <MarketAnalystPanel symbol={currentSymbol} />
           
           {/* Account Summary */}
           <AccountSummary account={account} isLoading={isLoadingAccount} />

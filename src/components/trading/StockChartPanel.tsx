@@ -25,6 +25,10 @@ interface Asset {
   class: string;
 }
 
+interface StockChartPanelProps {
+  onSymbolChange?: (symbol: string) => void;
+}
+
 // Timeframe options
 const TIMEFRAMES = [
   { value: "1Day", label: "1D" },
@@ -33,7 +37,7 @@ const TIMEFRAMES = [
   { value: "1Month", label: "1M" }
 ];
 
-const StockChartPanel = () => {
+const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => {
   const [symbol, setSymbol] = useState("AAPL"); // Default symbol
   const [chartData, setChartData] = useState<Bar[]>([]);
   const [timeframe, setTimeframe] = useState("1Day");
@@ -129,6 +133,11 @@ const StockChartPanel = () => {
     setSymbol(newSymbol);
     setSearchTerm("");
     setShowResults(false);
+    
+    // Call the onSymbolChange callback if provided
+    if (onSymbolChange) {
+      onSymbolChange(newSymbol);
+    }
   };
   
   // Function to handle manual stock entry
