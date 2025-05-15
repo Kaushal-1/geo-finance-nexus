@@ -133,6 +133,8 @@ export function useChatState() {
     suggestedQuestions,
     sendMessage,
     setActiveVisualization,
+    setSuggestedQuestions,
+    setLoading,
     clearChat,
   };
 }
