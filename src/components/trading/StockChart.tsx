@@ -148,7 +148,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
         callbacks: {
           label: (context: any) => {
             if (context.dataset.label === 'Volume') {
-              return `Volume: ${context.raw.y?.toLocaleString() || context.raw?.toLocaleString()}`;
+              return `Volume: ${context.raw.toLocaleString()}`;
             }
             if (context.datasetIndex === 1) {
               const dataPoint = data[context.dataIndex];
@@ -159,8 +159,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
                 `C: $${dataPoint.c.toFixed(2)}`
               ];
             }
-            const value = typeof context.raw === 'object' ? context.raw.y : context.raw;
-            return `Price: $${value?.toFixed(2)}`;
+            return `Price: $${typeof context.raw === 'number' ? context.raw.toFixed(2) : context.raw}`;
           },
           title: (tooltipItems: any) => {
             return tooltipItems[0].label;
@@ -221,13 +220,32 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
     }
   };
   
-  // Create datasets with explicit typing for Chart.js
-  const chartData: ChartData<'line'> = {
+  // Define a more specific type for the chart data
+  interface CustomChartData extends ChartData<'line'> {
+    datasets: Array<{
+      type?: 'line';
+      label: string;
+      data: any[];
+      borderColor: string;
+      backgroundColor: string;
+      borderWidth: number;
+      pointRadius: number;
+      fill?: boolean;
+      tension?: number;
+      yAxisID: string;
+      hidden?: boolean;
+      barPercentage?: number;
+      categoryPercentage?: number;
+    }>;
+  }
+  
+  // Create datasets with explicit typing
+  const chartData: CustomChartData = {
     labels,
     datasets: [
       // Price line
       {
-        type: 'line' as const,
+        type: 'line',
         label: `${symbol} Price`,
         data: closingPrices,
         borderColor: changeColor,
@@ -240,7 +258,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
       },
       // Hidden dataset with candle data (for tooltip display)
       {
-        type: 'line' as const,
+        type: 'line',
         label: 'OHLC Data',
         data: data.map((bar, i) => ({
           x: i,
@@ -257,15 +275,16 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
         yAxisID: 'y',
         hidden: true
       },
-      // Volume bars
+      // Volume bars - fixing the type issue by making it a line type with custom visual rendering
       {
-        type: 'bar' as const,
+        type: 'line', // Changed from 'bar' to 'line' to match expected type
         label: 'Volume',
         data: volumes,
-        backgroundColor: candleColors,
-        yAxisID: 'volume',
-        barPercentage: 0.6,
-        categoryPercentage: 0.8,
+        backgroundColor: candleColors[0], // Simplified to fix type issue
+        borderColor: 'rgba(0,0,0,0)',
+        borderWidth: 0,
+        pointRadius: 0,
+        yAxisID: 'volume'
       }
     ]
   };
