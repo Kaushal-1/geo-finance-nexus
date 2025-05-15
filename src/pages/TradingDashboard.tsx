@@ -85,14 +85,14 @@ const TradingDashboard = () => {
         </div>
         
         <div className="grid grid-cols-1 gap-4 sm:gap-6">
+          {/* Account Summary - Moved to top */}
+          <AccountSummary account={account} isLoading={isLoadingAccount} />
+          
           {/* Stock Chart Panel */}
           <StockChartPanel onSymbolChange={handleSymbolChange} />
           
           {/* AI Market Analyst Panel */}
           <MarketAnalystPanel symbol={currentSymbol} />
-          
-          {/* Account Summary */}
-          <AccountSummary account={account} isLoading={isLoadingAccount} />
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Positions Table */}

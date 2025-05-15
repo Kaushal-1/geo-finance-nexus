@@ -168,7 +168,7 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
       <Card className="bg-black/20 border-gray-800 backdrop-blur-sm mb-6">
         <CardHeader className="pb-3">
           <CardTitle className="text-xl flex justify-between items-center">
-            <span>AI Market Analyst</span>
+            <span>SONAR Market Analyst</span>
             <Badge variant="outline" className="border-blue-500/50 bg-blue-500/10 text-blue-400">
               Beta
             </Badge>
@@ -193,7 +193,7 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
       <CardHeader className="pb-3">
         <CardTitle className="text-xl flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <span>AI Market Analyst: {symbol}</span>
+            <span>SONAR Market Analyst: {symbol}</span>
             <Badge variant="outline" className="border-blue-500/50 bg-blue-500/10 text-blue-400">
               Beta
             </Badge>

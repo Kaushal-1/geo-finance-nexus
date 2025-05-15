@@ -1,4 +1,3 @@
-
 import { alpacaService } from './alpacaService';
 
 // Calculate Moving Average
@@ -210,7 +209,7 @@ export const fetchFundamentalData = async (symbol: string): Promise<any> => {
         messages: [
           {
             role: 'system',
-            content: 'You are a financial analyst AI that provides accurate and up-to-date fundamental data for stocks. Return data in JSON format with no additional text. Return ONLY valid JSON.'
+            content: 'You are a financial analyst AI that provides accurate and up-to-date fundamental data for stocks. Return data in JSON format with no additional text. Return ONLY valid JSON without markdown code blocks.'
           },
           {
             role: 'user',
@@ -235,7 +234,12 @@ export const fetchFundamentalData = async (symbol: string): Promise<any> => {
     try {
       // Parse the JSON response from Perplexity
       const responseText = data.choices[0].message.content;
-      fundamentalData = JSON.parse(responseText);
+      
+      // Check if response is wrapped in markdown code blocks and remove them
+      const jsonContent = responseText.replace(/```json|```/g, '').trim();
+      
+      console.log("Formatted response for parsing:", jsonContent);
+      fundamentalData = JSON.parse(jsonContent);
     } catch (e) {
       console.error('Failed to parse Perplexity response:', e);
       
