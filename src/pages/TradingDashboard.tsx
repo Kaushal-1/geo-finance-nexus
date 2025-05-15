@@ -16,6 +16,7 @@ import OrdersTable from "@/components/trading/OrdersTable";
 import TradePanel from "@/components/trading/TradePanel";
 import WatchlistManager from "@/components/trading/WatchlistManager";
 import TelegramBotPanel from "@/components/trading/TelegramBotPanel";
+import SonarScreener from "@/components/trading/SonarScreener";
 import { useTradingData } from "@/hooks/useTradingData";
 
 const TradingDashboard = () => {
@@ -72,16 +73,19 @@ const TradingDashboard = () => {
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-0">
           <h1 className="text-2xl sm:text-3xl font-bold text-white">Trading Dashboard</h1>
-          <Button 
-            onClick={refreshAll}
-            className="bg-teal-600 hover:bg-teal-700 w-full sm:w-auto"
-            disabled={isLoadingAccount || isLoadingPositions || isLoadingOrders || isLoadingWatchlists}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${
-              (isLoadingAccount || isLoadingPositions || isLoadingOrders || isLoadingWatchlists) ? 'animate-spin' : ''
-            }`} />
-            Refresh All
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <SonarScreener stockSymbol={currentSymbol} />
+            <Button 
+              onClick={refreshAll}
+              className="bg-teal-600 hover:bg-teal-700 w-full sm:w-auto"
+              disabled={isLoadingAccount || isLoadingPositions || isLoadingOrders || isLoadingWatchlists}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${
+                (isLoadingAccount || isLoadingPositions || isLoadingOrders || isLoadingWatchlists) ? 'animate-spin' : ''
+              }`} />
+              Refresh All
+            </Button>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 gap-4 sm:gap-6">
