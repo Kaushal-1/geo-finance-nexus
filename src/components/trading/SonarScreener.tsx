@@ -1,22 +1,9 @@
-
 import React, { useState } from "react";
 import { Search, TrendingUp, Newspaper, X, Calendar, ExternalLink, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
@@ -25,11 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { getPerplexityApiKey } from "@/services/chatService";
 import { useSonarAnalysis, NewsAnalysisParams, NewsItem } from "@/hooks/useSonarAnalysis";
 import { format } from "date-fns";
-
 interface SonarScreenerProps {
   stockSymbol: string;
 }
-
 interface NewsItem {
   title: string;
   summary: string;
@@ -37,7 +22,6 @@ interface NewsItem {
   url: string;
   sentiment: "Bullish" | "Bearish" | "Neutral";
 }
-
 interface StockInsight {
   summary: string;
   healthScore: number;
@@ -48,31 +32,29 @@ interface StockInsight {
   sentiment: "Bullish" | "Bearish" | "Neutral";
   news: NewsItem[];
 }
-
-const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
+const SonarScreener: React.FC<SonarScreenerProps> = ({
+  stockSymbol
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [insight, setInsight] = useState<StockInsight | null>(null);
   const [activeTab, setActiveTab] = useState("summary");
   const [showResults, setShowResults] = useState(false);
   const [newsTimeframe, setNewsTimeframe] = useState<string>("1month");
-  
-  const { 
-    analysisLoading, 
-    newsAnalysisData, 
-    runNewsAnalysis 
+  const {
+    analysisLoading,
+    newsAnalysisData,
+    runNewsAnalysis
   } = useSonarAnalysis();
-
   const runSonarAnalysis = async (type: string) => {
     setIsLoading(true);
     setIsOpen(false);
     setShowResults(true);
-
     try {
       toast({
         title: "Analyzing Stock",
         description: `Running ${type} analysis for ${stockSymbol}...`,
-        duration: 3000,
+        duration: 3000
       });
 
       // Get the API key
@@ -94,10 +76,10 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
             limit: 8,
             includeMarketNews: true
           };
-          
           await runNewsAnalysis(stockSymbol, params);
           setIsLoading(false);
-          return; // Early return as we're using the specialized hook
+          return;
+        // Early return as we're using the specialized hook
         default:
           query = `Provide key insights about ${stockSymbol} stock as of May 2025, including recent performance, significant news, and market sentiment. Format as JSON with these keys: summary (string), healthScore (number 0-100), sentiment (string: "Bullish", "Bearish", or "Neutral"), citations (array of {text, url}), news (array of {title, summary, source, url, sentiment}).`;
       }
@@ -107,39 +89,33 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
         method: "POST",
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
           model: "llama-3.1-sonar-small-128k-online",
-          messages: [
-            {
-              role: "system",
-              content: "You are a financial analyst that provides data about stocks in structured JSON format. Use online search to find the most up-to-date information available. Cite your sources in the response. Do not include any markdown formatting in your JSON.",
-            },
-            {
-              role: "user",
-              content: query,
-            },
-          ],
+          messages: [{
+            role: "system",
+            content: "You are a financial analyst that provides data about stocks in structured JSON format. Use online search to find the most up-to-date information available. Cite your sources in the response. Do not include any markdown formatting in your JSON."
+          }, {
+            role: "user",
+            content: query
+          }],
           temperature: 0.2,
           max_tokens: 2000,
-          search_recency_filter: "month",
-        }),
+          search_recency_filter: "month"
+        })
       });
-
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
       }
-
       const data = await response.json();
       const content = data.choices[0].message.content;
 
       // Extract JSON from the response, handling potential markdown wrapping
       const jsonContent = content.replace(/```json|```/g, "").trim();
       console.log("Raw JSON content:", jsonContent);
-      
       let parsedData;
-      
+
       // Handle news-only analysis differently
       if (type === "news") {
         try {
@@ -149,11 +125,13 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
             parsedData = {
               news: parsedData,
               summary: "Latest news analysis for " + stockSymbol,
-              sentiment: "Neutral", // Default
-              healthScore: 50, // Default
+              sentiment: "Neutral",
+              // Default
+              healthScore: 50,
+              // Default
               citations: []
             };
-          } 
+          }
           // If it already has a news property, use it directly
           else if (!parsedData.news) {
             parsedData.news = [];
@@ -166,16 +144,14 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
         // For comprehensive analysis
         parsedData = JSON.parse(jsonContent);
       }
-      
       console.log("Parsed data:", parsedData);
-      
+
       // Set the insight data
       setInsight(parsedData);
-      
       toast({
         title: "Analysis Complete",
         description: `${stockSymbol} analysis completed successfully.`,
-        duration: 3000,
+        duration: 3000
       });
     } catch (error) {
       console.error("Error running Sonar analysis:", error);
@@ -183,7 +159,7 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
         title: "Analysis Failed",
         description: `Could not complete analysis for ${stockSymbol}. ${error instanceof Error ? error.message : "Unknown error"}`,
         variant: "destructive",
-        duration: 5000,
+        duration: 5000
       });
       setShowResults(false);
     } finally {
@@ -194,7 +170,6 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
   // Helper function to get color based on sentiment
   const getSentimentColor = (sentiment: string | undefined) => {
     if (!sentiment) return "bg-gray-500";
-    
     switch (sentiment) {
       case "Bullish":
         return "bg-green-500";
@@ -208,7 +183,6 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
   // Helper function to get color based on impact
   const getImpactColor = (impact: string | undefined) => {
     if (!impact) return "bg-gray-500";
-    
     switch (impact) {
       case "High":
         return "text-red-500";
@@ -220,12 +194,10 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
         return "text-blue-500";
     }
   };
-
   const handleCloseResults = () => {
     setShowResults(false);
     setInsight(null);
   };
-
   const formatNewsDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'MMM d, yyyy');
@@ -233,14 +205,10 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
       return dateString;
     }
   };
-
-  return (
-    <>
+  return <>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
-          <Button 
-            className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto"
-          >
+          <Button className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto">
             <Search className="h-4 w-4 mr-2" />
             Sonar Screener
           </Button>
@@ -251,16 +219,12 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
             <span>Comprehensive Analysis</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-white/10" />
-          <DropdownMenuItem onClick={() => runSonarAnalysis("news")} className="cursor-pointer hover:bg-white/10">
-            <Newspaper className="mr-2 h-4 w-4" />
-            <span>News Analysis</span>
-          </DropdownMenuItem>
+          
         </DropdownMenuContent>
       </DropdownMenu>
 
       {/* Results Section */}
-      {(isLoading || analysisLoading) && (
-        <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10">
+      {(isLoading || analysisLoading) && <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10">
           <CardContent className="p-6">
             <div className="flex flex-col space-y-4">
               <div className="flex items-center space-x-4">
@@ -275,19 +239,12 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
               <Skeleton className="h-4 w-3/4 bg-white/10" />
             </div>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* Standard Analysis Results */}
-      {!isLoading && !analysisLoading && insight && showResults && !newsAnalysisData && (
-        <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10 relative">
+      {!isLoading && !analysisLoading && insight && showResults && !newsAnalysisData && <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10 relative">
           <div className="absolute top-2 right-2 z-10">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleCloseResults}
-              className="h-8 w-8 rounded-full bg-gray-800/50 hover:bg-gray-700/50"
-            >
+            <Button variant="ghost" size="icon" onClick={handleCloseResults} className="h-8 w-8 rounded-full bg-gray-800/50 hover:bg-gray-700/50">
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -301,21 +258,15 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
                 </Badge>
               </div>
               
-              {insight.healthScore !== undefined && (
-                <div className="flex items-center">
+              {insight.healthScore !== undefined && <div className="flex items-center">
                   <span className="text-sm text-gray-400 mr-2">Health Score:</span>
                   <div className="bg-gray-700 rounded-full h-2 w-36 overflow-hidden">
-                    <div 
-                      className={`h-full ${
-                        insight.healthScore >= 70 ? 'bg-green-500' : 
-                        insight.healthScore >= 40 ? 'bg-amber-500' : 'bg-red-500'
-                      }`}
-                      style={{ width: `${insight.healthScore}%` }}
-                    ></div>
+                    <div className={`h-full ${insight.healthScore >= 70 ? 'bg-green-500' : insight.healthScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{
+                width: `${insight.healthScore}%`
+              }}></div>
                   </div>
                   <span className="ml-2 text-sm font-medium text-white">{insight.healthScore}</span>
-                </div>
-              )}
+                </div>}
             </div>
             
             <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab}>
@@ -330,10 +281,8 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
               </TabsContent>
               
               <TabsContent value="news" className="mt-0">
-                {insight.news && insight.news.length > 0 ? (
-                  <div className="space-y-4">
-                    {insight.news.map((item, index) => (
-                      <div key={index} className="p-3 border border-white/10 rounded-lg bg-white/5">
+                {insight.news && insight.news.length > 0 ? <div className="space-y-4">
+                    {insight.news.map((item, index) => <div key={index} className="p-3 border border-white/10 rounded-lg bg-white/5">
                         <div className="flex justify-between items-start mb-1">
                           <h4 className="font-medium text-white text-sm">{item.title}</h4>
                           <div className={`ml-2 w-2 h-2 rounded-full ${getSentimentColor(item.sentiment)}`}></div>
@@ -341,62 +290,35 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
                         <p className="text-[#a0aec0] text-xs mb-2">{item.summary}</p>
                         <div className="flex justify-between items-center text-[11px]">
                           <span className="text-white">{item.source}</span>
-                          <a 
-                            href={item.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="flex items-center text-blue-400 hover:text-blue-300"
-                          >
+                          <a href={item.url} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-400 hover:text-blue-300">
                             <span>Source</span>
                           </a>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-400">No news data available.</p>
-                )}
+                      </div>)}
+                  </div> : <p className="text-gray-400">No news data available.</p>}
               </TabsContent>
               
               <TabsContent value="citations" className="mt-0">
-                {insight.citations && insight.citations.length > 0 ? (
-                  <div className="space-y-2">
-                    {insight.citations.map((citation, index) => (
-                      <div key={index} className="flex gap-2 items-start p-2 rounded hover:bg-white/5">
+                {insight.citations && insight.citations.length > 0 ? <div className="space-y-2">
+                    {insight.citations.map((citation, index) => <div key={index} className="flex gap-2 items-start p-2 rounded hover:bg-white/5">
                         <span className="text-gray-400 text-sm">{index + 1}.</span>
                         <div>
                           <p className="text-sm text-gray-300">{citation.text}</p>
-                          <a 
-                            href={citation.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-xs text-blue-400 hover:text-blue-300 flex items-center mt-1"
-                          >
+                          <a href={citation.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:text-blue-300 flex items-center mt-1">
                             {citation.url.replace(/https?:\/\//, '').split('/')[0]}
                           </a>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-400">No citation data available.</p>
-                )}
+                      </div>)}
+                  </div> : <p className="text-gray-400">No citation data available.</p>}
               </TabsContent>
             </Tabs>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
       {/* News Analysis Results */}
-      {!isLoading && !analysisLoading && newsAnalysisData && showResults && (
-        <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10 relative">
+      {!isLoading && !analysisLoading && newsAnalysisData && showResults && <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10 relative">
           <div className="absolute top-2 right-2 z-10">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleCloseResults}
-              className="h-8 w-8 rounded-full bg-gray-800/50 hover:bg-gray-700/50"
-            >
+            <Button variant="ghost" size="icon" onClick={handleCloseResults} className="h-8 w-8 rounded-full bg-gray-800/50 hover:bg-gray-700/50">
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -408,10 +330,7 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
                   {stockSymbol} News Analysis
                 </h3>
                 <div className={`ml-3 w-3 h-3 rounded-full ${getSentimentColor(newsAnalysisData.sentiment)}`}></div>
-                <Badge className="ml-2" variant={
-                  newsAnalysisData.sentiment === "Bullish" ? "default" : 
-                  newsAnalysisData.sentiment === "Bearish" ? "destructive" : "secondary"
-                }>
+                <Badge className="ml-2" variant={newsAnalysisData.sentiment === "Bullish" ? "default" : newsAnalysisData.sentiment === "Bearish" ? "destructive" : "secondary"}>
                   {newsAnalysisData.sentiment}
                 </Badge>
               </div>
@@ -419,13 +338,9 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
               <div className="flex items-center mt-2 md:mt-0">
                 <span className="text-sm text-gray-400 mr-2">Health:</span>
                 <div className="bg-gray-700 rounded-full h-2 w-24 overflow-hidden">
-                  <div 
-                    className={`h-full ${
-                      newsAnalysisData.healthScore >= 70 ? 'bg-green-500' : 
-                      newsAnalysisData.healthScore >= 40 ? 'bg-amber-500' : 'bg-red-500'
-                    }`}
-                    style={{ width: `${newsAnalysisData.healthScore}%` }}
-                  ></div>
+                  <div className={`h-full ${newsAnalysisData.healthScore >= 70 ? 'bg-green-500' : newsAnalysisData.healthScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{
+                width: `${newsAnalysisData.healthScore}%`
+              }}></div>
                 </div>
                 <span className="ml-2 text-sm font-medium text-white">
                   {newsAnalysisData.healthScore}
@@ -439,10 +354,12 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
             
             <div className="flex justify-between items-center mt-4">
               <h4 className="text-white text-sm font-medium">Recent News</h4>
-              <Select value={newsTimeframe} onValueChange={(value) => {
-                setNewsTimeframe(value);
-                runNewsAnalysis(stockSymbol, { timeframe: value });
-              }}>
+              <Select value={newsTimeframe} onValueChange={value => {
+            setNewsTimeframe(value);
+            runNewsAnalysis(stockSymbol, {
+              timeframe: value
+            });
+          }}>
                 <SelectTrigger className="w-28 h-8 bg-black/30 border-white/10 text-white text-xs">
                   <SelectValue placeholder="Time Range" />
                 </SelectTrigger>
@@ -457,16 +374,11 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
           
           <CardContent className="pt-2 pb-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-              {newsAnalysisData.newsItems && newsAnalysisData.newsItems.length > 0 ? (
-                newsAnalysisData.newsItems.map((item, index) => (
-                  <Card key={index} className="bg-black/30 border-white/5 overflow-hidden flex flex-col">
+              {newsAnalysisData.newsItems && newsAnalysisData.newsItems.length > 0 ? newsAnalysisData.newsItems.map((item, index) => <Card key={index} className="bg-black/30 border-white/5 overflow-hidden flex flex-col">
                     <CardContent className="p-3 flex flex-col h-full">
                       <div className="flex justify-between items-start">
                         <h5 className="font-medium text-white text-sm line-clamp-2">{item.title}</h5>
-                        <Badge className={`ml-1 ${
-                          item.sentiment === "Bullish" ? 'bg-green-700' : 
-                          item.sentiment === "Bearish" ? 'bg-red-700' : 'bg-blue-700'
-                        } text-[10px]`}>
+                        <Badge className={`ml-1 ${item.sentiment === "Bullish" ? 'bg-green-700' : item.sentiment === "Bearish" ? 'bg-red-700' : 'bg-blue-700'} text-[10px]`}>
                           {item.sentiment}
                         </Badge>
                       </div>
@@ -480,34 +392,22 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
                           <span className={`${getImpactColor(item.impact)}`}>
                             {item.impact} Impact
                           </span>
-                          <a 
-                            href={item.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center text-blue-400 hover:text-blue-300"
-                          >
+                          <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-blue-400 hover:text-blue-300">
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         </div>
                       </div>
                     </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <div className="col-span-2 text-center py-6 text-gray-400">
+                  </Card>) : <div className="col-span-2 text-center py-6 text-gray-400">
                   No news data available for this timeframe.
-                </div>
-              )}
+                </div>}
             </div>
           </CardContent>
           
           <CardFooter className="pt-0 pb-3 px-4 text-xs text-gray-500">
             Data sourced by Perplexity Sonar API • Updated in real-time
           </CardFooter>
-        </Card>
-      )}
-    </>
-  );
+        </Card>}
+    </>;
 };
-
 export default SonarScreener;
