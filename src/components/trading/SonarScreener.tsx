@@ -10,18 +10,21 @@ import { toast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { getPerplexityApiKey } from "@/services/chatService";
-import { useSonarAnalysis, NewsAnalysisParams, NewsItem } from "@/hooks/useSonarAnalysis";
+import { useSonarAnalysis, NewsAnalysisParams } from "@/hooks/useSonarAnalysis";
 import { format } from "date-fns";
+
 interface SonarScreenerProps {
   stockSymbol: string;
 }
-interface NewsItem {
+
+interface LocalNewsItem {
   title: string;
   summary: string;
   source: string;
   url: string;
   sentiment: "Bullish" | "Bearish" | "Neutral";
 }
+
 interface StockInsight {
   summary: string;
   healthScore: number;
@@ -30,8 +33,9 @@ interface StockInsight {
     url: string;
   }>;
   sentiment: "Bullish" | "Bearish" | "Neutral";
-  news: NewsItem[];
+  news: LocalNewsItem[];
 }
+
 const SonarScreener: React.FC<SonarScreenerProps> = ({
   stockSymbol
 }) => {
@@ -46,6 +50,7 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
     newsAnalysisData,
     runNewsAnalysis
   } = useSonarAnalysis();
+
   const runSonarAnalysis = async (type: string) => {
     setIsLoading(true);
     setIsOpen(false);
@@ -410,4 +415,5 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
         </Card>}
     </>;
 };
+
 export default SonarScreener;
