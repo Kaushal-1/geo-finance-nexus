@@ -13,6 +13,7 @@ import {
   Filler,
   ChartOptions,
   ChartData,
+  BarController,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,6 +25,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
+  BarController, // This is the critical addition we were missing
   Title,
   Tooltip,
   Legend,
@@ -223,11 +225,11 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
   // Define a more specific type for the chart data
   interface CustomChartData extends ChartData<'line'> {
     datasets: Array<{
-      type?: 'line';
+      type?: 'line' | 'bar';
       label: string;
       data: any[];
       borderColor: string;
-      backgroundColor: string;
+      backgroundColor: string | string[];
       borderWidth: number;
       pointRadius: number;
       fill?: boolean;
@@ -275,16 +277,18 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
         yAxisID: 'y',
         hidden: true
       },
-      // Volume bars - fixing the type issue by making it a line type with custom visual rendering
+      // Volume bars
       {
-        type: 'line', // Changed from 'bar' to 'line' to match expected type
+        type: 'bar',
         label: 'Volume',
         data: volumes,
-        backgroundColor: candleColors[0], // Simplified to fix type issue
+        backgroundColor: candleColors,
         borderColor: 'rgba(0,0,0,0)',
         borderWidth: 0,
         pointRadius: 0,
-        yAxisID: 'volume'
+        yAxisID: 'volume',
+        barPercentage: 0.6,
+        categoryPercentage: 0.8
       }
     ]
   };
