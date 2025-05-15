@@ -75,6 +75,39 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_settings: {
+        Row: {
+          chat_commands: boolean
+          created_at: string
+          id: string
+          order_notifications: boolean
+          price_alerts: boolean
+          trade_commands: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_commands?: boolean
+          created_at?: string
+          id?: string
+          order_notifications?: boolean
+          price_alerts?: boolean
+          trade_commands?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          chat_commands?: boolean
+          created_at?: string
+          id?: string
+          order_notifications?: boolean
+          price_alerts?: boolean
+          trade_commands?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

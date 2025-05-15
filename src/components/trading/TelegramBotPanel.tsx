@@ -33,32 +33,34 @@ const TelegramBotPanel = () => {
     const fetchSettings = async () => {
       try {
         setIsLoading(true);
+        // Use the correct table name and explicitly type the response
         const { data, error } = await supabase
           .from('telegram_settings')
           .select('*')
           .eq('user_id', settings.userId)
           .single();
         
-        if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
-          throw error;
-        }
-        
-        if (data) {
+        if (error) {
+          console.error("Error fetching Telegram settings:", error);
+          // If no settings exist, create default ones
+          if (error.code === 'PGRST116') {
+            await saveSettings({
+              userId: settings.userId,
+              priceAlerts: true,
+              orderNotifications: true,
+              tradeCommands: true,
+              chatCommands: true
+            });
+          } else {
+            throw error;
+          }
+        } else if (data) {
           setSettings({
             userId: data.user_id,
             priceAlerts: data.price_alerts,
             orderNotifications: data.order_notifications,
             tradeCommands: data.trade_commands,
             chatCommands: data.chat_commands
-          });
-        } else {
-          // If no settings exist, create default ones
-          await saveSettings({
-            userId: settings.userId,
-            priceAlerts: true,
-            orderNotifications: true,
-            tradeCommands: true,
-            chatCommands: true
           });
         }
       } catch (error) {
@@ -80,6 +82,7 @@ const TelegramBotPanel = () => {
     try {
       setIsSaving(true);
       
+      // Correctly format the data for the telegram_settings table
       const { error } = await supabase
         .from('telegram_settings')
         .upsert(
