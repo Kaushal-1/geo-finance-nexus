@@ -14,6 +14,7 @@ import {
   ChartOptions,
   ChartData,
   BarController,
+  LineController,
   ChartTypeRegistry,
 } from "chart.js";
 import { Chart } from "react-chartjs-2";
@@ -26,6 +27,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
+  LineController, // Explicitly register LineController
   BarController,
   Title,
   Tooltip,
@@ -256,7 +258,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
     datasets: [
       // Price line
       {
-        type: 'line' as const,
+        type: 'line',
         label: `${symbol} Price`,
         data: closingPrices,
         borderColor: changeColor,
@@ -269,7 +271,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
       } as ChartDatasetWithCustomData,
       // Hidden dataset with candle data (for tooltip display)
       {
-        type: 'line' as const,
+        type: 'line',
         label: 'OHLC Data',
         data: data.map((bar, i) => ({
           x: i,
@@ -288,7 +290,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
       } as ChartDatasetWithCustomData,
       // Volume bars
       {
-        type: 'bar' as const,
+        type: 'bar',
         label: 'Volume',
         data: volumes,
         backgroundColor: candleColors,
@@ -312,7 +314,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
       </div>
       <Chart 
         type="line"
-        data={chartData as any} 
+        data={chartData} 
         options={options} 
         plugins={[candlestickPlugin]}
       />
