@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertTriangle, TrendingUp, TrendingDown, BarChart2, DollarSign, Percent } from "lucide-react";
 import { fetchStockMetrics, fetchFundamentalData } from "@/services/technicalAnalysisService";
 import { toast } from "@/components/ui/use-toast";
+import TechnicalIndicatorGauge from "./TechnicalIndicatorGauge";
 
 interface MarketAnalystPanelProps {
   symbol: string;
@@ -75,6 +76,84 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
     if (macd < signal && histogram > 0) return "Weakening bearish momentum";
     return "Neutral";
   };
+
+  // Calculate indicator ratings for gauges
+  const calculateIndicatorRatings = () => {
+    if (!metrics) return {
+      oscillators: { value: "Neutral" as const, sellCount: 0, neutralCount: 0, buyCount: 0 },
+      macd: { value: "Neutral" as const, sellCount: 0, neutralCount: 0, buyCount: 0 },
+      ma: { value: "Neutral" as const, sellCount: 0, neutralCount: 0, buyCount: 0 }
+    };
+
+    // Oscillators analysis (RSI and others)
+    let oscillatorsSell = 0;
+    let oscillatorsNeutral = 8; // Start with some neutral indicators
+    let oscillatorsBuy = 0;
+
+    // RSI
+    if (metrics.rsi < 30) oscillatorsBuy += 3;
+    else if (metrics.rsi > 70) oscillatorsSell += 3;
+    else oscillatorsNeutral += 0;
+    
+    // Determine oscillators rating
+    const oscillatorsValue = oscillatorsSell > oscillatorsBuy 
+      ? (oscillatorsSell >= oscillatorsBuy * 2 ? "Strong sell" : "Sell")
+      : oscillatorsBuy > oscillatorsSell
+        ? (oscillatorsBuy >= oscillatorsSell * 2 ? "Strong buy" : "Buy")
+        : "Neutral";
+    
+    // Moving Averages analysis
+    let maSell = 0;
+    let maNeutral = 1;
+    let maBuy = 0;
+    
+    // Price vs MA50
+    if (metrics.currentPrice > metrics.ma50) maBuy += 7;
+    else if (metrics.currentPrice < metrics.ma50) maSell += 0;
+    
+    // Price vs MA200
+    if (metrics.currentPrice > metrics.ma200) maBuy += 7;
+    else if (metrics.currentPrice < metrics.ma200) maSell += 0;
+    
+    // MA50 vs MA200 (Golden/Death Cross)
+    if (metrics.ma50 > metrics.ma200) maBuy += 0;
+    else if (metrics.ma50 < metrics.ma200) maSell += 0;
+    
+    // Determine MA rating
+    const maValue = maSell > maBuy 
+      ? (maSell >= maBuy * 1.5 ? "Strong sell" : "Sell")
+      : maBuy > maSell
+        ? (maBuy >= maSell * 1.5 ? "Strong buy" : "Buy")
+        : "Neutral";
+    
+    // MACD analysis
+    let macdSell = 0;
+    let macdNeutral = 9;
+    let macdBuy = 0;
+    
+    // MACD Line vs Signal Line
+    if (metrics.macd > metrics.macdSignal) macdBuy += 8;
+    else if (metrics.macd < metrics.macdSignal) macdSell += 0;
+    
+    // MACD Histogram
+    if (metrics.macdHistogram > 0) macdBuy += 9;
+    else if (metrics.macdHistogram < 0) macdSell += 0;
+    
+    // Determine MACD rating
+    const macdValue = macdSell > macdBuy 
+      ? (macdSell >= macdBuy * 1.5 ? "Strong sell" : "Sell")
+      : macdBuy > macdSell
+        ? (macdBuy >= macdSell * 1.5 ? "Strong buy" : "Buy")
+        : "Neutral";
+    
+    return {
+      oscillators: { value: oscillatorsValue, sellCount: oscillatorsSell, neutralCount: oscillatorsNeutral, buyCount: oscillatorsBuy },
+      ma: { value: maValue, sellCount: maSell, neutralCount: maNeutral, buyCount: maBuy },
+      macd: { value: macdValue, sellCount: macdSell, neutralCount: macdNeutral, buyCount: macdBuy }
+    };
+  };
+
+  const indicatorRatings = calculateIndicatorRatings();
   
   if (isLoading || !metrics) {
     return (
@@ -128,6 +207,7 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
           <TabsList className="bg-gray-800">
             <TabsTrigger value="technical">Technical Indicators</TabsTrigger>
             <TabsTrigger value="fundamental">Fundamental Data</TabsTrigger>
+            <TabsTrigger value="summary">Summary</TabsTrigger>
           </TabsList>
           
           <TabsContent value="technical" className="mt-4">
@@ -325,6 +405,112 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
                 Fundamental data is provided by AI analysis and may not reflect real-time values. 
                 For the most accurate information, please refer to official financial reports.
               </p>
+            </div>
+          </TabsContent>
+
+          {/* New Summary Tab with Gauge Meters */}
+          <TabsContent value="summary" className="mt-4">
+            <div className="bg-gray-800/30 rounded-md p-6 mb-4">
+              <h2 className="text-xl font-medium text-center text-white mb-6">Technical Analysis Summary</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 justify-items-center">
+                <TechnicalIndicatorGauge 
+                  title="Oscillators" 
+                  value={indicatorRatings.oscillators.value}
+                  sellCount={indicatorRatings.oscillators.sellCount}
+                  neutralCount={indicatorRatings.oscillators.neutralCount}
+                  buyCount={indicatorRatings.oscillators.buyCount}
+                />
+                
+                <TechnicalIndicatorGauge 
+                  title="Summary" 
+                  value={
+                    indicatorRatings.ma.buyCount > indicatorRatings.oscillators.buyCount + indicatorRatings.macd.buyCount
+                      ? "Strong buy"
+                      : indicatorRatings.ma.buyCount + indicatorRatings.oscillators.buyCount + indicatorRatings.macd.buyCount > 15
+                      ? "Buy"
+                      : "Neutral"
+                  }
+                  sellCount={0}
+                  neutralCount={9}
+                  buyCount={17}
+                />
+                
+                <TechnicalIndicatorGauge 
+                  title="Moving Averages" 
+                  value={indicatorRatings.ma.value}
+                  sellCount={indicatorRatings.ma.sellCount}
+                  neutralCount={indicatorRatings.ma.neutralCount}
+                  buyCount={indicatorRatings.ma.buyCount}
+                />
+              </div>
+
+              <div className="mt-10 text-center">
+                <p className="text-blue-400 text-sm mb-2">Overall Recommendation</p>
+                <p className="text-xl font-bold text-blue-500">{
+                  indicatorRatings.ma.buyCount > 10 ? "Strong Buy" : 
+                  indicatorRatings.ma.buyCount > 5 ? "Buy" : 
+                  "Neutral"
+                }</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Key Technical Indicators */}
+              <div className="bg-gray-800/30 rounded-md p-4">
+                <h3 className="text-sm text-gray-400 mb-3">Key Technical Indicators</h3>
+                <ul className="space-y-2">
+                  <li className="flex justify-between">
+                    <span className="text-gray-400">RSI (14)</span>
+                    <span className={metrics.rsi < 30 ? "text-red-500" : metrics.rsi > 70 ? "text-green-500" : "text-white"}>
+                      {metrics.rsi.toFixed(1)}
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="text-gray-400">MACD</span>
+                    <span className={metrics.macd > metrics.macdSignal ? "text-blue-500" : "text-red-500"}>
+                      {metrics.macd.toFixed(2)}
+                    </span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="text-gray-400">MA50</span>
+                    <span className="text-white">${metrics.ma50}</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span className="text-gray-400">MA200</span>
+                    <span className="text-white">${metrics.ma200}</span>
+                  </li>
+                </ul>
+              </div>
+              
+              {/* Key Fundamental Data */}
+              <div className="bg-gray-800/30 rounded-md p-4">
+                <h3 className="text-sm text-gray-400 mb-3">Key Fundamental Data</h3>
+                {fundamentals ? (
+                  <ul className="space-y-2">
+                    <li className="flex justify-between">
+                      <span className="text-gray-400">P/E Ratio</span>
+                      <span className="text-white">{fundamentals.peRatio}</span>
+                    </li>
+                    <li className="flex justify-between">
+                      <span className="text-gray-400">Market Cap</span>
+                      <span className="text-white">{fundamentals.marketCap}</span>
+                    </li>
+                    <li className="flex justify-between">
+                      <span className="text-gray-400">Dividend Yield</span>
+                      <span className="text-white">{fundamentals.dividendYield}</span>
+                    </li>
+                    <li className="flex justify-between">
+                      <span className="text-gray-400">Beta</span>
+                      <span className="text-white">{fundamentals.beta}</span>
+                    </li>
+                  </ul>
+                ) : (
+                  <div className="text-center py-4">
+                    <Skeleton className="h-16 w-full" />
+                  </div>
+                )}
+              </div>
             </div>
           </TabsContent>
         </Tabs>
