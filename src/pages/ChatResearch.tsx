@@ -7,8 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Send, AlertCircle, CheckCircle } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { useChatState } from '@/hooks/useChatState';
-import { ChatMessage as IChatMessage } from '@/types/chat'; // Renamed to avoid conflict
-import { generateResponse } from '@/services/chatService';
+import { ChatMessage as ChatMessageType } from '@/types/chat'; 
 import SuggestedQuestions from '@/components/chat/SuggestedQuestions';
 import ChatMessage from '@/components/chat/ChatMessage';
 import VisualizationPanel from '@/components/chat/VisualizationPanel';
@@ -21,7 +20,7 @@ const ChatResearch = () => {
   const navigate = useNavigate();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { portfolioSummary } = usePortfolioContext(); // Use portfolioSummary instead of portfolioContext
+  const { portfolioSummary } = usePortfolioContext(); // Using portfolioSummary instead of portfolioContext
   
   const { 
     messages, 
