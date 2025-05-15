@@ -15,7 +15,7 @@ import {
   ChartData,
   BarController,
 } from "chart.js";
-import { Line } from "react-chartjs-2";
+import { Chart } from "react-chartjs-2";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Register Chart.js components
@@ -25,7 +25,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
-  BarController, // This is the critical addition we were missing
+  BarController,
   Title,
   Tooltip,
   Legend,
@@ -133,7 +133,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
   const candleColors = data.map(bar => bar.c >= bar.o ? "#00b8a950" : "#f8485e50");
   
   // Create typed options for the chart
-  const options: ChartOptions<'line'> = {
+  const options: ChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     interaction: {
@@ -222,32 +222,13 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
     }
   };
   
-  // Define a more specific type for the chart data
-  interface CustomChartData extends ChartData<'line'> {
-    datasets: Array<{
-      type?: 'line' | 'bar';
-      label: string;
-      data: any[];
-      borderColor: string;
-      backgroundColor: string | string[];
-      borderWidth: number;
-      pointRadius: number;
-      fill?: boolean;
-      tension?: number;
-      yAxisID: string;
-      hidden?: boolean;
-      barPercentage?: number;
-      categoryPercentage?: number;
-    }>;
-  }
-  
-  // Create datasets with explicit typing
-  const chartData: CustomChartData = {
+  // Create chart data with proper typing
+  const chartData = {
     labels,
     datasets: [
       // Price line
       {
-        type: 'line',
+        type: 'line' as const,
         label: `${symbol} Price`,
         data: closingPrices,
         borderColor: changeColor,
@@ -260,7 +241,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
       },
       // Hidden dataset with candle data (for tooltip display)
       {
-        type: 'line',
+        type: 'line' as const,
         label: 'OHLC Data',
         data: data.map((bar, i) => ({
           x: i,
@@ -279,7 +260,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
       },
       // Volume bars
       {
-        type: 'bar',
+        type: 'bar' as const,
         label: 'Volume',
         data: volumes,
         backgroundColor: candleColors,
@@ -301,7 +282,8 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
           {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)} ({((priceChange / firstPrice) * 100).toFixed(2)}%)
         </span>
       </div>
-      <Line 
+      <Chart 
+        type="line"
         data={chartData} 
         options={options} 
         plugins={[candlestickPlugin]}
