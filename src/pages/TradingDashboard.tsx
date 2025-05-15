@@ -90,7 +90,12 @@ const TradingDashboard = () => {
         
         <div className="grid grid-cols-1 gap-4 sm:gap-6">
           {/* Account Summary - Moved to top */}
-          <AccountSummary account={account} isLoading={isLoadingAccount} />
+          <AccountSummary 
+            account={account} 
+            isLoading={isLoadingAccount} 
+            orders={orders}
+            initialInvestment={25000}
+          />
           
           {/* Stock Chart Panel */}
           <StockChartPanel onSymbolChange={handleSymbolChange} />
@@ -139,10 +144,61 @@ const TradingDashboard = () => {
             onRefreshWatchlists={refreshWatchlists}
           />
           
-          {/* Notice Card */}
-          <Card className="bg-blue-900/20 border-blue-800/30 backdrop-blur-sm">
-            <CardContent className="p-4 text-center text-blue-300 text-sm">
-              This is a paper trading platform using Alpaca API. No real money is being used.
+          {/* Business Model Card */}
+          <Card className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-800/30 backdrop-blur-sm">
+            <CardContent className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-3 bg-black/20 rounded-lg border border-white/5">
+                  <h3 className="text-lg font-semibold text-white mb-2">Free Plan</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-300">
+                    <li>Paper trading access</li>
+                    <li>Basic stock analysis</li>
+                    <li>5 watchlists max</li>
+                    <li>Standard API limits</li>
+                  </ul>
+                  <div className="mt-3 text-center">
+                    <span className="text-lg font-bold text-white">$0</span>
+                    <span className="text-sm text-gray-400">/month</span>
+                  </div>
+                </div>
+                
+                <div className="p-3 bg-blue-900/30 rounded-lg border border-blue-600/30 relative">
+                  <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
+                    <span className="bg-blue-600 text-xs text-white px-2 py-1 rounded-md">POPULAR</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Premium</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-300">
+                    <li>All Free features</li>
+                    <li>Enhanced Sonar analysis</li>
+                    <li>Unlimited watchlists</li>
+                    <li>Advanced alerts</li>
+                    <li>Real-time data</li>
+                  </ul>
+                  <div className="mt-3 text-center">
+                    <span className="text-lg font-bold text-white">$19.99</span>
+                    <span className="text-sm text-gray-400">/month</span>
+                  </div>
+                </div>
+                
+                <div className="p-3 bg-purple-900/30 rounded-lg border border-purple-600/30">
+                  <h3 className="text-lg font-semibold text-white mb-2">Pro Trader</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-300">
+                    <li>All Premium features</li>
+                    <li>Live trading (0.1% commission)</li>
+                    <li>Advanced portfolio analysis</li>
+                    <li>Dedicated API access</li>
+                    <li>Priority support</li>
+                  </ul>
+                  <div className="mt-3 text-center">
+                    <span className="text-lg font-bold text-white">$49.99</span>
+                    <span className="text-sm text-gray-400">/month</span>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="mt-4 text-center text-sm text-blue-300">
+                This is a paper trading platform using Alpaca API. Upgrade for real trading capabilities.
+              </p>
             </CardContent>
           </Card>
         </div>

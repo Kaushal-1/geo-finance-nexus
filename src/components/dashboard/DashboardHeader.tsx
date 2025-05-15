@@ -1,10 +1,12 @@
+
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { CircleUser, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+
 const DashboardHeader = () => {
   const {
     user,
@@ -12,9 +14,17 @@ const DashboardHeader = () => {
   } = useAuth();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
+  
+  // Check which route is active
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+  
   return <header className="bg-[#0f1628]/80 backdrop-blur-md border-b border-white/5 px-4 sm:px-6 py-3 sticky top-0 z-50">
       <div className="flex justify-between items-center">
         {/* Logo */}
@@ -32,22 +42,47 @@ const DashboardHeader = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex space-x-8">
-          <Link to="/dashboard" className="text-white font-medium hover:text-teal-400 transition">Market Map</Link>
-          <Link to="/trading" className="text-gray-400 hover:text-teal-400 transition">Dashboard</Link>
-          <Link to="/chat-research" className="text-gray-400 hover:text-teal-400 transition">
+          <Link 
+            to="/dashboard" 
+            className={`${isActive('/dashboard') ? 'text-white font-medium' : 'text-gray-400'} hover:text-teal-400 transition`}
+          >
+            Market Map
+          </Link>
+          <Link 
+            to="/trading" 
+            className={`${isActive('/trading') ? 'text-white font-medium' : 'text-gray-400'} hover:text-teal-400 transition`}
+          >
+            Trading
+          </Link>
+          <Link 
+            to="/chat-research" 
+            className={`${isActive('/chat-research') ? 'text-white font-medium' : 'text-gray-400'} hover:text-teal-400 transition`}
+          >
             Research
           </Link>
         </nav>
 
         {/* Mobile Navigation */}
         {isMobile && mobileMenuOpen && <div className="absolute top-full left-0 right-0 bg-[#0f1628] border-b border-white/5 p-4 flex flex-col space-y-4 md:hidden">
-            <Link to="/dashboard" className="text-white font-medium hover:text-teal-400 transition" onClick={() => setMobileMenuOpen(false)}>
-              Dashboard
+            <Link 
+              to="/dashboard" 
+              className={`${isActive('/dashboard') ? 'text-white font-medium' : 'text-gray-400'} hover:text-teal-400 transition`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Market Map
             </Link>
-            <Link to="/trading" className="text-gray-400 hover:text-teal-400 transition" onClick={() => setMobileMenuOpen(false)}>
+            <Link 
+              to="/trading" 
+              className={`${isActive('/trading') ? 'text-white font-medium' : 'text-gray-400'} hover:text-teal-400 transition`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
               Trading
             </Link>
-            <Link to="/chat-research" className="text-gray-400 hover:text-teal-400 transition" onClick={() => setMobileMenuOpen(false)}>
+            <Link 
+              to="/chat-research" 
+              className={`${isActive('/chat-research') ? 'text-white font-medium' : 'text-gray-400'} hover:text-teal-400 transition`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
               Research
             </Link>
           </div>}
@@ -82,4 +117,5 @@ const DashboardHeader = () => {
       </div>
     </header>;
 };
+
 export default DashboardHeader;
