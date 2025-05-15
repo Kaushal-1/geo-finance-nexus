@@ -1,8 +1,8 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlpacaAccount } from "@/types/alpaca";
-import { ArrowUp, ArrowDown, DollarSign, Wallet, TrendingUp, Clock } from "lucide-react";
+import { AlpacaAccount, AlpacaOrder } from "@/types/alpaca";
+import { ArrowUp, ArrowDown, DollarSign, Wallet, TrendingUp, Clock, Shield, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -20,18 +21,22 @@ import { useSonarAnalysis } from "@/hooks/useSonarAnalysis";
 interface AccountSummaryProps {
   account: AlpacaAccount | null;
   isLoading: boolean;
-  orders?: any[];
+  orders?: AlpacaOrder[];
   initialInvestment?: number;
+  isAdmin?: boolean;
 }
 
 const AccountSummary: React.FC<AccountSummaryProps> = ({ 
   account, 
   isLoading,
   orders = [],
-  initialInvestment = 25000 // Default initial investment
+  initialInvestment = 25000, // Default initial investment
+  isAdmin = false // Admin flag for visibility control
 }) => {
   const [activeTab, setActiveTab] = useState("summary");
   const [showOrders, setShowOrders] = useState(false);
+  const [validationStatus, setValidationStatus] = useState<'valid' | 'warning' | 'error' | null>(null);
+  const [validationMessage, setValidationMessage] = useState<string | null>(null);
   
   // Calculate performance metrics
   const dailyPL = account ? 
@@ -48,6 +53,34 @@ const AccountSummary: React.FC<AccountSummaryProps> = ({
 
   // Get account health analysis
   const { analysisLoading, healthScore, stockAnalysis, runAccountAnalysis } = useSonarAnalysis();
+  
+  // Validate account data
+  useEffect(() => {
+    if (account) {
+      // Sum up long and short positions to compare with equity
+      const longValue = parseFloat(account.long_market_value);
+      const shortValue = parseFloat(account.short_market_value);
+      const cash = parseFloat(account.cash);
+      const equity = parseFloat(account.equity);
+      
+      // Calculate expected equity (cash + long - short)
+      const expectedEquity = cash + longValue - Math.abs(shortValue);
+      const discrepancy = Math.abs(equity - expectedEquity);
+      const discrepancyPercentage = (discrepancy / equity) * 100;
+      
+      // Tolerance threshold (0.5% for warning, 1% for error)
+      if (discrepancyPercentage > 1) {
+        setValidationStatus('error');
+        setValidationMessage(`Account data discrepancy of ${discrepancyPercentage.toFixed(2)}% detected. Expected equity: $${expectedEquity.toFixed(2)}`);
+      } else if (discrepancyPercentage > 0.5) {
+        setValidationStatus('warning');
+        setValidationMessage(`Small account data discrepancy of ${discrepancyPercentage.toFixed(2)}% detected.`);
+      } else {
+        setValidationStatus('valid');
+        setValidationMessage(null);
+      }
+    }
+  }, [account]);
   
   // Format time for orders
   const formatTime = (timeStr: string | null) => {
@@ -110,8 +143,24 @@ const AccountSummary: React.FC<AccountSummaryProps> = ({
   return (
     <Card className="bg-black/20 border-white/10 backdrop-blur-sm">
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
-        <CardTitle className="text-xl font-semibold text-white">Account Summary</CardTitle>
+        <CardTitle className="text-xl font-semibold text-white flex items-center">
+          Account Summary
+          {isAdmin && (
+            <Badge className="ml-2 bg-purple-700 text-white text-xs">
+              Admin
+            </Badge>
+          )}
+        </CardTitle>
         <div className="flex items-center space-x-2">
+          {validationStatus && validationStatus !== 'valid' && (
+            <div className="mr-2 flex items-center">
+              <AlertCircle className={`h-4 w-4 mr-1 ${validationStatus === 'error' ? 'text-red-500' : 'text-amber-400'}`} />
+              <span className={`text-xs ${validationStatus === 'error' ? 'text-red-500' : 'text-amber-400'}`}>
+                {validationMessage || (validationStatus === 'error' ? 'Data error' : 'Warning')}
+              </span>
+            </div>
+          )}
+          
           {healthScore && (
             <div className="flex items-center mr-2">
               <span className="text-sm text-gray-400 mr-2">Health:</span>
@@ -255,36 +304,84 @@ const AccountSummary: React.FC<AccountSummaryProps> = ({
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <h4 className="text-sm font-medium text-white">Recent Orders</h4>
+                  
+                  {/* Enhanced backdrop dropdown for recent orders */}
                   <DropdownMenu open={showOrders} onOpenChange={setShowOrders}>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm" className="h-8">
                         <Clock className="h-4 w-4 mr-1" /> View Orders
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-72 bg-[#1a2035] border-white/10">
+                    <DropdownMenuContent 
+                      className="w-80 bg-[#1a2035] border-white/10 backdrop-blur-md p-0"
+                      style={{
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.8)',
+                        backdropFilter: 'blur(16px)',
+                      }}
+                    >
+                      <DropdownMenuLabel className="py-2 px-3 flex items-center justify-between">
+                        <span>Recent Orders</span>
+                        {isAdmin && (
+                          <Badge className="bg-purple-700 text-white text-xs">
+                            Admin View
+                          </Badge>
+                        )}
+                      </DropdownMenuLabel>
                       <DropdownMenuSeparator className="bg-white/10" />
-                      {orders && orders.length > 0 ? (
-                        orders.slice(0, 5).map((order: any) => (
-                          <DropdownMenuItem key={order.id} className="flex flex-col items-start p-2">
-                            <div className="flex w-full justify-between items-center">
-                              <span className="font-medium text-teal-400">{order.symbol}</span>
-                              <Badge className={order.side === 'buy' ? 'bg-green-600' : 'bg-red-600'}>
-                                {order.side.toUpperCase()}
-                              </Badge>
-                            </div>
-                            <div className="flex w-full justify-between text-xs mt-1">
-                              <span className="text-gray-400">{formatTime(order.submitted_at)}</span>
-                              <span className="text-white">{order.qty} @ {order.filled_avg_price || 'Market'}</span>
-                            </div>
-                          </DropdownMenuItem>
-                        ))
-                      ) : (
-                        <DropdownMenuItem className="text-center text-gray-400">
-                          No recent orders
-                        </DropdownMenuItem>
-                      )}
+                      
+                      <div className="max-h-72 overflow-y-auto py-1">
+                        {orders && orders.length > 0 ? (
+                          orders.slice(0, isAdmin ? orders.length : 5).map((order: AlpacaOrder) => (
+                            <DropdownMenuItem key={order.id} className="flex flex-col items-start p-2 hover:bg-white/5 cursor-default">
+                              <div className="flex w-full justify-between items-center">
+                                <div className="flex items-center">
+                                  <span className="font-medium text-teal-400">{order.symbol}</span>
+                                  <Badge className={`ml-2 ${order.side === 'buy' ? 'bg-green-600' : 'bg-red-600'}`}>
+                                    {order.side.toUpperCase()}
+                                  </Badge>
+                                </div>
+                                <Badge className={`
+                                  ${order.status === 'filled' ? 'bg-green-700/50 text-green-300' : 
+                                    order.status === 'canceled' ? 'bg-red-700/50 text-red-300' : 
+                                    'bg-blue-700/50 text-blue-300'}
+                                `}>
+                                  {order.status.toUpperCase()}
+                                </Badge>
+                              </div>
+                              <div className="flex w-full justify-between text-xs mt-2">
+                                <div className="flex flex-col">
+                                  <span className="text-gray-400">{formatTime(order.submitted_at)}</span>
+                                  <span className="text-gray-400">{order.order_type} @ {order.limit_price || 'Market'}</span>
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-white">{order.qty} shares</span>
+                                  {order.filled_avg_price && (
+                                    <div className="text-white">
+                                      ${parseFloat(order.filled_avg_price).toFixed(2)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {isAdmin && (
+                                <div className="mt-1 pt-1 border-t border-white/10 w-full text-xs text-gray-400">
+                                  ID: {order.id.substring(0, 8)}...
+                                </div>
+                              )}
+                            </DropdownMenuItem>
+                          ))
+                        ) : (
+                          <div className="text-center py-4 text-gray-400 text-sm">
+                            No recent orders
+                          </div>
+                        )}
+                      </div>
+                      
                       <DropdownMenuSeparator className="bg-white/10" />
-                      <DropdownMenuItem className="justify-center text-blue-400 cursor-pointer" onClick={() => setActiveTab("orders")}>
+                      <DropdownMenuItem 
+                        className="justify-center text-blue-400 cursor-pointer py-2" 
+                        onClick={() => setActiveTab("orders")}
+                      >
                         View all orders
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -321,9 +418,15 @@ const AccountSummary: React.FC<AccountSummaryProps> = ({
             <span>Paper Trading Account</span>
             <Badge variant="outline" className="ml-2 bg-blue-900/20 text-blue-300 border-blue-800">FREE</Badge>
           </div>
-          <Button size="sm" variant="outline" className="h-7 text-xs text-blue-300 border-blue-800 hover:bg-blue-900/30">
-            Upgrade to Premium
-          </Button>
+          {isAdmin ? (
+            <Button size="sm" variant="outline" className="h-7 text-xs bg-purple-900/30 text-purple-300 border-purple-800 hover:bg-purple-900/50">
+              <Shield className="h-3 w-3 mr-1" /> Admin Controls
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" className="h-7 text-xs text-blue-300 border-blue-800 hover:bg-blue-900/30">
+              Upgrade to Premium
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

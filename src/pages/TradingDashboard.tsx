@@ -22,6 +22,7 @@ import { useTradingData } from "@/hooks/useTradingData";
 const TradingDashboard = () => {
   const isMobile = useIsMobile();
   const [currentSymbol, setCurrentSymbol] = useState("AAPL");
+  const [isAdminMode, setIsAdminMode] = useState(false);
   
   const { 
     account,
@@ -54,6 +55,36 @@ const TradingDashboard = () => {
     
     // Log some debug information
     console.log("Trading Dashboard mounted");
+    
+    // Check for admin mode (could be based on URL parameter, localStorage, etc.)
+    const checkAdminMode = () => {
+      // For demo purposes, let's use a simple localStorage check
+      // In a real app, this would be based on authentication
+      const isAdmin = localStorage.getItem('trader_admin_mode') === 'true';
+      setIsAdminMode(isAdmin);
+      
+      // Admin mode keyboard shortcut (Ctrl+Shift+A)
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+          const newAdminMode = !isAdminMode;
+          localStorage.setItem('trader_admin_mode', newAdminMode.toString());
+          setIsAdminMode(newAdminMode);
+          toast({
+            title: newAdminMode ? "Admin Mode Activated" : "Admin Mode Deactivated",
+            description: newAdminMode 
+              ? "You now have access to advanced features and complete data visibility."
+              : "Returned to standard user view.",
+            duration: 3000
+          });
+        }
+      };
+      
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    };
+    
+    const cleanup = checkAdminMode();
+    return cleanup;
   }, []);
 
   // Debug log when watchlists change
@@ -95,6 +126,7 @@ const TradingDashboard = () => {
             isLoading={isLoadingAccount} 
             orders={orders}
             initialInvestment={25000}
+            isAdmin={isAdminMode}
           />
           
           {/* Stock Chart Panel */}
