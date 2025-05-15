@@ -10,7 +10,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 // Trading components
 import StockChartPanel from "@/components/trading/StockChartPanel";
 import MarketAnalystPanel from "@/components/trading/MarketAnalystPanel";
-import EnhancedAccountSummary from "@/components/trading/EnhancedAccountSummary";
+import AccountSummary from "@/components/trading/AccountSummary";
 import PositionsTable from "@/components/trading/PositionsTable";
 import OrdersTable from "@/components/trading/OrdersTable";
 import TradePanel from "@/components/trading/TradePanel";
@@ -89,8 +89,8 @@ const TradingDashboard = () => {
         </div>
         
         <div className="grid grid-cols-1 gap-4 sm:gap-6">
-          {/* Enhanced Account Summary - Moved to top */}
-          <EnhancedAccountSummary 
+          {/* Account Summary - Moved to top */}
+          <AccountSummary 
             account={account} 
             isLoading={isLoadingAccount} 
             orders={orders}
