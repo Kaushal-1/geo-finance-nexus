@@ -34,12 +34,85 @@ export class TelegramBot {
 
     console.log(`Received message from chat ${chatId}: ${text}`);
 
+    // Check user settings before processing commands
+    const canProcessCommands = await this.checkUserPermissions(chatId.toString(), text);
+    if (!canProcessCommands) {
+      if (text.startsWith('/')) {
+        await this.sendMessage(chatId, "This command has been disabled in your settings. You can enable it in the Trading Dashboard.");
+      }
+      return;
+    }
+
     // Process commands
     if (text.startsWith('/')) {
       await this.processCommand(chatId, text);
     } else {
       // For non-commands, send helpful message
       await this.sendMessage(chatId, "Send /help to see available commands.");
+    }
+  }
+
+  async checkUserPermissions(chatId: string, command: string): Promise<boolean> {
+    try {
+      const { data, error } = await this.getSettingsFromSupabase(chatId);
+      
+      if (error || !data) {
+        // If no settings found, default to allowing all
+        console.log(`No settings found for user ${chatId}, using defaults`);
+        return true;
+      }
+      
+      // Check specific permissions based on command type
+      if (command.startsWith('/buy') || command.startsWith('/sell')) {
+        return data.trade_commands;
+      } else if (command.startsWith('/alert')) {
+        return data.price_alerts;
+      } else if (command.startsWith('/chat')) {
+        return data.chat_commands;
+      }
+      
+      // Default commands like /help are always allowed
+      return true;
+    } catch (error) {
+      console.error("Error checking user permissions:", error);
+      // Default to allow in case of error to prevent lockouts
+      return true;
+    }
+  }
+
+  async getSettingsFromSupabase(chatId: string) {
+    // This uses the alertService's Supabase client
+    return await this.alertService.supabase
+      .from('telegram_settings')
+      .select('*')
+      .eq('user_id', chatId)
+      .single();
+  }
+
+  async sendPriceAlert(chatId: string, symbol: string, currentPrice: number, thresholdPrice: number, direction: string): Promise<void> {
+    try {
+      // Check if user has price alerts enabled
+      const { data } = await this.getSettingsFromSupabase(chatId);
+      if (data && !data.price_alerts) {
+        console.log(`Price alerts disabled for user ${chatId}, not sending notification`);
+        return;
+      }
+      
+      const emoji = direction === 'above' ? '📈' : '📉';
+      const message = `
+${emoji} <b>Stock Price Alert</b>
+
+💹 <b>Symbol:</b> ${symbol}
+📊 <b>Current Price:</b> $${Number(currentPrice).toFixed(2)}
+🎯 <b>Target Threshold:</b> $${Number(thresholdPrice).toFixed(2)}
+🕰️ <b>Status:</b> Price is ${direction} the threshold.
+
+🔍 <a href="https://www.tradingview.com/symbols/${symbol}/">View on TradingView</a>
+`;
+
+      await this.sendMessage(parseInt(chatId, 10), message);
+    } catch (error) {
+      console.error("Error sending price alert:", error);
     }
   }
 
@@ -318,20 +391,24 @@ Examples:
     }
   }
 
-  async sendPriceAlert(chatId: string, symbol: string, currentPrice: number, thresholdPrice: number, direction: string): Promise<void> {
-    const emoji = direction === 'above' ? '📈' : '📉';
-    const message = `
-${emoji} <b>Stock Price Alert</b>
+  async verifyConnection(chatId: string): Promise<boolean> {
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${this.BOT_TOKEN}/getChat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId
+        })
+      });
 
-💹 <b>Symbol:</b> ${symbol}
-📊 <b>Current Price:</b> $${Number(currentPrice).toFixed(2)}
-🎯 <b>Target Threshold:</b> $${Number(thresholdPrice).toFixed(2)}
-🕰️ <b>Status:</b> Price is ${direction} the threshold.
-
-🔍 <a href="https://www.tradingview.com/symbols/${symbol}/">View on TradingView</a>
-`;
-
-    await this.sendMessage(parseInt(chatId, 10), message);
+      const data = await response.json();
+      return data.ok;
+    } catch (error) {
+      console.error('Error verifying Telegram connection:', error);
+      return false;
+    }
   }
 
   async handleChatCommand(chatId: number, parts: string[]): Promise<void> {

@@ -40,11 +40,29 @@ serve(async (req) => {
 
     // If this is a webhook from Telegram
     if (req.method === 'POST') {
-      const update = await req.json();
-      console.log("Received Telegram update:", JSON.stringify(update));
+      const body = await req.json();
+      
+      // Check if this is a verification request from our UI
+      if (body.action === 'verify_connection' && body.user_id) {
+        console.log(`Verifying Telegram connection for user: ${body.user_id}`);
+        const isConnected = await telegramBot.verifyConnection(body.user_id);
+        
+        return new Response(
+          JSON.stringify({ 
+            status: isConnected ? 'connected' : 'disconnected',
+            user_id: body.user_id 
+          }),
+          {
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
+      }
+      
+      // Regular Telegram update
+      console.log("Received Telegram update:", JSON.stringify(body));
       
       // Process the update
-      await telegramBot.processUpdate(update);
+      await telegramBot.processUpdate(body);
       
       return new Response(JSON.stringify({ status: 'ok' }), {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
