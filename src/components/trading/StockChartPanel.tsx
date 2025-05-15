@@ -42,16 +42,42 @@ const StockChartPanel = () => {
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const [priceInfo, setPriceInfo] = useState({ current: 0, change: 0, changePercent: 0 });
   
   // Function to fetch stock data
   const fetchStockData = useCallback(async () => {
     console.log(`Fetching stock data for ${symbol} with timeframe ${timeframe}`);
     setIsLoading(true);
     try {
-      const response = await alpacaService.getBars(symbol, timeframe);
+      // Set appropriate limit based on timeframe
+      let limit = 60; // Default
+      if (timeframe === "5Day") limit = 5 * 24; // 5 days of hourly bars
+      if (timeframe === "1Week") limit = 7 * 24; // 7 days of hourly bars
+      if (timeframe === "1Month") limit = 30; // 30 daily bars
+      
+      const response = await alpacaService.getBars(symbol, timeframe, limit);
       console.log("Stock data response:", response);
       if (response && Array.isArray(response)) {
-        setChartData(response);
+        // Ensure bars are sorted by time
+        const sortedData = [...response].sort((a, b) => 
+          new Date(a.t).getTime() - new Date(b.t).getTime()
+        );
+        
+        setChartData(sortedData);
+        
+        // Calculate price info
+        if (sortedData.length > 0) {
+          const latestBar = sortedData[sortedData.length - 1];
+          const firstBar = sortedData[0];
+          const priceChange = latestBar.c - firstBar.c;
+          const priceChangePercent = (priceChange / firstBar.c) * 100;
+          
+          setPriceInfo({
+            current: latestBar.c,
+            change: priceChange,
+            changePercent: priceChangePercent
+          });
+        }
       } else {
         console.error("Invalid response format:", response);
         setChartData([]);
@@ -201,6 +227,11 @@ const StockChartPanel = () => {
             </div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               {symbol}
+              {priceInfo.current > 0 && (
+                <span className={`text-sm font-normal ${priceInfo.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {priceInfo.change >= 0 ? '+' : ''}{priceInfo.change.toFixed(2)} ({priceInfo.changePercent.toFixed(2)}%)
+                </span>
+              )}
             </h2>
           </div>
           

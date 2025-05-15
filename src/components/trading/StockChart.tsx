@@ -1,18 +1,20 @@
 
 import React from "react";
-import { Line } from "react-chartjs-2";
 import {
   Chart,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
   Filler,
   ChartOptions,
 } from "chart.js";
+import { Line } from "react-chartjs-2";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Register Chart.js components
 Chart.register(
@@ -20,6 +22,7 @@ Chart.register(
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
@@ -52,58 +55,191 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
     );
   }
 
+  // Format dates for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Calculate price change color
+  const firstPrice = data[0]?.c || 0;
+  const lastPrice = data[data.length - 1]?.c || 0;
+  const priceChange = lastPrice - firstPrice;
+  const changeColor = priceChange >= 0 ? "#00b8a9" : "#f8485e";
+
   // Process data for Chart.js
   const chartData = {
-    labels: data.map(bar => new Date(bar.t).toLocaleDateString()),
+    labels: data.map(bar => formatDate(bar.t)),
     datasets: [
+      // Price line
       {
         label: `${symbol} Price`,
         data: data.map(bar => bar.c),
-        borderColor: "#00b8d4",
-        backgroundColor: "rgba(0, 184, 212, 0.1)",
+        borderColor: changeColor,
+        backgroundColor: `${changeColor}20`,
         borderWidth: 2,
         pointRadius: 0,
         fill: true,
-        tension: 0.4
+        tension: 0.2,
+        yAxisID: 'y'
+      },
+      // Candlestick representation
+      {
+        type: 'bar' as const,
+        label: 'Candle',
+        data: data.map(bar => ({
+          x: formatDate(bar.t),
+          o: bar.o,
+          h: bar.h,
+          l: bar.l,
+          c: bar.c,
+          color: bar.c >= bar.o ? "#00b8a9" : "#f8485e"
+        })),
+        backgroundColor: data.map(bar => bar.c >= bar.o ? "#00b8a950" : "#f8485e50"),
+        borderColor: data.map(bar => bar.c >= bar.o ? "#00b8a9" : "#f8485e"),
+        borderWidth: 1,
+        barPercentage: 0.4,
+        categoryPercentage: 0.8,
+        yAxisID: 'y',
+        parsing: {
+          yAxisKey: 'y',
+        },
+        hidden: true, // Hide by default as we'll render custom candlesticks
+      },
+      // Volume bars
+      {
+        type: 'bar' as const,
+        label: 'Volume',
+        data: data.map(bar => ({
+          x: formatDate(bar.t),
+          y: bar.v,
+          color: bar.c >= bar.o ? "#00b8a950" : "#f8485e50"
+        })),
+        backgroundColor: data.map(bar => bar.c >= bar.o ? "#00b8a950" : "#f8485e50"),
+        yAxisID: 'volume',
+        barPercentage: 0.6,
+        categoryPercentage: 0.8,
       }
     ]
+  };
+  
+  // Create custom candle rendering plugin
+  const candlestickPlugin = {
+    id: 'candlestick',
+    beforeDatasetsDraw(chart: any) {
+      const { ctx, chartArea, scales } = chart;
+      
+      const dataset = chart.data.datasets[1];
+      const xScale = scales.x;
+      const yScale = scales.y;
+      
+      if (!dataset || dataset.hidden) return;
+      
+      ctx.save();
+      ctx.lineWidth = 2;
+      
+      // Draw each candlestick
+      for (let i = 0; i < dataset.data.length; i++) {
+        const dataPoint = dataset.data[i];
+        const x = xScale.getPixelForValue(dataPoint.x);
+        const open = yScale.getPixelForValue(dataPoint.o);
+        const high = yScale.getPixelForValue(dataPoint.h);
+        const low = yScale.getPixelForValue(dataPoint.l);
+        const close = yScale.getPixelForValue(dataPoint.c);
+        
+        const color = dataPoint.c >= dataPoint.o ? "#00b8a9" : "#f8485e";
+        
+        const candleWidth = (xScale.width / dataset.data.length) * 0.7;
+        
+        // Set stroke color for lines
+        ctx.strokeStyle = color;
+        
+        // Draw high/low line (wick)
+        ctx.beginPath();
+        ctx.moveTo(x, high);
+        ctx.lineTo(x, low);
+        ctx.stroke();
+        
+        // Draw candle body
+        const bodyHeight = Math.abs(close - open);
+        const y = dataPoint.c >= dataPoint.o ? close : open;
+        
+        ctx.fillStyle = dataPoint.c >= dataPoint.o ? "#00b8a920" : "#f8485e20";
+        ctx.strokeStyle = color;
+        ctx.fillRect(x - candleWidth / 2, y, candleWidth, bodyHeight);
+        ctx.strokeRect(x - candleWidth / 2, y, candleWidth, bodyHeight);
+      }
+      
+      ctx.restore();
+    }
   };
   
   const options: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: {
+      mode: "index" as const,
+      intersect: false
+    },
     plugins: {
       legend: {
-        position: "top" as const,
-        labels: {
-          color: "#fff"
-        }
+        display: false
       },
       tooltip: {
         mode: "index" as const,
         intersect: false,
         callbacks: {
           label: (context: any) => {
-            return `$${context.raw.toFixed(2)}`;
+            if (context.dataset.label === 'Volume') {
+              return `Volume: ${context.raw.y.toLocaleString()}`;
+            }
+            if (context.dataset.label === 'Candle') {
+              return [
+                `O: $${context.raw.o.toFixed(2)}`,
+                `H: $${context.raw.h.toFixed(2)}`,
+                `L: $${context.raw.l.toFixed(2)}`,
+                `C: $${context.raw.c.toFixed(2)}`
+              ];
+            }
+            return `Price: $${context.raw.toFixed(2)}`;
+          },
+          title: (tooltipItems: any) => {
+            return tooltipItems[0].label;
           }
-        }
-      }
+        },
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        titleColor: '#fff',
+        bodyColor: '#fff',
+        borderColor: '#333',
+        borderWidth: 1,
+        padding: 10,
+        displayColors: false
+      },
+      // Register our custom plugin
+      candlestick: candlestickPlugin
     },
     scales: {
       x: {
         grid: {
-          color: "rgba(255, 255, 255, 0.1)"
+          display: true,
+          color: "rgba(255, 255, 255, 0.05)"
         },
         ticks: {
           color: "#9ca3af",
           maxRotation: 0,
           autoSkip: true,
-          maxTicksLimit: 10
+          maxTicksLimit: 8
         }
       },
       y: {
+        position: 'right',
         grid: {
-          color: "rgba(255, 255, 255, 0.1)"
+          color: "rgba(255, 255, 255, 0.05)"
         },
         ticks: {
           color: "#9ca3af",
@@ -111,18 +247,41 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
             return `$${value.toFixed(2)}`;
           }
         }
+      },
+      volume: {
+        position: 'left',
+        grid: {
+          display: false
+        },
+        ticks: {
+          color: "#9ca3af",
+          callback: (value: number) => {
+            return value >= 1000000 
+              ? `${(value / 1000000).toFixed(1)}M`
+              : value >= 1000 
+                ? `${(value / 1000).toFixed(1)}K` 
+                : value;
+          }
+        },
+        display: true,
+        suggestedMax: Math.max(...data.map(bar => bar.v)) * 2.5
       }
-    },
-    interaction: {
-      mode: "nearest" as const,
-      axis: "x" as const,
-      intersect: false
     }
   };
   
   return (
-    <div className="chart-wrapper h-[400px]">
-      <Line data={chartData} options={options} />
+    <div className="chart-container h-[400px] relative">
+      <div className="absolute top-2 left-2 z-10 flex flex-col">
+        <span className="text-2xl font-bold text-white">${lastPrice.toFixed(2)}</span>
+        <span className={`text-sm ${priceChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+          {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)} ({((priceChange / firstPrice) * 100).toFixed(2)}%)
+        </span>
+      </div>
+      <Line 
+        data={chartData} 
+        options={options} 
+        plugins={[candlestickPlugin]}
+      />
     </div>
   );
 };

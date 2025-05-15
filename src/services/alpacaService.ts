@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 import { toast } from "@/components/ui/use-toast";
 
@@ -190,38 +191,69 @@ export const alpacaService = {
   
   // Get bars (candles) for a symbol
   getBars: async (symbol: string, timeframe = '1Day', limit = 60) => {
-    console.log(`Getting bars for ${symbol} with timeframe ${timeframe}`);
+    console.log(`Getting bars for ${symbol} with timeframe ${timeframe}, limit ${limit}`);
     try {
-      // Map user-friendly timeframes to API format correctly
-      let apiTimeframe;
+      // Map user-friendly timeframes to API format
+      let apiTimeframe: string;
+      const today = new Date();
+      let startDate: string | null = null;
       
-      // Parse the timeframe properly according to Alpaca API requirements
-      // Format should be: {number}{unit} where unit is one of: Min, Hour, Day, Week, Month
-      if (timeframe === '1Day') {
-        apiTimeframe = '1D';
-      } else if (timeframe === '5Day') {
-        // For 5-day, we'll use 1D timeframe and limit to the last 5 days
-        apiTimeframe = '1D';
-        limit = 5;
-      } else if (timeframe === '1Week') {
-        apiTimeframe = '1W';
-      } else if (timeframe === '1Month') {
-        apiTimeframe = '1M';
-      } else {
-        // Default to 1D if unknown timeframe
-        apiTimeframe = '1D';
+      // Determine appropriate parameters based on timeframe
+      switch (timeframe) {
+        case '1Day':
+          // For 1-day view, use 5-minute bars for the current day
+          apiTimeframe = '5Min';
+          startDate = new Date(today.setHours(0,0,0,0)).toISOString();
+          break;
+        case '5Day':
+          // For 5-day view, use 1-hour bars
+          apiTimeframe = '1Hour';
+          startDate = new Date(today.setDate(today.getDate() - 5)).toISOString();
+          break;
+        case '1Week':
+          // For 1-week view, use 1-hour bars
+          apiTimeframe = '1Hour';
+          startDate = new Date(today.setDate(today.getDate() - 7)).toISOString();
+          break;
+        case '1Month':
+          // For 1-month view, use 1-day bars
+          apiTimeframe = '1Day';
+          startDate = new Date(today.setMonth(today.getMonth() - 1)).toISOString();
+          break;
+        default:
+          apiTimeframe = '1Day';
       }
       
-      const response = await alpacaDataApi.get(`/v2/stocks/${symbol}/bars`, {
-        params: {
-          timeframe: apiTimeframe,
-          limit: limit,
-          adjustment: 'all',
-        }
-      });
+      // Construct request parameters
+      const params: any = {
+        timeframe: apiTimeframe,
+        adjustment: 'all',
+      };
       
-      console.log(`Received bars data for ${symbol}:`, response.data);
-      return response.data.bars;
+      // Use either start_date or limit depending on timeframe
+      if (startDate) {
+        params.start = startDate;
+      } else {
+        params.limit = limit;
+      }
+      
+      const response = await alpacaDataApi.get(`/v2/stocks/${symbol}/bars`, { params });
+      
+      if (response.data && response.data.bars) {
+        console.log(`Received ${response.data.bars.length} bars for ${symbol} with timeframe ${apiTimeframe}`);
+        // Ensure we're returning sorted bars with correct property types
+        return response.data.bars.map((bar: any) => ({
+          t: bar.t,  // Keep timestamp as string
+          o: parseFloat(bar.o),
+          h: parseFloat(bar.h),
+          l: parseFloat(bar.l),
+          c: parseFloat(bar.c),
+          v: parseFloat(bar.v),
+        }));
+      } else {
+        console.warn("Empty or invalid bars data received:", response.data);
+        return [];
+      }
     } catch (error) {
       return handleApiError(error, `Failed to fetch stock data for ${symbol}`);
     }
