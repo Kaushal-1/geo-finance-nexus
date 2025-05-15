@@ -1,8 +1,10 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { toast as sonnerToast } from 'sonner';
+import { createAuthToastManager } from '@/lib/utils';
 
 interface AuthContextType {
   user: User | null;
@@ -20,6 +22,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const { toast } = useToast();
+  
+  // Create a ref to store the authToastManager to persist across renders
+  const authToastManagerRef = useRef(createAuthToastManager());
+  
+  // Create a ref to track auth state initialization
+  const isInitializedRef = useRef<boolean>(false);
 
   useEffect(() => {
     console.log("AuthContext initialization");
@@ -32,18 +40,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(currentSession?.user ?? null);
         setLoading(false);
         
-        if (event === 'SIGNED_IN') {
-          toast({
-            title: "Welcome!",
-            description: "You have successfully signed in.",
-          });
-        }
-        
-        if (event === 'SIGNED_OUT') {
-          toast({
-            title: "Signed out",
-            description: "You have been signed out successfully.",
-          });
+        // Only show toasts after initial loading is complete
+        if (isInitializedRef.current) {
+          if (event === 'SIGNED_IN') {
+            authToastManagerRef.current.showAuthToast(() => {
+              toast({
+                title: "Welcome!",
+                description: "You have successfully signed in.",
+              });
+            }, "You have successfully signed in.");
+          }
+          
+          if (event === 'SIGNED_OUT') {
+            authToastManagerRef.current.showAuthToast(() => {
+              toast({
+                title: "Signed out",
+                description: "You have been signed out successfully.",
+              });
+            }, "You have been signed out successfully.");
+          }
         }
       }
     );
@@ -54,6 +69,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setLoading(false);
+      isInitializedRef.current = true;
     });
 
     return () => {
@@ -64,6 +80,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signIn = async (email: string, password: string) => {
     try {
+      // Reset toast manager before attempting sign in
+      authToastManagerRef.current.reset();
+      
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         toast({
@@ -86,6 +105,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
+      // Reset toast manager before attempting sign up
+      authToastManagerRef.current.reset();
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -140,6 +162,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signOut = async () => {
+    // Reset toast manager before signing out
+    authToastManagerRef.current.reset();
     await supabase.auth.signOut();
   };
 
