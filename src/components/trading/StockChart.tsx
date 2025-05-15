@@ -14,6 +14,7 @@ import {
   ChartOptions,
   ChartData,
   BarController,
+  ChartTypeRegistry,
 } from "chart.js";
 import { Chart } from "react-chartjs-2";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,6 +40,16 @@ interface Bar {
   l: number; // low
   c: number; // close
   v: number; // volume
+}
+
+// Define a type for OHLC data point
+interface OHLCDataPoint {
+  x: number;
+  y: number;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
 }
 
 interface StockChartProps {
@@ -222,8 +233,25 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
     }
   };
   
+  // Define type-safe datasets
+  type ChartDatasetWithCustomData = {
+    type: 'line' | 'bar';
+    label: string;
+    data: number[] | OHLCDataPoint[];
+    borderColor: string;
+    backgroundColor: string | string[];
+    borderWidth: number;
+    pointRadius: number;
+    fill?: boolean;
+    tension?: number;
+    yAxisID: string;
+    hidden?: boolean;
+    barPercentage?: number;
+    categoryPercentage?: number;
+  };
+
   // Create chart data with proper typing
-  const chartData = {
+  const chartData: ChartData<'line' | 'bar', (number | OHLCDataPoint)[]> = {
     labels,
     datasets: [
       // Price line
@@ -238,7 +266,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
         fill: true,
         tension: 0.2,
         yAxisID: 'y'
-      },
+      } as ChartDatasetWithCustomData,
       // Hidden dataset with candle data (for tooltip display)
       {
         type: 'line' as const,
@@ -257,7 +285,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
         pointRadius: 0,
         yAxisID: 'y',
         hidden: true
-      },
+      } as ChartDatasetWithCustomData,
       // Volume bars
       {
         type: 'bar' as const,
@@ -270,8 +298,8 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
         yAxisID: 'volume',
         barPercentage: 0.6,
         categoryPercentage: 0.8
-      }
-    ]
+      } as ChartDatasetWithCustomData
+    ] as ChartDatasetWithCustomData[]
   };
   
   return (
@@ -284,7 +312,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
       </div>
       <Chart 
         type="line"
-        data={chartData} 
+        data={chartData as any} 
         options={options} 
         plugins={[candlestickPlugin]}
       />
