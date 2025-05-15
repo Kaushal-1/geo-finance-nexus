@@ -15,6 +15,8 @@ interface MarketAnalystPanelProps {
   symbol: string;
 }
 
+type SentimentValue = "Strong buy" | "Buy" | "Neutral" | "Sell" | "Strong sell";
+
 const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
   const [metrics, setMetrics] = useState<any>(null);
   const [fundamentals, setFundamentals] = useState<any>(null);
@@ -79,9 +81,9 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
   // Calculate indicator ratings for gauges
   const calculateIndicatorRatings = () => {
     if (!metrics) return {
-      oscillators: { value: "Neutral" as const, sellCount: 0, neutralCount: 0, buyCount: 0 },
-      macd: { value: "Neutral" as const, sellCount: 0, neutralCount: 0, buyCount: 0 },
-      ma: { value: "Neutral" as const, sellCount: 0, neutralCount: 0, buyCount: 0 }
+      oscillators: { value: "Neutral" as SentimentValue, sellCount: 0, neutralCount: 0, buyCount: 0 },
+      macd: { value: "Neutral" as SentimentValue, sellCount: 0, neutralCount: 0, buyCount: 0 },
+      ma: { value: "Neutral" as SentimentValue, sellCount: 0, neutralCount: 0, buyCount: 0 }
     };
 
     // Oscillators analysis (RSI and others)
@@ -95,7 +97,7 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
     else oscillatorsNeutral += 0;
     
     // Determine oscillators rating
-    let oscillatorsValue: "Strong buy" | "Buy" | "Neutral" | "Sell" | "Strong sell";
+    let oscillatorsValue: SentimentValue;
     if (oscillatorsSell > oscillatorsBuy) {
       oscillatorsValue = oscillatorsSell >= oscillatorsBuy * 2 ? "Strong sell" : "Sell";
     } else if (oscillatorsBuy > oscillatorsSell) {
@@ -122,7 +124,7 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
     else if (metrics.ma50 < metrics.ma200) maSell += 0;
     
     // Determine MA rating
-    let maValue: "Strong buy" | "Buy" | "Neutral" | "Sell" | "Strong sell";
+    let maValue: SentimentValue;
     if (maSell > maBuy) {
       maValue = maSell >= maBuy * 1.5 ? "Strong sell" : "Sell";
     } else if (maBuy > maSell) {
@@ -145,7 +147,7 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
     else if (metrics.macdHistogram < 0) macdSell += 0;
     
     // Determine MACD rating
-    let macdValue: "Strong buy" | "Buy" | "Neutral" | "Sell" | "Strong sell";
+    let macdValue: SentimentValue;
     if (macdSell > macdBuy) {
       macdValue = macdSell >= macdBuy * 1.5 ? "Strong sell" : "Sell";
     } else if (macdBuy > macdSell) {
@@ -168,7 +170,7 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
       <Card className="bg-black/20 border-gray-800 backdrop-blur-sm mb-6">
         <CardHeader className="pb-3">
           <CardTitle className="text-xl flex justify-between items-center">
-            <span>SONAR Market Analyst</span>
+            <span>SONAR Market Analyst: {symbol}</span>
             <Badge variant="outline" className="border-blue-500/50 bg-blue-500/10 text-blue-400">
               Beta
             </Badge>
@@ -434,10 +436,10 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
                   title="Summary" 
                   value={
                     indicatorRatings.ma.buyCount > indicatorRatings.oscillators.buyCount + indicatorRatings.macd.buyCount
-                      ? "Strong buy" as const
+                      ? "Strong buy" as SentimentValue
                       : indicatorRatings.ma.buyCount + indicatorRatings.oscillators.buyCount + indicatorRatings.macd.buyCount > 15
-                      ? "Buy" as const
-                      : "Neutral" as const
+                      ? "Buy" as SentimentValue
+                      : "Neutral" as SentimentValue
                   }
                   sellCount={0}
                   neutralCount={9}

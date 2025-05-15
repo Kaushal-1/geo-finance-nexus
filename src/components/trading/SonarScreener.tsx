@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Search, TrendingUp, Newspaper, DollarSign, BarChart3, ExternalLink } from "lucide-react";
+import { Search, TrendingUp, Newspaper, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -45,10 +45,12 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [insight, setInsight] = useState<StockInsight | null>(null);
   const [activeTab, setActiveTab] = useState("summary");
+  const [showResults, setShowResults] = useState(false);
 
   const runSonarAnalysis = async (type: string) => {
     setIsLoading(true);
     setIsOpen(false);
+    setShowResults(true);
 
     try {
       toast({
@@ -70,13 +72,7 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
           query = `Provide a comprehensive analysis of ${stockSymbol} stock in May 2025. Include: 1) Recent performance summary, 2) Key news events, 3) Portfolio health assessment, 4) Overall sentiment (Bullish/Bearish/Neutral). Format as JSON with these keys: summary (string), healthScore (number 0-100), sentiment (string: "Bullish", "Bearish", or "Neutral"), citations (array of {text, url}), news (array of {title, summary, source, url, sentiment}).`;
           break;
         case "news":
-          query = `Find the 5 most relevant recent news articles about ${stockSymbol} stock. For each, provide the title, brief summary, source name, source URL, and sentiment (Bullish/Bearish/Neutral). Format as JSON with array of {title, summary, source, url, sentiment}.`;
-          break;
-        case "technical":
-          query = `Analyze the technical indicators for ${stockSymbol} stock as of May 2025. Include moving averages, RSI, MACD, and volume analysis. Provide an overall technical analysis. Format as JSON with these keys: summary (string), healthScore (number 0-100), sentiment (string: "Bullish", "Bearish", or "Neutral"), citations (array of {text, url}).`;
-          break;
-        case "fundamental":
-          query = `Provide fundamental analysis of ${stockSymbol} including P/E ratio, market cap, revenue growth, debt levels, and competitive positioning as of May 2025. Format as JSON with these keys: summary (string), healthScore (number 0-100), sentiment (string: "Bullish", "Bearish", or "Neutral"), citations (array of {text, url}).`;
+          query = `Find the 5 most relevant recent news articles about ${stockSymbol} stock. For each, provide the title, brief summary, source name, source URL, and sentiment (Bullish/Bearish/Neutral). Format as JSON with array of news objects having these keys: title (string), summary (string), source (string), url (string), sentiment (string: "Bullish", "Bearish", or "Neutral").`;
           break;
         default:
           query = `Provide key insights about ${stockSymbol} stock as of May 2025, including recent performance, significant news, and market sentiment. Format as JSON with these keys: summary (string), healthScore (number 0-100), sentiment (string: "Bullish", "Bearish", or "Neutral"), citations (array of {text, url}), news (array of {title, summary, source, url, sentiment}).`;
@@ -118,8 +114,35 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
       const jsonContent = content.replace(/```json|```/g, "").trim();
       console.log("Raw JSON content:", jsonContent);
       
-      // Parse the JSON
-      const parsedData = JSON.parse(jsonContent);
+      let parsedData;
+      
+      // Handle news-only analysis differently
+      if (type === "news") {
+        try {
+          parsedData = JSON.parse(jsonContent);
+          // If it's an array, wrap it in an object structure
+          if (Array.isArray(parsedData)) {
+            parsedData = {
+              news: parsedData,
+              summary: "Latest news analysis for " + stockSymbol,
+              sentiment: "Neutral", // Default
+              healthScore: 50, // Default
+              citations: []
+            };
+          } 
+          // If it already has a news property, use it directly
+          else if (!parsedData.news) {
+            parsedData.news = [];
+          }
+        } catch (e) {
+          console.error("Error parsing news data:", e);
+          throw new Error("Could not parse news data");
+        }
+      } else {
+        // For comprehensive analysis
+        parsedData = JSON.parse(jsonContent);
+      }
+      
       console.log("Parsed data:", parsedData);
       
       // Set the insight data
@@ -138,6 +161,7 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
         variant: "destructive",
         duration: 5000,
       });
+      setShowResults(false);
     } finally {
       setIsLoading(false);
     }
@@ -157,6 +181,11 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
     }
   };
 
+  const handleCloseResults = () => {
+    setShowResults(false);
+    setInsight(null);
+  };
+
   return (
     <>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -168,23 +197,15 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
             Sonar Screener
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56 bg-[#1a2035] border-white/10 text-white">
+        <DropdownMenuContent className="w-56 bg-[#1a2035] border-white/10 text-white z-50">
           <DropdownMenuItem onClick={() => runSonarAnalysis("comprehensive")} className="cursor-pointer hover:bg-white/10">
             <TrendingUp className="mr-2 h-4 w-4" />
             <span>Comprehensive Analysis</span>
           </DropdownMenuItem>
+          <DropdownMenuSeparator className="bg-white/10" />
           <DropdownMenuItem onClick={() => runSonarAnalysis("news")} className="cursor-pointer hover:bg-white/10">
             <Newspaper className="mr-2 h-4 w-4" />
             <span>News Analysis</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator className="bg-white/10" />
-          <DropdownMenuItem onClick={() => runSonarAnalysis("technical")} className="cursor-pointer hover:bg-white/10">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            <span>Technical Analysis</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => runSonarAnalysis("fundamental")} className="cursor-pointer hover:bg-white/10">
-            <DollarSign className="mr-2 h-4 w-4" />
-            <span>Fundamental Analysis</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -209,8 +230,18 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
         </Card>
       )}
 
-      {!isLoading && insight && (
-        <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10">
+      {!isLoading && insight && showResults && (
+        <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10 relative">
+          <div className="absolute top-2 right-2 z-10">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleCloseResults}
+              className="h-8 w-8 rounded-full bg-gray-800/50 hover:bg-gray-700/50"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row justify-between items-start mb-4">
               <div className="flex items-center mb-4 md:mb-0">
@@ -267,7 +298,6 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
                             rel="noopener noreferrer"
                             className="flex items-center text-blue-400 hover:text-blue-300"
                           >
-                            <ExternalLink className="h-3 w-3 mr-1" />
                             <span>Source</span>
                           </a>
                         </div>
@@ -293,7 +323,6 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({ stockSymbol }) => {
                             rel="noopener noreferrer"
                             className="text-xs text-blue-400 hover:text-blue-300 flex items-center mt-1"
                           >
-                            <ExternalLink className="h-3 w-3 mr-1" />
                             {citation.url.replace(/https?:\/\//, '').split('/')[0]}
                           </a>
                         </div>

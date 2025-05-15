@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -25,6 +26,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import VisualizationPanel from "@/components/chat/VisualizationPanel";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
 
 const ChatResearch = () => {
   const [apiKey, setApiKey] = useState<string | null>(
@@ -167,6 +169,9 @@ const ChatResearch = () => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] text-[#f5f7fa]">
+      {/* Add Dashboard Header */}
+      <DashboardHeader />
+
       <div className="container mx-auto py-8 px-4">
         {/* Header */}
         <div className="mb-8 flex justify-between items-center">
