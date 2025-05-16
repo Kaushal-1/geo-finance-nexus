@@ -22,7 +22,7 @@ import { Line } from "react-chartjs-2";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { createChartOptions, darkThemeColors } from "./chart-utils/chartConfig";
-import { CandlestickController, CandlestickElement } from "./chart-utils/candlestickPlugin";
+import { CandlestickController, CandlestickElement, CandlestickChartType } from "./chart-utils/candlestickPlugin";
 import { CandlestickData, calculateSMA, calculateEMA, calculateRSI, calculateMACD } from "./chart-utils/indicatorUtils";
 import { formatCandlestickData, generateVolumeColors } from "./chart-utils/dataTransformer";
 
@@ -68,8 +68,8 @@ interface ChartConfig {
   emaPeriod: number;
 }
 
-// Define type for our chart data to avoid typing issues
-type StockChartData = ChartData<"line", any[]>;
+// Define a more flexible chart data type
+type StockChartData = ChartData<"line" | CandlestickChartType, any[]>;
 
 const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => {
   const [chartConfig, setChartConfig] = useState<ChartConfig>({
@@ -81,8 +81,8 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
     emaPeriod: 50,
   });
   
-  // Use a more generic ref type
-  const chartRef = useRef<ChartJS | null>(null);
+  // Use a generic ref that will work with any chart type
+  const chartRef = useRef<any>(null);
   
   // Prepare the chart data
   const chartData = useMemo(() => {
@@ -311,11 +311,11 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
       </div>
       
       <div className="flex-1 relative">
-        {/* Use a type assertion to make TypeScript accept our mixed chart types */}
+        {/* Use any typing for the chart to avoid TypeScript errors */}
         {chartData && <Line 
-          data={chartData} 
+          data={chartData as any} 
           options={options as any} 
-          ref={chartRef} 
+          ref={chartRef as any} 
         />}
       </div>
     </div>
