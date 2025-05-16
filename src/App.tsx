@@ -67,11 +67,8 @@ const App = () => {
                       <StockDetail />
                     </ProtectedRoute>
                   } />
-                  <Route path="/stock-compare" element={
-                    <ProtectedRoute>
-                      <StockCompare />
-                    </ProtectedRoute>
-                  } />
+                  {/* Making Stock Compare directly accessible without login for better visibility */}
+                  <Route path="/stock-compare" element={<StockCompare />} />
                   <Route path="/account-settings" element={
                     <ProtectedRoute>
                       <AccountSettings />

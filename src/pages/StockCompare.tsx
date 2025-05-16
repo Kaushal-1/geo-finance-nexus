@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { 
   ArrowRightLeft, 
   ChevronDown, 
@@ -72,118 +72,133 @@ const StockCompare = () => {
   }, [stock1, stock2, timeframe]);
   
   return (
-    <div className="container p-4 md:p-6 mx-auto">
-      {/* Header Section */}
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-white mb-2">Confused which stock to buy?</h1>
-        <p className="text-gray-300 max-w-3xl mx-auto">
-          Our Sonar API will help you analyze the stocks properly via in-depth analysis and real-time analysis of the selected stocks
-        </p>
-      </div>
+    <div className="bg-gradient-to-br from-[#0a0e17] to-[#131b2e] min-h-screen">
+      {/* Added proper navbar */}
+      <header className="py-4 px-6 bg-black/30 border-b border-white/10 flex justify-between items-center">
+        <div className="flex items-center">
+          <Link to="/" className="text-teal-400 text-xl font-bold mr-8">GeoFinance</Link>
+          <nav className="hidden md:flex space-x-6">
+            <Link to="/dashboard" className="text-white/70 hover:text-white">Dashboard</Link>
+            <Link to="/trading" className="text-white/70 hover:text-white">Trading</Link>
+            <Link to="/stock-compare" className="text-white font-medium">Compare Stocks</Link>
+            <Link to="/chat-research" className="text-white/70 hover:text-white">AI Research</Link>
+          </nav>
+        </div>
+      </header>
       
-      {/* Stock Selection */}
-      <Card className="bg-black/20 border-gray-800 backdrop-blur-sm mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="w-full md:w-1/2">
-              <label className="block text-sm font-medium text-gray-400 mb-2">Stock 1</label>
-              <StockSelector 
-                value={stock1}
-                onChange={setStock1}
-                disabled={isLoading}
-              />
+      <div className="container p-4 md:p-6 mx-auto">
+        {/* Header Section */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-white mb-2">Confused which stock to buy?</h1>
+          <p className="text-gray-300 max-w-3xl mx-auto">
+            Our Sonar API will help you analyze the stocks properly via in-depth analysis and real-time analysis of the selected stocks
+          </p>
+        </div>
+        
+        {/* Stock Selection */}
+        <Card className="bg-black/20 border-gray-800 backdrop-blur-sm mb-6">
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="w-full md:w-1/2">
+                <label className="block text-sm font-medium text-gray-400 mb-2">Stock 1</label>
+                <StockSelector 
+                  value={stock1}
+                  onChange={setStock1}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="w-full md:w-1/2">
+                <label className="block text-sm font-medium text-gray-400 mb-2">Stock 2</label>
+                <StockSelector 
+                  value={stock2}
+                  onChange={setStock2}
+                  disabled={isLoading}
+                />
+              </div>
             </div>
-            <div className="w-full md:w-1/2">
-              <label className="block text-sm font-medium text-gray-400 mb-2">Stock 2</label>
-              <StockSelector 
-                value={stock2}
-                onChange={setStock2}
-                disabled={isLoading}
-              />
-            </div>
-          </div>
-          
-          <div className="mt-6 flex justify-center">
-            <Button 
-              onClick={handleCompare}
-              disabled={isLoading || !stock1 || !stock2}
-              className="bg-teal-600 hover:bg-teal-700"
-              size="lg"
-            >
-              <ArrowRightLeft className="mr-2 h-4 w-4" />
-              {isLoading ? "Loading..." : "Compare Stocks"}
-            </Button>
-          </div>
-          
-          {/* Time Period Selector */}
-          <div className="mt-6 flex justify-center">
-            <div className="flex space-x-2">
-              {["1Day", "1Week", "1Month", "1Year"].map((period) => (
-                <Button
-                  key={period}
-                  variant={timeframe === period ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setTimeframe(period)}
-                  className={timeframe === period ? "bg-teal-600 hover:bg-teal-700" : "border-gray-700"}
-                >
-                  {period.replace(/([A-Z])/g, ' $1').trim()}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Main Comparison Content - Only shown after clicking Compare */}
-      {isComparing && (
-        <>
-          {/* Chart Comparison */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <Card className="bg-black/20 border-gray-800 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{stock1}</span>
-                  <span className="text-lg font-normal">
-                    ${realTimePrices[stock1] ? realTimePrices[stock1].toFixed(2) : "Loading..."}
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <StockComparisonChart symbol={stock1} timeframe={timeframe} />
-              </CardContent>
-            </Card>
             
-            <Card className="bg-black/20 border-gray-800 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{stock2}</span>
-                  <span className="text-lg font-normal">
-                    ${realTimePrices[stock2] ? realTimePrices[stock2].toFixed(2) : "Loading..."}
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <StockComparisonChart symbol={stock2} timeframe={timeframe} />
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Technical Analysis Panels */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <TechnicalAnalysisPanel symbol={stock1} />
-            <TechnicalAnalysisPanel symbol={stock2} />
-          </div>
-          
-          {/* News Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <StockNewsPanel symbol={stock1} />
-            <StockNewsPanel symbol={stock2} />
-          </div>
-          
-          {/* Buy Recommendation */}
-          <StockRecommendation stock1={stock1} stock2={stock2} />
-        </>
-      )}
+            <div className="mt-6 flex justify-center">
+              <Button 
+                onClick={handleCompare}
+                disabled={isLoading || !stock1 || !stock2}
+                className="bg-teal-600 hover:bg-teal-700"
+                size="lg"
+              >
+                <ArrowRightLeft className="mr-2 h-4 w-4" />
+                {isLoading ? "Loading..." : "Compare Stocks"}
+              </Button>
+            </div>
+            
+            {/* Time Period Selector */}
+            <div className="mt-6 flex justify-center">
+              <div className="flex space-x-2">
+                {["1Day", "1Week", "1Month", "1Year"].map((period) => (
+                  <Button
+                    key={period}
+                    variant={timeframe === period ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setTimeframe(period)}
+                    className={timeframe === period ? "bg-teal-600 hover:bg-teal-700" : "border-gray-700"}
+                  >
+                    {period.replace(/([A-Z])/g, ' $1').trim()}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Main Comparison Content - Only shown after clicking Compare */}
+        {isComparing && (
+          <>
+            {/* Chart Comparison */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <Card className="bg-black/20 border-gray-800 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{stock1}</span>
+                    <span className="text-lg font-normal">
+                      ${realTimePrices[stock1] ? realTimePrices[stock1].toFixed(2) : "Loading..."}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <StockComparisonChart symbol={stock1} timeframe={timeframe} />
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-black/20 border-gray-800 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{stock2}</span>
+                    <span className="text-lg font-normal">
+                      ${realTimePrices[stock2] ? realTimePrices[stock2].toFixed(2) : "Loading..."}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <StockComparisonChart symbol={stock2} timeframe={timeframe} />
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Technical Analysis Panels */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <TechnicalAnalysisPanel symbol={stock1} />
+              <TechnicalAnalysisPanel symbol={stock2} />
+            </div>
+            
+            {/* News Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <StockNewsPanel symbol={stock1} />
+              <StockNewsPanel symbol={stock2} />
+            </div>
+            
+            {/* Buy Recommendation */}
+            <StockRecommendation stock1={stock1} stock2={stock2} />
+          </>
+        )}
+      </div>
     </div>
   );
 };
