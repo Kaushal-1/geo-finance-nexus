@@ -18,17 +18,23 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    // Update state so the next render will show the fallback UI
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    // You can log the error to an error reporting service
     console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 
   render(): ReactNode {
     if (this.state.hasError) {
-      // You can render any custom fallback UI
-      return this.props.fallback || (
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+      
+      // Default fallback UI
+      return (
         <div className="p-6 bg-red-900/20 border border-red-800 rounded-lg text-center">
           <h2 className="text-xl font-bold text-red-400 mb-2">Something went wrong</h2>
           <p className="text-gray-300">

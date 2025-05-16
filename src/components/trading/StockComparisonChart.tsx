@@ -74,6 +74,7 @@ const StockComparisonChart: React.FC<StockComparisonChartProps> = ({
               newData[symbol] = sortedData;
             } else {
               console.warn(`No data received for ${symbol}`);
+              newData[symbol] = []; // Ensure we at least have an empty array
             }
           } catch (symbolError) {
             console.error(`Error fetching data for ${symbol}:`, symbolError);
@@ -114,7 +115,20 @@ const StockComparisonChart: React.FC<StockComparisonChartProps> = ({
   };
   
   return (
-    <ErrorBoundary>
+    <ErrorBoundary fallback={
+      <div className="p-6 bg-red-900/20 border border-red-800 rounded-lg text-center">
+        <h2 className="text-xl font-bold text-red-400 mb-2">Chart Error</h2>
+        <p className="text-gray-300">
+          There was a problem rendering the chart component.
+        </p>
+        <button
+          className="mt-4 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors"
+          onClick={() => window.location.reload()}
+        >
+          Reload Page
+        </button>
+      </div>
+    }>
       <div className="flex flex-col h-full">
         <div className="mb-4 flex justify-center">
           <div className="flex space-x-2">

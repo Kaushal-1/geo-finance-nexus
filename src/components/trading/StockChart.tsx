@@ -113,54 +113,64 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
     // Prepare the datasets
     const datasets: ChartDataset[] = [];
     
-    // Price dataset
-    const priceData = symbolData.map(bar => bar.c);
-    
-    // Calculate price change for label
-    const firstPrice = symbolData[0]?.c || 0;
-    const lastPrice = symbolData[symbolData.length - 1]?.c || 0;
-    const priceChange = lastPrice - firstPrice;
-    const percentChange = (priceChange / firstPrice) * 100;
-    
-    datasets.push({
-      type: 'line' as const,
-      label: `${symbols[0]} (${priceChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}%)`,
-      data: priceData,
-      borderColor: '#3b82f6', // Blue line
-      backgroundColor: 'rgba(59, 130, 246, 0.2)',
-      fill: false,
-      tension: 0.2,
-      borderWidth: 2,
-      pointRadius: 0,
-      pointHoverRadius: 5,
-      yAxisID: 'y',
-      order: 0
+    // Price dataset(s) - one per symbol
+    symbols.forEach((symbol, index) => {
+      const symbolBars = data[symbol];
+      if (!symbolBars || symbolBars.length === 0) return;
+      
+      const priceData = symbolBars.map(bar => bar.c);
+      
+      // Calculate price change for label
+      const firstPrice = symbolBars[0]?.c || 0;
+      const lastPrice = symbolBars[symbolBars.length - 1]?.c || 0;
+      const priceChange = lastPrice - firstPrice;
+      const percentChange = (priceChange / firstPrice) * 100;
+      
+      const colorIndex = index % CHART_COLORS.length;
+      
+      datasets.push({
+        type: 'line' as const,
+        label: `${symbol} (${priceChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}%)`,
+        data: priceData,
+        borderColor: CHART_COLORS[colorIndex].line,
+        backgroundColor: CHART_COLORS[colorIndex].background,
+        fill: false,
+        tension: 0.2,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        yAxisID: 'y',
+        order: 0
+      });
     });
     
-    // Volume dataset
-    const volumeData = symbolData.map(bar => bar.v);
-    
-    // Create color array based on price changes
-    const volumeColors = symbolData.map((bar, index) => {
-      // For the first bar or when the close is higher than previous close
-      if (index === 0 || bar.c >= symbolData[index - 1].c) {
-        return 'rgba(15, 206, 157, 0.6)'; // Green
-      }
-      // When the close is lower than the previous close
-      return 'rgba(239, 68, 68, 0.6)'; // Red
-    });
-    
-    datasets.push({
-      type: 'bar' as const,
-      label: 'Volume',
-      data: volumeData,
-      backgroundColor: volumeColors,
-      borderColor: 'rgba(0, 0, 0, 0)',
-      borderWidth: 0,
-      barThickness: 8, // Increased bar thickness
-      yAxisID: 'y1',
-      order: 1
-    });
+    // Only add volume for the first symbol
+    if (symbols.length === 1) {
+      const symbolData = data[symbols[0]];
+      const volumeData = symbolData.map(bar => bar.v);
+      
+      // Create color array based on price changes
+      const volumeColors = symbolData.map((bar, index) => {
+        // For the first bar or when the close is higher than previous close
+        if (index === 0 || bar.c >= symbolData[index - 1].c) {
+          return 'rgba(15, 206, 157, 0.6)'; // Green
+        }
+        // When the close is lower than the previous close
+        return 'rgba(239, 68, 68, 0.6)'; // Red
+      });
+      
+      datasets.push({
+        type: 'bar' as const,
+        label: 'Volume',
+        data: volumeData,
+        backgroundColor: volumeColors,
+        borderColor: 'rgba(0, 0, 0, 0)',
+        borderWidth: 0,
+        barThickness: 8, // Increased bar thickness
+        yAxisID: 'y1',
+        order: 1
+      });
+    }
     
     return {
       labels,
@@ -183,7 +193,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
         titleFont: {
           family: "'Inter', sans-serif",
           size: 14,
-          weight: 600 // Fix: using number instead of string
+          weight: 600 
         },
         bodyFont: {
           family: "'Inter', sans-serif",
