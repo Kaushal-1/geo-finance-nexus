@@ -25,6 +25,7 @@ const StockComparisonChart: React.FC<StockComparisonChartProps> = ({
 }) => {
   const [chartData, setChartData] = useState<Bar[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [key, setKey] = useState(Date.now()); // Add a key prop to force re-render when symbol changes
   
   useEffect(() => {
     const fetchChartData = async () => {
@@ -57,6 +58,8 @@ const StockComparisonChart: React.FC<StockComparisonChartProps> = ({
     };
     
     fetchChartData();
+    // Change key when symbol or timeframe changes to force Chart.js to re-initialize
+    setKey(Date.now());
   }, [symbol, timeframe]);
   
   return (
@@ -65,6 +68,7 @@ const StockComparisonChart: React.FC<StockComparisonChartProps> = ({
         <Skeleton className="h-full w-full bg-gray-800" />
       ) : (
         <StockChart 
+          key={`${symbol}-${timeframe}-${key}`} // Add unique key to force remount
           data={chartData} 
           symbol={symbol} 
           isLoading={isLoading} 
