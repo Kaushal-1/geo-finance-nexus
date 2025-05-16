@@ -7,11 +7,9 @@ import { toast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
 import HomeMapboxGlobe from "@/components/HomeMapboxGlobe";
 import "@/components/home-mapbox.css";
-
 const Index = () => {
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
   const [hasScrolled, setHasScrolled] = useState(false);
-
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
@@ -20,7 +18,6 @@ const Index = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
   const handleExploreClick = () => {
     toast({
       title: "Welcome to GeoFinance",
@@ -28,32 +25,24 @@ const Index = () => {
       duration: 5000
     });
   };
-
-  const features = [
-    {
-      title: "Geospatial Insights",
-      description: "Visualize financial data layered onto geographic maps to identify regional trends and opportunities.",
-      icon: Globe
-    },
-    {
-      title: "Real-Time Dashboards",
-      description: "Monitor market changes with customizable dashboards that update in real-time with global financial data.",
-      icon: ChartBar
-    },
-    {
-      title: "Custom Alerts",
-      description: "Set up personalized notifications for market events based on geospatial and financial parameters.",
-      icon: Bell
-    },
-    {
-      title: "Portfolio Mapping",
-      description: "Plot your investments on a global scale and visualize exposure across different geographic regions.",
-      icon: Clock
-    }
-  ];
-
-  return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] overflow-x-hidden">
+  const features = [{
+    title: "Geospatial Insights",
+    description: "Visualize financial data layered onto geographic maps to identify regional trends and opportunities.",
+    icon: Globe
+  }, {
+    title: "Real-Time Dashboards",
+    description: "Monitor market changes with customizable dashboards that update in real-time with global financial data.",
+    icon: ChartBar
+  }, {
+    title: "Custom Alerts",
+    description: "Set up personalized notifications for market events based on geospatial and financial parameters.",
+    icon: Bell
+  }, {
+    title: "Portfolio Mapping",
+    description: "Plot your investments on a global scale and visualize exposure across different geographic regions.",
+    icon: Clock
+  }];
+  return <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] overflow-x-hidden">
       {/* Navbar */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${hasScrolled ? "py-3 bg-black/70 backdrop-blur-md" : "py-5 bg-transparent"}`}>
         <div className="container mx-auto flex items-center justify-between">
@@ -148,28 +137,7 @@ const Index = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="flex flex-wrap justify-center gap-4 mb-12">
-            <Link to="/dashboard">
-              <Button variant="outline" className="border-white/20 text-white py-5 px-6 rounded-md hover:bg-white/10">
-                Market Map
-              </Button>
-            </Link>
-            <Link to="/trading">
-              <Button variant="outline" className="border-white/20 text-white py-5 px-6 rounded-md hover:bg-white/10">
-                Trading Platform
-              </Button>
-            </Link>
-            <Link to="/stock-compare">
-              <Button className="bg-teal-gradient text-white py-5 px-6 rounded-md button-glow">
-                Compare Stocks
-              </Button>
-            </Link>
-            <Link to="/chat-research">
-              <Button variant="outline" className="border-white/20 text-white py-5 px-6 rounded-md hover:bg-white/10">
-                AI Research
-              </Button>
-            </Link>
-          </div>
+          
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => <div key={index} className="transition-all duration-500 opacity-0 translate-y-10" style={{
@@ -252,8 +220,6 @@ const Index = () => {
 
       {/* Welcome Modal */}
       <WelcomeModal isOpen={showWelcomeModal} onClose={() => setShowWelcomeModal(false)} />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
