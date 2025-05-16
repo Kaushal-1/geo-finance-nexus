@@ -106,65 +106,68 @@ const AccountSettings = () => {
 
           {/* Main Content */}
           <div className="space-y-6">
-            <TabsContent value="profile" className={activeTab === "profile" ? "block" : "hidden"}>
-              <Card className="bg-black/20 border-white/10 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-white">User Profile</CardTitle>
-                  <CardDescription>Manage your account information</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-gray-400">User profile settings to be implemented.</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            {/* Replace the direct TabsContent usage with a proper Tabs component */}
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsContent value="profile">
+                <Card className="bg-black/20 border-white/10 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="text-white">User Profile</CardTitle>
+                    <CardDescription>Manage your account information</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <p className="text-gray-400">User profile settings to be implemented.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-            <TabsContent value="notifications" className={activeTab === "notifications" ? "block" : "hidden"}>
-              <Card className="bg-black/20 border-white/10 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-white">Notification Settings</CardTitle>
-                  <CardDescription>Manage how you receive alerts and notifications</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-gray-400">Notification settings to be implemented.</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+              <TabsContent value="notifications">
+                <Card className="bg-black/20 border-white/10 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="text-white">Notification Settings</CardTitle>
+                    <CardDescription>Manage how you receive alerts and notifications</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <p className="text-gray-400">Notification settings to be implemented.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-            <TabsContent value="api" className={activeTab === "api" ? "block" : "hidden"}>
-              <Card className="bg-black/20 border-white/10 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-white">API Keys</CardTitle>
-                  <CardDescription>Manage API keys for third-party integrations</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-gray-400">API key management to be implemented.</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="telegram" className={activeTab === "telegram" ? "block" : "hidden"}>
-              <TelegramBotPanel />
-            </TabsContent>
+              <TabsContent value="api">
+                <Card className="bg-black/20 border-white/10 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="text-white">API Keys</CardTitle>
+                    <CardDescription>Manage API keys for third-party integrations</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <p className="text-gray-400">API key management to be implemented.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+              
+              <TabsContent value="telegram">
+                <TelegramBotPanel />
+              </TabsContent>
 
-            <TabsContent value="data" className={activeTab === "data" ? "block" : "hidden"}>
-              <Card className="bg-black/20 border-white/10 backdrop-blur-sm">
-                <CardHeader>
-                  <CardTitle className="text-white">Data & Privacy</CardTitle>
-                  <CardDescription>Manage your data and privacy settings</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-gray-400">Data & Privacy settings to be implemented.</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+              <TabsContent value="data">
+                <Card className="bg-black/20 border-white/10 backdrop-blur-sm">
+                  <CardHeader>
+                    <CardTitle className="text-white">Data & Privacy</CardTitle>
+                    <CardDescription>Manage your data and privacy settings</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <p className="text-gray-400">Data & Privacy settings to be implemented.</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </main>
