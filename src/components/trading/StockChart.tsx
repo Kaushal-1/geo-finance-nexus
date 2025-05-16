@@ -13,12 +13,13 @@ import {
   Filler,
   ChartOptions,
   TimeScale,
+  ChartData,
+  ChartDataset,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { getPerplexityApiKey } from "@/services/chatService";
 
 // Register Chart.js components
 ChartJS.register(
@@ -66,13 +67,42 @@ const CHART_COLORS = [
   { line: "#ef4444", background: "rgba(239, 68, 68, 0.2)" },  // red
 ];
 
+// Define custom point data structure for chart
+interface PointData {
+  x: string;
+  y: number;
+}
+
+// Define custom chart dataset types
+interface LineChartDataset extends ChartDataset<'line', (number | PointData)[]> {
+  label: string;
+  borderColor: string;
+  backgroundColor: string;
+}
+
+interface BarChartDataset extends ChartDataset<'bar', (number | PointData)[]> {
+  label: string;
+  backgroundColor: string;
+  borderColor: string;
+  barThickness: number;
+  order: number;
+}
+
+type ChartDatasetCustom = LineChartDataset | BarChartDataset;
+
+// Modified chartData interface to work with point data
+interface ChartDataCustom {
+  labels: string[];
+  datasets: ChartDatasetCustom[];
+}
+
 const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => {
   const [showForecast, setShowForecast] = useState(false);
   const [forecastData, setForecastData] = useState<ForecastData | null>(null);
   const [isForecastLoading, setIsForecastLoading] = useState(false);
 
   // Prepare the chart data
-  const chartData = useMemo(() => {
+  const chartData = useMemo<ChartDataCustom | null>(() => {
     if (isLoading || !data || symbols.length === 0) return null;
 
     // Only use the first symbol for the main chart
@@ -107,7 +137,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
     const color = CHART_COLORS[0];
 
     // Create the main price dataset
-    const datasets = [
+    const datasets: ChartDatasetCustom[] = [
       {
         label: `${symbol} Price`,
         data: prices,
@@ -119,6 +149,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
         pointRadius: 0,
         pointHoverRadius: 5,
         yAxisID: 'y',
+        type: 'line'
       },
       {
         label: `${symbol} Volume`,
@@ -126,7 +157,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
         backgroundColor: 'rgba(59, 130, 246, 0.5)',
         borderColor: 'rgba(59, 130, 246, 0)',
         borderWidth: 0,
-        type: 'bar' as const,
+        type: 'bar',
         barThickness: 3,
         yAxisID: 'y',
         order: 1
@@ -141,13 +172,14 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
       // Add current marker
       datasets.push({
         label: 'Current',
-        data: [{ x: lastDate, y: forecastData.current }],
+        data: [{ x: lastDate, y: forecastData.current } as PointData],
         borderColor: '#3388ff',
         backgroundColor: '#3388ff',
         pointRadius: 5,
         pointHoverRadius: 8,
         showLine: false,
-        yAxisID: 'y'
+        yAxisID: 'y',
+        type: 'line'
       });
       
       // Add forecast line (horizontal)
@@ -157,8 +189,8 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
       datasets.push({
         label: `Max +${forecastData.max.percent.toFixed(2)}%`,
         data: [
-          { x: lastDate, y: forecastData.current },
-          { x: forecastEndDate, y: forecastData.max.value }
+          { x: lastDate, y: forecastData.current } as PointData,
+          { x: forecastEndDate, y: forecastData.max.value } as PointData
         ],
         borderColor: '#4ade80',
         backgroundColor: 'rgba(74, 222, 128, 0.1)',
@@ -167,15 +199,16 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
         pointRadius: 0,
         fill: false,
         tension: 0,
-        yAxisID: 'y'
+        yAxisID: 'y',
+        type: 'line'
       });
       
       // Avg line
       datasets.push({
         label: `Avg +${forecastData.avg.percent.toFixed(2)}%`,
         data: [
-          { x: lastDate, y: forecastData.current },
-          { x: forecastEndDate, y: forecastData.avg.value }
+          { x: lastDate, y: forecastData.current } as PointData,
+          { x: forecastEndDate, y: forecastData.avg.value } as PointData
         ],
         borderColor: '#22d3ee',
         backgroundColor: 'rgba(34, 211, 238, 0.1)',
@@ -184,15 +217,16 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
         pointRadius: 0,
         fill: false,
         tension: 0,
-        yAxisID: 'y'
+        yAxisID: 'y',
+        type: 'line'
       });
       
       // Min line
       datasets.push({
         label: `Min -${Math.abs(forecastData.min.percent).toFixed(2)}%`,
         data: [
-          { x: lastDate, y: forecastData.current },
-          { x: forecastEndDate, y: forecastData.min.value }
+          { x: lastDate, y: forecastData.current } as PointData,
+          { x: forecastEndDate, y: forecastData.min.value } as PointData
         ],
         borderColor: '#f43f5e',
         backgroundColor: 'rgba(244, 63, 94, 0.1)',
@@ -201,34 +235,37 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
         pointRadius: 0,
         fill: false,
         tension: 0,
-        yAxisID: 'y'
+        yAxisID: 'y',
+        type: 'line'
       });
       
       // Add forecast range area
       datasets.push({
         label: 'Forecast Range',
         data: [
-          { x: lastDate, y: forecastData.current },
-          { x: forecastEndDate, y: forecastData.max.value }
+          { x: lastDate, y: forecastData.current } as PointData,
+          { x: forecastEndDate, y: forecastData.max.value } as PointData
         ],
         borderColor: 'transparent',
         backgroundColor: 'rgba(74, 222, 128, 0.1)', // green tint
-        fill: '+1',
+        fill: '+1' as any,
         tension: 0,
-        yAxisID: 'y'
+        yAxisID: 'y',
+        type: 'line'
       });
       
       datasets.push({
         label: 'Forecast Range',
         data: [
-          { x: lastDate, y: forecastData.current },
-          { x: forecastEndDate, y: forecastData.min.value }
+          { x: lastDate, y: forecastData.current } as PointData,
+          { x: forecastEndDate, y: forecastData.min.value } as PointData
         ],
         borderColor: 'transparent',
         backgroundColor: 'rgba(244, 63, 94, 0.1)', // red tint
-        fill: '+1',
+        fill: '+1' as any,
         tension: 0,
-        yAxisID: 'y'
+        yAxisID: 'y',
+        type: 'line'
       });
     }
 
@@ -315,18 +352,8 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
   const fetchForecastData = async () => {
     setIsForecastLoading(true);
     try {
-      const apiKey = getPerplexityApiKey();
-      
-      if (!apiKey) {
-        toast({
-          title: "API Key Missing",
-          description: "Please set the Perplexity API key in your account settings.",
-          variant: "destructive",
-        });
-        setIsForecastLoading(false);
-        return;
-      }
-      
+      // For demo purposes, create mock forecast data
+      // In a real app, you would fetch this from an API
       const symbol = symbols[0];
       if (!symbol || !data[symbol] || data[symbol].length === 0) {
         throw new Error("No stock data available for forecast");
@@ -335,72 +362,33 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
       const stockData = data[symbol];
       const currentPrice = stockData[stockData.length - 1].c;
       
-      // Construct the query for price forecast
-      const query = `You are a financial analyst. I need a 1-year price forecast for ${symbol} stock.
-      The current price is $${currentPrice} as of May 2025.
-      
-      Analyze market trends, company performance, and sector outlook to provide:
-      1. Maximum price target with percentage increase from current
-      2. Minimum price target with percentage decrease from current
-      3. Average expected price with percentage change from current
-      
-      Format output as valid JSON with these fields:
-      - current: current price (number)
-      - max: {value: max price forecast (number), percent: percentage increase (number)}
-      - min: {value: min price forecast (number), percent: percentage decrease (number)}
-      - avg: {value: average price forecast (number), percent: percentage change (number)}`;
-
-      // Call the Perplexity API
-      const response = await fetch("https://api.perplexity.ai/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "llama-3.1-sonar-small-128k-online",
-          messages: [
-            {
-              role: "system",
-              content: "You are a financial analyst providing accurate stock price forecasts based on available data. Your output must be in JSON format."
-            },
-            {
-              role: "user",
-              content: query
-            }
-          ],
-          temperature: 0.2,
-          max_tokens: 500
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const responseData = await response.json();
-      const content = responseData.choices[0].message.content;
-
-      // Extract JSON from the response
-      const jsonPattern = /```json([\s\S]*?)```|({[\s\S]*})/;
-      const match = jsonPattern.exec(content);
-      
-      if (match) {
-        let jsonString = match[1] || match[2];
-        // Clean up the string
-        jsonString = jsonString.trim();
+      // Generate mock forecast data
+      setTimeout(() => {
+        const mockForecast = {
+          current: currentPrice,
+          max: {
+            value: currentPrice * 1.15,  // 15% increase
+            percent: 15
+          },
+          min: {
+            value: currentPrice * 0.92,  // 8% decrease
+            percent: -8
+          },
+          avg: {
+            value: currentPrice * 1.08,  // 8% increase
+            percent: 8
+          }
+        };
         
-        const forecast = JSON.parse(jsonString);
-        setForecastData(forecast);
+        setForecastData(mockForecast);
         setShowForecast(true);
         
         toast({
           title: "Forecast Generated",
           description: `1-year price forecast for ${symbol} generated successfully`,
         });
-      } else {
-        throw new Error("Could not parse forecast data");
-      }
+      }, 1000); // Simulate API delay
+      
     } catch (error) {
       console.error("Error fetching forecast data:", error);
       toast({
@@ -451,7 +439,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
         </Button>
       </div>
       <div className="relative h-[calc(100%-2.5rem)]">
-        <Line data={chartData} options={options} />
+        <Line data={chartData as ChartData<"line", number[], string>} options={options} />
         {showForecast && (
           <div className="absolute top-0 right-0 bg-gray-900/80 border border-gray-700 p-1 px-3 rounded text-xs">
             <span className="text-gray-300">1Y FORECAST</span>
