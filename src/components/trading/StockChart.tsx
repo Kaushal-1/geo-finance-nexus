@@ -130,6 +130,11 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
       barThickness: 4,
       yAxisID: 'volume',
       order: 1,
+      // Add the missing properties required by TypeScript
+      fill: false,
+      tension: 0,
+      pointRadius: 0,
+      pointHoverRadius: 0,
     } : null;
     
     // Combine price and volume datasets
@@ -179,7 +184,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
             
             // For price dataset
             if (tooltipItem.datasetIndex === 0) {
-              return `PRICE: $${tooltipItem.parsed.y.toFixed(2)}`;
+              return `PRICE: $${Number(tooltipItem.parsed.y).toFixed(2)}`;
             }
             
             // For volume dataset
@@ -201,7 +206,8 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
         grid: {
           display: true,
           color: "rgba(255, 255, 255, 0.05)",
-          drawBorder: false,
+          // Remove drawBorder as it's not a valid property
+          borderColor: "rgba(255, 255, 255, 0.05)"
         },
         ticks: {
           color: "#9ca3af",
@@ -220,11 +226,12 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
         position: 'right',
         grid: {
           color: "rgba(255, 255, 255, 0.05)",
-          drawBorder: false
+          // Remove drawBorder as it's not a valid property
+          borderColor: "rgba(255, 255, 255, 0.05)"
         },
         ticks: {
           color: "#9ca3af",
-          callback: (value) => `$${value.toFixed(2)}`,
+          callback: (value) => `$${Number(value).toFixed(2)}`,
           font: {
             size: 10
           }
@@ -275,3 +282,4 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
 };
 
 export default StockChart;
+
