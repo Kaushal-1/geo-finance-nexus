@@ -6,13 +6,11 @@ import {
   LinearScale,
   PointElement,
   LineElement,
-  BarElement,
   Title,
   Tooltip,
   Legend,
   Filler,
   ChartOptions,
-  TooltipItem,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,7 +21,6 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
-  BarElement,
   Title,
   Tooltip,
   Legend,
@@ -54,23 +51,6 @@ const CHART_COLORS = [
   { line: "#10b981", background: "rgba(16, 185, 129, 0.2)" }, // emerald
   { line: "#ef4444", background: "rgba(239, 68, 68, 0.2)" },  // red
 ];
-
-// Define a custom chart dataset type that can accommodate both line and bar charts
-interface CustomChartDataset {
-  label: string;
-  data: number[];
-  borderColor: string;
-  backgroundColor: string | string[]; // Allow both string and array of strings
-  fill: boolean;
-  tension: number;
-  borderWidth: number;
-  pointRadius: number;
-  pointHoverRadius: number;
-  yAxisID: string;
-  type?: string;
-  barThickness?: number;
-  order?: number;
-}
 
 const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => {
   // Prepare the chart data
@@ -103,60 +83,36 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
 
     const labels = sortedDates.map(date => formatDate(date));
 
-    // Create datasets for price data
-    const priceDatasets = symbols.map((symbol, index) => {
+    // Create datasets
+    const datasets = symbols.map((symbol, index) => {
       if (!data[symbol] || data[symbol].length === 0) return null;
 
-      const prices = data[symbol].map(bar => bar.c);
-      
+      // Use normalized values to compare different stocks with different price ranges
+      const firstPrice = data[symbol][0]?.c || 1;
+      const normalizedData = data[symbol].map(bar => ({
+        x: formatDate(bar.t),
+        y: (bar.c / firstPrice) * 100 // Convert to percentage of first price
+      }));
+
       // Calculate price change for label
-      const firstPrice = prices[0] || 0;
-      const lastPrice = prices[prices.length - 1] || 0;
+      const lastPrice = data[symbol][data[symbol].length - 1]?.c || 0;
       const priceChange = lastPrice - firstPrice;
       const percentChange = (priceChange / firstPrice) * 100;
       
       const color = CHART_COLORS[index % CHART_COLORS.length];
-      // For the main chart, use teal color as in the reference design
-      const lineColor = index === 0 ? "#0fce9d" : color.line;
 
       return {
         label: `${symbol} (${priceChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}%)`,
-        data: prices,
-        borderColor: lineColor,
-        backgroundColor: "rgba(15, 206, 157, 0.2)",
+        data: normalizedData,
+        borderColor: color.line,
+        backgroundColor: color.background,
         fill: false,
         tension: 0.2,
         borderWidth: 2,
         pointRadius: 0,
-        pointHoverRadius: 4,
-        yAxisID: 'y',
+        pointHoverRadius: 5,
       };
     }).filter(Boolean);
-
-    // Create volume dataset for the first symbol
-    const volumeDataset = symbols.length > 0 && data[symbols[0]] ? {
-      label: 'Volume',
-      data: data[symbols[0]].map(bar => bar.v),
-      // Fix: Use a single string for backgroundColor to satisfy type constraints
-      backgroundColor: "rgba(15, 206, 157, 0.5)",
-      borderColor: "transparent",
-      borderWidth: 0,
-      type: 'bar' as const,
-      barThickness: 4,
-      yAxisID: 'volume',
-      order: 1,
-      // Add the missing properties required by TypeScript
-      fill: false,
-      tension: 0,
-      pointRadius: 0,
-      pointHoverRadius: 0,
-    } : null;
-    
-    // Combine price and volume datasets
-    const datasets = [...priceDatasets] as CustomChartDataset[];
-    if (volumeDataset) {
-      datasets.push(volumeDataset as CustomChartDataset);
-    }
 
     return {
       labels,
@@ -175,99 +131,52 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
       tooltip: {
         mode: 'index',
         intersect: false,
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        titleColor: "white",
-        bodyColor: "white",
-        borderColor: "rgba(15, 206, 157, 0.3)",
-        borderWidth: 1,
-        padding: 10,
-        displayColors: false,
-        titleFont: {
-          size: 14,
-          weight: 'bold',
-        },
         callbacks: {
-          title: (tooltipItems) => {
-            if (tooltipItems.length > 0) {
-              // Display formatted date
-              return tooltipItems[0].label.toLowerCase();
-            }
-            return '';
-          },
-          label: (tooltipItem) => {
-            const symbol = symbols[0] || '';
-            
-            // For price dataset
-            if (tooltipItem.datasetIndex === 0) {
-              return `PRICE: $${Number(tooltipItem.parsed.y).toFixed(2)}`;
-            }
-            
-            // For volume dataset
-            if (tooltipItem.datasetIndex === 1) {
-              const volumeValue = tooltipItem.parsed.y;
-              return `VOLUME: ${volumeValue.toLocaleString()}`;
-            }
-            
-            return '';
+          label: (context) => {
+            const datasetLabel = context.dataset.label || '';
+            const symbol = datasetLabel.split(' ')[0];
+            const value = context.parsed.y;
+            return `${datasetLabel}: ${value.toFixed(2)}%`;
           }
         }
       },
       legend: {
-        display: false,
+        position: 'top',
+        labels: {
+          color: '#e5e7eb', // text-gray-200
+          usePointStyle: true,
+          pointStyle: 'line',
+        }
       },
     },
     scales: {
       x: {
         grid: {
           display: true,
-          color: "rgba(255, 255, 255, 0.05)",
-          // Fix: Remove borderColor as it's not a valid property for grid
+          color: "rgba(255, 255, 255, 0.05)"
         },
         ticks: {
           color: "#9ca3af",
           maxRotation: 0,
           autoSkip: true,
           maxTicksLimit: 8,
-          font: {
-            size: 10
-          }
-        },
-        border: {
-          display: false
         }
       },
       y: {
         position: 'right',
         grid: {
-          color: "rgba(255, 255, 255, 0.05)",
-          // Fix: Remove borderColor as it's not a valid property for grid
+          color: "rgba(255, 255, 255, 0.05)"
         },
         ticks: {
           color: "#9ca3af",
-          callback: (value) => `$${Number(value).toFixed(2)}`,
-          font: {
-            size: 10
-          }
+          callback: (value) => `${value}%`,
         },
-        border: {
-          display: false
+        title: {
+          display: true,
+          text: 'Relative Performance (%)',
+          color: '#9ca3af',
         }
       },
-      volume: {
-        position: 'left',
-        grid: {
-          display: false,
-        },
-        ticks: {
-          display: false,
-        },
-        border: {
-          display: false
-        }
-      }
-    },
-    animation: {
-      duration: 500
     }
   };
 
@@ -288,8 +197,8 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
   }
 
   return (
-    <div className="h-full relative bg-[#080a10]">
-      <Line data={chartData as any} options={options} />
+    <div className="h-full relative">
+      <Line data={chartData} options={options} />
     </div>
   );
 };
