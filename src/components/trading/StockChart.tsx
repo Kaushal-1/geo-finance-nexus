@@ -1,5 +1,5 @@
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -10,20 +10,29 @@ import {
   Tooltip,
   Legend,
   Filler,
-  ChartOptions,
   BarElement,
   ChartData,
+  TimeScale
 } from "chart.js";
+import 'chartjs-adapter-date-fns';
 import { Line } from "react-chartjs-2";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { createChartOptions, darkThemeColors } from "./chart-utils/chartConfig";
+import { CandlestickController, CandlestickElement } from "./chart-utils/candlestickPlugin";
+import { CandlestickData, calculateSMA, calculateEMA, calculateRSI, calculateMACD } from "./chart-utils/indicatorUtils";
+import { formatCandlestickData, generateVolumeColors } from "./chart-utils/dataTransformer";
 
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
+  TimeScale,
   PointElement,
   LineElement,
   BarElement,
+  CandlestickController,
+  CandlestickElement,
   Title,
   Tooltip,
   Legend,
@@ -47,258 +56,172 @@ interface StockChartProps {
   isLoading?: boolean;
 }
 
-// Define chart colors for different stocks
-const CHART_COLORS = [
-  { line: "#3b82f6", background: "rgba(59, 130, 246, 0.2)" }, // blue
-  { line: "#f59e0b", background: "rgba(245, 158, 11, 0.2)" }, // amber
-  { line: "#10b981", background: "rgba(16, 185, 129, 0.2)" }, // emerald
-  { line: "#ef4444", background: "rgba(239, 68, 68, 0.2)" },  // red
-];
-
-// Types for mixed chart datasets
-type LineDataset = {
-  type: 'line';
-  label: string;
-  data: number[];
-  borderColor: string;
-  backgroundColor: string;
-  fill: boolean;
-  tension: number;
-  borderWidth: number;
-  pointRadius: number;
-  pointHoverRadius: number;
-  yAxisID: string;
-  order: number;
+interface ChartConfig {
+  showVolume: boolean;
+  showSMA: boolean;
+  showEMA: boolean;
+  chartType: 'candlestick' | 'line';
+  smaPeriod: number;
+  emaPeriod: number;
 }
-
-type BarDataset = {
-  type: 'bar';
-  label: string;
-  data: number[];
-  backgroundColor: string[] | string;
-  borderColor: string;
-  borderWidth: number;
-  barThickness: number;
-  yAxisID: string;
-  order: number;
-}
-
-type ChartDataset = LineDataset | BarDataset;
-type StockChartData = ChartData<'line', number[], string> & {
-  datasets: ChartDataset[];
-};
 
 const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => {
+  const [chartConfig, setChartConfig] = useState<ChartConfig>({
+    showVolume: true,
+    showSMA: true,
+    showEMA: false,
+    chartType: 'candlestick',
+    smaPeriod: 20,
+    emaPeriod: 50,
+  });
+  
+  const chartRef = useRef<ChartJS>(null);
+  
   // Prepare the chart data
   const chartData = useMemo(() => {
     if (isLoading || !data || symbols.length === 0) return null;
 
     // Get data for the first symbol
-    const symbolData = data[symbols[0]];
+    const symbolData = data[symbols[0]] as CandlestickData[];
     if (!symbolData || symbolData.length === 0) return null;
     
-    // Format dates for display
-    const formatDate = (dateString: string) => {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).toLowerCase();
-    };
-
-    const labels = symbolData.map(bar => formatDate(bar.t));
+    // Format the candlestick data
+    const formattedData = formatCandlestickData(symbolData);
+    const { timestamps, candlesticks, volumes, prices } = formattedData;
     
-    // Prepare the datasets
-    const datasets: ChartDataset[] = [];
+    // Calculate technical indicators
+    const smaData = chartConfig.showSMA ? calculateSMA(symbolData, chartConfig.smaPeriod) : [];
+    const emaData = chartConfig.showEMA ? calculateEMA(symbolData, chartConfig.emaPeriod) : [];
     
-    // Price dataset(s) - one per symbol
-    symbols.forEach((symbol, index) => {
-      const symbolBars = data[symbol];
-      if (!symbolBars || symbolBars.length === 0) return;
-      
-      const priceData = symbolBars.map(bar => bar.c);
-      
-      // Calculate price change for label
-      const firstPrice = symbolBars[0]?.c || 0;
-      const lastPrice = symbolBars[symbolBars.length - 1]?.c || 0;
-      const priceChange = lastPrice - firstPrice;
-      const percentChange = (priceChange / firstPrice) * 100;
-      
-      const colorIndex = index % CHART_COLORS.length;
-      
+    // Generate volume colors based on price movement
+    const volumeColors = generateVolumeColors(symbolData);
+    
+    // Create the datasets array
+    const datasets: any[] = [];
+    
+    // Add the price dataset based on chart type
+    if (chartConfig.chartType === 'candlestick') {
       datasets.push({
-        type: 'line' as const,
-        label: `${symbol} (${priceChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}%)`,
-        data: priceData,
-        borderColor: CHART_COLORS[colorIndex].line,
-        backgroundColor: CHART_COLORS[colorIndex].background,
+        type: 'candlestick',
+        label: `${symbols[0]} Price`,
+        data: candlesticks,
+        candlestickWidth: 6,
+        borderColorUp: darkThemeColors.green.base,
+        borderColorDown: darkThemeColors.red.base,
+        backgroundColorUp: 'rgba(34, 197, 94, 0.1)',
+        backgroundColorDown: 'rgba(239, 68, 68, 0.1)',
+        order: 0,
+        yAxisID: 'y',
+      });
+    } else {
+      datasets.push({
+        type: 'line',
+        label: `${symbols[0]} Price`,
+        data: prices,
+        borderColor: darkThemeColors.blue.base,
+        backgroundColor: darkThemeColors.blue.gradient.start,
         fill: false,
-        tension: 0.2,
+        tension: 0.1,
         borderWidth: 2,
         pointRadius: 0,
         pointHoverRadius: 5,
         yAxisID: 'y',
         order: 0
       });
-    });
+    }
     
-    // Only add volume for the first symbol
-    if (symbols.length === 1) {
-      const symbolData = data[symbols[0]];
-      const volumeData = symbolData.map(bar => bar.v);
-      
-      // Create color array based on price changes
-      const volumeColors = symbolData.map((bar, index) => {
-        // For the first bar or when the close is higher than previous close
-        if (index === 0 || bar.c >= symbolData[index - 1].c) {
-          return 'rgba(15, 206, 157, 0.6)'; // Green
-        }
-        // When the close is lower than the previous close
-        return 'rgba(239, 68, 68, 0.6)'; // Red
-      });
-      
+    // Add SMA indicator if enabled
+    if (chartConfig.showSMA) {
       datasets.push({
-        type: 'bar' as const,
-        label: 'Volume',
-        data: volumeData,
-        backgroundColor: volumeColors,
-        borderColor: 'rgba(0, 0, 0, 0)',
-        borderWidth: 0,
-        barThickness: 8, // Increased bar thickness
-        yAxisID: 'y1',
+        type: 'line',
+        label: `SMA (${chartConfig.smaPeriod})`,
+        data: smaData,
+        borderColor: darkThemeColors.amber.base,
+        backgroundColor: 'transparent',
+        borderWidth: 1,
+        borderDash: [5, 5],
+        pointRadius: 0,
+        pointHoverRadius: 3,
+        yAxisID: 'y',
         order: 1
       });
     }
     
-    return {
-      labels,
-      datasets
-    } as StockChartData;
-  }, [data, symbols, isLoading]);
-
-  const options: ChartOptions<'line'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      mode: 'index',
-      intersect: false,
-    },
-    plugins: {
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-        backgroundColor: 'rgba(13, 17, 23, 0.9)',
-        titleFont: {
-          family: "'Inter', sans-serif",
-          size: 14,
-          weight: 600 
-        },
-        bodyFont: {
-          family: "'Inter', sans-serif",
-          size: 12
-        },
-        padding: 12,
-        borderColor: 'rgba(59, 130, 246, 0.3)',
+    // Add EMA indicator if enabled
+    if (chartConfig.showEMA) {
+      datasets.push({
+        type: 'line',
+        label: `EMA (${chartConfig.emaPeriod})`,
+        data: emaData,
+        borderColor: darkThemeColors.purple.base,
+        backgroundColor: 'transparent',
         borderWidth: 1,
-        callbacks: {
-          label: (context) => {
-            const datasetLabel = context.dataset.label || '';
-            const value = context.parsed.y;
-            
-            if (context.dataset.yAxisID === 'y1') {
-              // Format volume with commas
-              return `${datasetLabel}: ${value.toLocaleString()}`;
-            }
-            
-            // Format price with precision
-            return `${datasetLabel}: $${value.toFixed(2)}`;
-          }
-        }
-      },
-      legend: {
-        position: 'top',
-        align: 'start',
-        labels: {
-          color: '#e5e7eb', // text-gray-200
-          font: {
-            family: "'Inter', sans-serif",
-            size: 12
-          },
-          usePointStyle: true,
-          pointStyle: 'line',
-          padding: 15
-        }
-      },
-    },
-    scales: {
-      x: {
-        grid: {
-          display: true,
-          color: "rgba(255, 255, 255, 0.05)"
-        },
-        ticks: {
-          color: "#9ca3af",
-          font: {
-            family: "'Inter', sans-serif",
-            size: 11
-          },
-          maxRotation: 0,
-          autoSkip: true,
-          maxTicksLimit: 8,
-        }
-      },
-      y: {
-        position: 'right',
-        grid: {
-          color: "rgba(255, 255, 255, 0.05)"
-        },
-        ticks: {
-          color: "#9ca3af",
-          font: {
-            family: "'Inter', sans-serif",
-            size: 11
-          },
-          callback: (value) => {
-            // Ensure value is treated as a number for toFixed
-            const numValue = Number(value);
-            return `$${numValue.toFixed(2)}`;
-          }
-        },
-        title: {
-          display: false
-        }
-      },
-      y1: {
-        position: 'left',
-        grid: {
-          drawOnChartArea: false
-        },
-        ticks: {
-          color: "#9ca3af",
-          font: {
-            family: "'Inter', sans-serif",
-            size: 11
-          },
-          callback: (value) => {
-            // Ensure value is treated as a number for calculations
-            const numValue = Number(value);
-            if (numValue >= 1000000) {
-              return `${(numValue / 1000000).toFixed(1)}M`;
-            } else if (numValue >= 1000) {
-              return `${(numValue / 1000).toFixed(1)}K`;
-            }
-            return value;
-          }
-        },
-        title: {
-          display: false
-        }
-      }
+        borderDash: [2, 4],
+        pointRadius: 0,
+        pointHoverRadius: 3,
+        yAxisID: 'y',
+        order: 2
+      });
     }
-  };
+    
+    // Add volume chart if enabled
+    if (chartConfig.showVolume) {
+      datasets.push({
+        type: 'bar',
+        label: 'Volume',
+        data: volumes,
+        backgroundColor: volumeColors,
+        borderColor: 'transparent',
+        borderWidth: 0,
+        barThickness: 6,
+        maxBarThickness: 10,
+        yAxisID: 'y1',
+        order: 3
+      });
+    }
+    
+    return {
+      labels: timestamps,
+      datasets
+    };
+  }, [data, symbols, isLoading, chartConfig]);
 
+  // Create chart options
+  const options = useMemo(() => {
+    return createChartOptions(chartConfig.showVolume);
+  }, [chartConfig.showVolume]);
+
+  // Toggle chart controls
+  const toggleSMA = () => {
+    setChartConfig(prev => ({ ...prev, showSMA: !prev.showSMA }));
+  };
+  
+  const toggleEMA = () => {
+    setChartConfig(prev => ({ ...prev, showEMA: !prev.showEMA }));
+  };
+  
+  const toggleVolume = () => {
+    setChartConfig(prev => ({ ...prev, showVolume: !prev.showVolume }));
+  };
+  
+  const toggleChartType = () => {
+    setChartConfig(prev => ({
+      ...prev,
+      chartType: prev.chartType === 'candlestick' ? 'line' : 'candlestick'
+    }));
+  };
+  
+  const increaseSMAPeriod = () => {
+    setChartConfig(prev => ({ ...prev, smaPeriod: prev.smaPeriod + 5 }));
+  };
+  
+  const decreaseSMAPeriod = () => {
+    setChartConfig(prev => ({ 
+      ...prev, 
+      smaPeriod: Math.max(5, prev.smaPeriod - 5) 
+    }));
+  };
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -316,8 +239,73 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
   }
 
   return (
-    <div className="h-[450px] relative"> {/* Increased height for better visualization */}
-      <Line data={chartData} options={options} />
+    <div className="flex flex-col h-full">
+      <div className="flex flex-wrap gap-2 mb-3">
+        <Button 
+          size="sm" 
+          variant={chartConfig.chartType === 'candlestick' ? "default" : "outline"} 
+          className="text-xs h-7 px-2 py-1"
+          onClick={toggleChartType}
+        >
+          Candlestick
+        </Button>
+        <Button 
+          size="sm" 
+          variant={chartConfig.chartType === 'line' ? "default" : "outline"} 
+          className="text-xs h-7 px-2 py-1"
+          onClick={toggleChartType}
+        >
+          Line
+        </Button>
+        <Button 
+          size="sm" 
+          variant={chartConfig.showSMA ? "default" : "outline"}
+          className="text-xs h-7 px-2 py-1" 
+          onClick={toggleSMA}
+        >
+          SMA {chartConfig.smaPeriod}
+        </Button>
+        {chartConfig.showSMA && (
+          <>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="text-xs h-7 px-2 py-1"
+              onClick={decreaseSMAPeriod}
+            >
+              -
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="text-xs h-7 px-2 py-1"
+              onClick={increaseSMAPeriod}
+            >
+              +
+            </Button>
+          </>
+        )}
+        <Button 
+          size="sm" 
+          variant={chartConfig.showEMA ? "default" : "outline"}
+          className="text-xs h-7 px-2 py-1" 
+          onClick={toggleEMA}
+        >
+          EMA {chartConfig.emaPeriod}
+        </Button>
+        <Button 
+          size="sm" 
+          variant={chartConfig.showVolume ? "default" : "outline"}
+          className="text-xs h-7 px-2 py-1" 
+          onClick={toggleVolume}
+        >
+          Volume
+        </Button>
+      </div>
+      
+      <div className="flex-1 relative">
+        {chartData && (<Line data={chartData} options={options} ref={chartRef} />)}
+      </div>
     </div>
   );
 };

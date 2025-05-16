@@ -1,11 +1,15 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Search } from "lucide-react";
+import { RefreshCw, Search, ArrowUp, ArrowDown, Clock } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import StockChart from "./StockChart";
 import { alpacaService } from "@/services/alpacaService";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Bar {
   t: string; // timestamp
@@ -30,36 +34,47 @@ interface StockChartPanelProps {
 
 // Timeframe options
 const TIMEFRAMES = [
-  { value: "1Day", label: "1D" },
-  { value: "5Day", label: "5D" },
-  { value: "1Week", label: "1W" },
-  { value: "1Month", label: "1M" }
+  { value: "1Min", label: "1M", apiValue: "1Min", limit: 120 },
+  { value: "5Min", label: "5M", apiValue: "5Min", limit: 120 },
+  { value: "15Min", label: "15M", apiValue: "15Min", limit: 100 },
+  { value: "1Hour", label: "1H", apiValue: "1Hour", limit: 72 },
+  { value: "1Day", label: "1D", apiValue: "1Day", limit: 30 },
+  { value: "1Week", label: "1W", apiValue: "1Week", limit: 52 },
+  { value: "1Month", label: "1M", apiValue: "1Month", limit: 24 },
 ];
 
 const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => {
   const [symbol, setSymbol] = useState("AAPL"); // Default symbol
   const [chartData, setChartData] = useState<Bar[]>([]);
-  const [timeframe, setTimeframe] = useState("1Day");
+  const [timeframe, setTimeframe] = useState("15Min");
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<Asset[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
-  const [priceInfo, setPriceInfo] = useState({ current: 0, change: 0, changePercent: 0 });
+  const [priceInfo, setPriceInfo] = useState({ 
+    current: 0, 
+    change: 0, 
+    changePercent: 0,
+    high: 0,
+    low: 0,
+    open: 0,
+    volume: 0
+  });
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   
   // Function to fetch stock data
   const fetchStockData = useCallback(async () => {
     console.log(`Fetching stock data for ${symbol} with timeframe ${timeframe}`);
     setIsLoading(true);
     try {
-      // Set appropriate limit based on timeframe
-      let limit = 60; // Default
-      if (timeframe === "5Day") limit = 5 * 24; // 5 days of hourly bars
-      if (timeframe === "1Week") limit = 7 * 24; // 7 days of hourly bars
-      if (timeframe === "1Month") limit = 30; // 30 daily bars
+      // Get the appropriate limit based on timeframe
+      const selectedTimeframe = TIMEFRAMES.find(tf => tf.value === timeframe) || TIMEFRAMES[2]; // default to 15Min
+      const limit = selectedTimeframe.limit;
       
-      const response = await alpacaService.getBars(symbol, timeframe, limit);
+      const response = await alpacaService.getBars(symbol, selectedTimeframe.apiValue, limit);
       console.log("Stock data response:", response);
+      
       if (response && Array.isArray(response)) {
         // Ensure bars are sorted by time
         const sortedData = [...response].sort((a, b) => 
@@ -67,6 +82,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
         );
         
         setChartData(sortedData);
+        setLastUpdated(new Date());
         
         // Calculate price info
         if (sortedData.length > 0) {
@@ -75,10 +91,18 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
           const priceChange = latestBar.c - firstBar.c;
           const priceChangePercent = (priceChange / firstBar.c) * 100;
           
+          // Get the highest high and lowest low across all bars
+          const highestHigh = Math.max(...sortedData.map(bar => bar.h));
+          const lowestLow = Math.min(...sortedData.map(bar => bar.l));
+          
           setPriceInfo({
             current: latestBar.c,
             change: priceChange,
-            changePercent: priceChangePercent
+            changePercent: priceChangePercent,
+            high: highestHigh,
+            low: lowestLow,
+            open: firstBar.o,
+            volume: latestBar.v
           });
         }
       } else {
@@ -157,6 +181,36 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
       }
     }
   };
+  
+  // Format numbers for display
+  const formatNumber = (num: number, decimals = 2) => {
+    return num.toLocaleString(undefined, {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    });
+  };
+  
+  // Format volume for display
+  const formatVolume = (volume: number) => {
+    if (volume >= 1_000_000) {
+      return `${(volume / 1_000_000).toFixed(2)}M`;
+    } else if (volume >= 1_000) {
+      return `${(volume / 1_000).toFixed(2)}K`;
+    }
+    return volume.toString();
+  };
+  
+  // Format last updated time
+  const formatLastUpdated = () => {
+    if (!lastUpdated) return "Never";
+    
+    return lastUpdated.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+  };
 
   // Fetch data when component mounts or symbol/timeframe changes
   useEffect(() => {
@@ -182,16 +236,29 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
     let interval: NodeJS.Timeout | undefined;
     
     if (autoRefresh) {
+      // Determine refresh interval based on timeframe
+      let refreshInterval = 60000; // Default to 1 minute
+      
+      if (timeframe === '1Min') {
+        refreshInterval = 30000; // 30 seconds for 1-minute charts
+      } else if (['5Min', '15Min'].includes(timeframe)) {
+        refreshInterval = 60000; // 1 minute for 5-minute and 15-minute charts
+      } else if (timeframe === '1Hour') {
+        refreshInterval = 300000; // 5 minutes for hourly charts
+      } else {
+        refreshInterval = 900000; // 15 minutes for daily+ charts
+      }
+      
       interval = setInterval(() => {
         console.log("Auto-refreshing chart data");
         fetchStockData();
-      }, 60000); // Update every minute
+      }, refreshInterval);
     }
     
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [autoRefresh, fetchStockData]);
+  }, [autoRefresh, timeframe, fetchStockData]);
 
   // Format data for the chart component
   const formattedChartData = {
@@ -238,45 +305,82 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
                 </Button>
               </form>
             </div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2 font-inter">
-              {symbol}
-              {priceInfo.current > 0 && (
-                <span className={`text-sm font-normal ${priceInfo.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {priceInfo.change >= 0 ? '+' : ''}{priceInfo.change.toFixed(2)} ({priceInfo.changePercent.toFixed(2)}%)
-                </span>
+            
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2 font-inter">
+                {symbol}
+                {priceInfo.current > 0 && (
+                  <span className={`text-sm font-normal ${priceInfo.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    ${formatNumber(priceInfo.current)}
+                  </span>
+                )}
+              </h2>
+              
+              {priceInfo.change !== 0 && (
+                <div className="flex items-center space-x-2">
+                  <span className={`flex items-center ${priceInfo.change >= 0 ? 'text-green-500' : 'text-red-500'} text-sm`}>
+                    {priceInfo.change >= 0 ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
+                    {priceInfo.change >= 0 ? '+' : ''}{formatNumber(priceInfo.change)} ({priceInfo.changePercent >= 0 ? '+' : ''}{formatNumber(priceInfo.changePercent)}%)
+                  </span>
+                </div>
               )}
-            </h2>
+            </div>
+            
+            {/* Price stats */}
+            {!isLoading && priceInfo.current > 0 && (
+              <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-400">
+                <div>Open: <span className="text-gray-300">${formatNumber(priceInfo.open)}</span></div>
+                <div>High: <span className="text-gray-300">${formatNumber(priceInfo.high)}</span></div>
+                <div>Low: <span className="text-gray-300">${formatNumber(priceInfo.low)}</span></div>
+                <div>Vol: <span className="text-gray-300">{formatVolume(priceInfo.volume)}</span></div>
+                <div className="flex items-center">
+                  <Clock className="h-3 w-3 mr-1" />
+                  <span>{formatLastUpdated()}</span>
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Timeframe selector and refresh controls */}
           <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-            <div className="flex gap-1">
-              {TIMEFRAMES.map(tf => (
-                <Button 
-                  key={tf.value} 
-                  variant={timeframe === tf.value ? "default" : "outline"}
-                  size="sm"
-                  className={`${timeframe === tf.value ? 'bg-teal-600 hover:bg-teal-700' : 'border-gray-700'} font-inter`}
-                  onClick={() => setTimeframe(tf.value)}
-                >
-                  {tf.label}
-                </Button>
-              ))}
-            </div>
+            <Tabs defaultValue={timeframe} className="w-full">
+              <TabsList className="grid grid-cols-7">
+                {TIMEFRAMES.map(tf => (
+                  <TabsTrigger 
+                    key={tf.value} 
+                    value={tf.value}
+                    onClick={() => setTimeframe(tf.value)}
+                    className="text-xs"
+                  >
+                    {tf.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
             
             <div className="flex gap-2">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="auto-refresh"
-                  checked={autoRefresh}
-                  onChange={() => setAutoRefresh(!autoRefresh)}
-                  className="rounded border-gray-700 bg-gray-900"
-                />
-                <label htmlFor="auto-refresh" className="text-sm text-gray-300 font-inter">
-                  Auto-refresh (1m)
-                </label>
-              </div>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="auto-refresh"
+                        checked={autoRefresh}
+                        onChange={() => setAutoRefresh(!autoRefresh)}
+                        className="rounded border-gray-700 bg-gray-900"
+                      />
+                      <label htmlFor="auto-refresh" className="text-sm text-gray-300 font-inter">
+                        Auto
+                      </label>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Auto-refresh chart data</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
               <Button 
                 size="sm"
                 variant="outline" 
@@ -284,8 +388,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
                 onClick={fetchStockData}
                 disabled={isLoading}
               >
-                <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-                <span className="sr-only md:not-sr-only md:inline-block font-inter">Refresh</span>
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               </Button>
             </div>
           </div>
