@@ -14,7 +14,7 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import StockComparisonChart from "@/components/trading/StockComparisonChart";
 import StockSelector from "@/components/trading/StockSelector";
-import StockAnalysisPanel from "@/components/trading/StockAnalysisPanel";
+import TechnicalAnalysisPanel from "@/components/trading/TechnicalAnalysisPanel";
 import StockNewsPanel from "@/components/trading/StockNewsPanel";
 import StockRecommendation from "@/components/trading/StockRecommendation";
 import { alpacaService } from "@/services/alpacaService";
@@ -27,6 +27,20 @@ const StockCompare = () => {
   const [isComparing, setIsComparing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [realTimePrices, setRealTimePrices] = useState<{[key: string]: number}>({});
+  
+  // Safe formatter function to ensure we don't render objects directly
+  const formatValue = (value: any): string => {
+    if (value === null || value === undefined) return "N/A";
+    if (typeof value === "object") {
+      // If it's an object with bullishBearish and value properties
+      if (value.hasOwnProperty("bullishBearish") && value.hasOwnProperty("value")) {
+        return `${value.value} (${value.bullishBearish})`;
+      }
+      // For other objects, return a placeholder
+      return "Object";
+    }
+    return String(value);
+  };
   
   // Handle comparison button click
   const handleCompare = useCallback(async () => {
@@ -71,20 +85,6 @@ const StockCompare = () => {
       setIsLoading(false);
     }
   }, [stock1, stock2, timeframe]);
-  
-  // Safe formatter function to ensure we don't render objects directly
-  const formatValue = (value: any): string => {
-    if (value === null || value === undefined) return "N/A";
-    if (typeof value === "object") {
-      // If it's an object with bullishBearish and value properties
-      if (value.hasOwnProperty("bullishBearish") && value.hasOwnProperty("value")) {
-        return `${value.value} (${value.bullishBearish})`;
-      }
-      // For other objects, return a placeholder
-      return "Object";
-    }
-    return String(value);
-  };
   
   return (
     <div className="container p-4 md:p-6 mx-auto">
@@ -183,10 +183,10 @@ const StockCompare = () => {
             </Card>
           </div>
           
-          {/* Analysis Panels */}
+          {/* Technical Analysis Panels */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <StockAnalysisPanel symbol={stock1} />
-            <StockAnalysisPanel symbol={stock2} />
+            <TechnicalAnalysisPanel symbol={stock1} />
+            <TechnicalAnalysisPanel symbol={stock2} />
           </div>
           
           {/* News Section */}
