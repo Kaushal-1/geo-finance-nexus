@@ -1,18 +1,15 @@
 
-import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import MapVisualization from "@/components/dashboard/MapVisualization";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import { useToast } from "@/components/ui/use-toast";
 import { useTimelineData } from "@/hooks/useTimelineData";
-import { useNewsData } from "@/hooks/useNewsData";
 import { Button } from "@/components/ui/button";
 import { Newspaper, ArrowRightLeft } from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
-  SheetClose,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -21,18 +18,8 @@ import GlobalStockNews from "@/components/dashboard/GlobalStockNews";
 
 const Dashboard = () => {
   const [is3DView] = useState(true); // Keep as true, but no longer toggleable
-  const { toast } = useToast();
   const { selectedPeriod, setSelectedPeriod } = useTimelineData();
   const navigate = useNavigate();
-
-  // Initial load toast
-  useEffect(() => {
-    toast({
-      title: "Dashboard loaded",
-      description: "Welcome to the GeoFinance dashboard with real-time Finnhub API data integration.",
-      duration: 5000
-    });
-  }, []);
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] text-[#f5f7fa] overflow-hidden">
@@ -77,10 +64,15 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Bottom Market Performance - TradingView Widget */}
+        {/* Updated Trading View Widget */}
         <div className="h-20 rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm overflow-hidden">
           <div className="tradingview-widget-container h-full">
             <div className="tradingview-widget-container__widget h-full"></div>
+            <div className="tradingview-widget-copyright hidden md:block">
+              <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
+                <span className="text-blue-400 text-xs">Track all markets on TradingView</span>
+              </a>
+            </div>
           </div>
         </div>
         
@@ -90,44 +82,48 @@ const Dashboard = () => {
         </div>
       </div>
       
-      {/* TradingView Widget Script */}
-      <TradingViewWidget />
+      {/* Updated TradingView Widget */}
+      <UpdatedTradingViewWidget />
     </div>
   );
 };
 
-// Separate component for TradingView Widget to handle script injection
-const TradingViewWidget = () => {
-  useEffect(() => {
+// Updated component for TradingView Widget with the new configuration
+const UpdatedTradingViewWidget = () => {
+  React.useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
     script.async = true;
     script.innerHTML = JSON.stringify({
       "symbols": [
         {
-          "description": "Sensex",
-          "proName": "INDEX:SENSEX"
+          "proName": "FOREXCOM:SPXUSD",
+          "title": "S&P 500 Index"
         },
         {
-          "description": "Bitcoin",
-          "proName": "BINANCE:BTCUSDT"
+          "proName": "FOREXCOM:NSXUSD",
+          "title": "US 100 Cash CFD"
         },
         {
-          "description": "Nvidia",
-          "proName": "NASDAQ:NVDA"
+          "description": "TESLA",
+          "proName": "NASDAQ:TSLA"
         },
         {
-          "description": "Google",
-          "proName": "NASDAQ:GOOGL"
+          "description": "UBER",
+          "proName": "NYSE:UBER"
         },
         {
-          "description": "SBI",
-          "proName": "NSE:SBIN"
+          "description": "RELIANCE",
+          "proName": "NASDAQ:RELI"
+        },
+        {
+          "description": "APPLE",
+          "proName": "NASDAQ:AAPL"
         }
       ],
       "showSymbolLogo": true,
       "isTransparent": true,
-      "displayMode": "adaptive",
+      "displayMode": "regular",
       "colorTheme": "dark",
       "locale": "en"
     });
