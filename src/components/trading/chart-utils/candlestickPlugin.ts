@@ -1,6 +1,15 @@
 
 import { Chart, ChartType, LineController, LineElement, PointElement, ChartTypeRegistry, LineOptions } from 'chart.js';
 
+// Define a custom interface for parsed data with OHLC properties
+interface CandlestickParsedData {
+  x: number;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+}
+
 // Extend LineOptions to include candlestick properties
 interface CandlestickOptions extends LineOptions {
   candlestickWidth?: number;
@@ -87,7 +96,7 @@ class CandlestickController extends LineController {
 
   // Override to properly parse candlestick data
   parseObjectData(meta: any, data: any, start: number, count: number) {
-    const parsed: any[] = [];
+    const parsed: CandlestickParsedData[] = [];
     for (let i = 0; i < count; ++i) {
       const index = i + start;
       const item = data[index];
@@ -107,7 +116,7 @@ class CandlestickController extends LineController {
   // Override to update element with correct coordinates
   updateElement(element: any, index: number, properties: any, mode: any) {
     const me = this;
-    const parsed = me.getParsed(index);
+    const parsed = me.getParsed(index) as CandlestickParsedData | undefined;
     
     if (parsed) {
       // Use the scales to get pixel values
@@ -154,13 +163,7 @@ declare module 'chart.js' {
         c: number;
       };
       metaExtensions: {};
-      parsedDataType: {
-        x: number;
-        o: number;
-        h: number;
-        l: number;
-        c: number;
-      };
+      parsedDataType: CandlestickParsedData;
       scales: typeof Chart.defaults.scales;
     };
   }

@@ -12,7 +12,10 @@ import {
   Filler,
   BarElement,
   ChartData,
-  TimeScale
+  TimeScale,
+  ChartType,
+  ChartOptions,
+  ChartTypeRegistry
 } from "chart.js";
 import 'chartjs-adapter-date-fns';
 import { Line } from "react-chartjs-2";
@@ -78,7 +81,8 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
     emaPeriod: 50,
   });
   
-  const chartRef = useRef<ChartJS>(null);
+  // Use a more generic ref type
+  const chartRef = useRef<ChartJS | null>(null);
   
   // Prepare the chart data
   const chartData = useMemo(() => {
@@ -307,7 +311,12 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
       </div>
       
       <div className="flex-1 relative">
-        {chartData && <Line data={chartData as ChartData<"line">} options={options} ref={chartRef} />}
+        {/* Use a type assertion to make TypeScript accept our mixed chart types */}
+        {chartData && <Line 
+          data={chartData} 
+          options={options as any} 
+          ref={chartRef} 
+        />}
       </div>
     </div>
   );
