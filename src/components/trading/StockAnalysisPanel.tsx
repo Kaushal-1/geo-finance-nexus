@@ -108,6 +108,21 @@ const StockAnalysisPanel: React.FC<StockAnalysisPanelProps> = ({ symbol }) => {
       // Fetch summary data
       const summaryResponse = await fetchSonarResponse(summaryQuery, apiKey);
       if (summaryResponse) {
+        // Ensure strengthsWeaknesses is always an array
+        if (summaryResponse.strengthsWeaknesses && !Array.isArray(summaryResponse.strengthsWeaknesses)) {
+          // If it's a string, try to parse it as JSON array
+          try {
+            if (typeof summaryResponse.strengthsWeaknesses === 'string') {
+              summaryResponse.strengthsWeaknesses = JSON.parse(summaryResponse.strengthsWeaknesses);
+            } else {
+              // If it's not an array or a string, set it as an empty array
+              summaryResponse.strengthsWeaknesses = [];
+            }
+          } catch (e) {
+            console.error("Error parsing strengthsWeaknesses:", e);
+            summaryResponse.strengthsWeaknesses = [];
+          }
+        }
         setSummary(summaryResponse);
       }
     } catch (error) {
@@ -341,7 +356,8 @@ const StockAnalysisPanel: React.FC<StockAnalysisPanelProps> = ({ symbol }) => {
                 <div>
                   <p className="text-gray-400 mb-1">Strengths & Weaknesses</p>
                   <ul className="list-disc list-inside space-y-1">
-                    {summary.strengthsWeaknesses.map((item, index) => (
+                    {/* Use optional chaining and ensure strengthsWeaknesses is an array before mapping */}
+                    {Array.isArray(summary.strengthsWeaknesses) && summary.strengthsWeaknesses.map((item, index) => (
                       <li key={index} className={index < 2 ? "text-green-500" : "text-red-500"}>
                         {item}
                       </li>

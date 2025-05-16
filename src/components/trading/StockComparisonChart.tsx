@@ -1,13 +1,22 @@
 
 import React, { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bar } from "@/types/alpaca";
 import { alpacaService } from "@/services/alpacaService";
 import StockChart from "./StockChart";
 
 interface StockComparisonChartProps {
   symbol: string;
   timeframe?: string;
+}
+
+// Define the Bar interface here if it's not properly exported from alpaca types
+interface Bar {
+  t: string;     // timestamp
+  o: number;     // open
+  h: number;     // high
+  l: number;     // low
+  c: number;     // close
+  v: number;     // volume
 }
 
 const StockComparisonChart: React.FC<StockComparisonChartProps> = ({ 
