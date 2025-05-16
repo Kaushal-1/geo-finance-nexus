@@ -10,10 +10,7 @@ import {
   Tooltip,
   Legend,
   Filler,
-  BarElement,
   ChartOptions,
-  ChartData,
-  ChartDataset,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,7 +21,6 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
-  BarElement,
   Title,
   Tooltip,
   Legend,
@@ -48,39 +44,33 @@ interface StockChartProps {
   isLoading?: boolean;
 }
 
-// Define custom dataset types to handle both line and bar charts
-type LineDataset = ChartDataset<'line', number[]> & {
-  fill: boolean;
-  tension: number;
-  borderWidth: number;
-  pointRadius: number;
-  pointHoverRadius: number;
-};
-
-type BarDataset = ChartDataset<'bar', number[]> & {
-  barThickness?: number;
-  order?: number;
-};
-
-// Union type for our mixed chart
-type MixedChartDataset = LineDataset | BarDataset;
-
-// Define chart data type
-type MixedChartData = Omit<ChartData<'line', number[]>, 'datasets'> & {
-  datasets: MixedChartDataset[];
-};
+// Define chart colors for different stocks
+const CHART_COLORS = [
+  { line: "#3b82f6", background: "rgba(59, 130, 246, 0.2)" }, // blue
+  { line: "#f59e0b", background: "rgba(245, 158, 11, 0.2)" }, // amber
+  { line: "#10b981", background: "rgba(16, 185, 129, 0.2)" }, // emerald
+  { line: "#ef4444", background: "rgba(239, 68, 68, 0.2)" },  // red
+];
 
 const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => {
   // Prepare the chart data
-  const chartData = useMemo<MixedChartData | null>(() => {
+  const chartData = useMemo(() => {
     if (isLoading || !data || symbols.length === 0) return null;
 
-    const symbol = symbols[0]; // We're only displaying one symbol in trading dashboard
-    const bars = data[symbol];
+    // Find common dates across all symbols
+    const allDates = new Set<string>();
+    symbols.forEach(symbol => {
+      if (data[symbol]) {
+        data[symbol].forEach(bar => allDates.add(bar.t));
+      }
+    });
+    
+    // Convert to array and sort
+    const sortedDates = Array.from(allDates).sort((a, b) => 
+      new Date(a).getTime() - new Date(b).getTime()
+    );
 
-    if (!bars || bars.length === 0) return null;
-
-    // Get dates for x-axis labels
+    // Format dates for display
     const formatDate = (dateString: string) => {
       const date = new Date(dateString);
       return date.toLocaleDateString('en-US', { 
@@ -88,158 +78,104 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      }).toLowerCase();
+      });
     };
 
-    const labels = bars.map(bar => formatDate(bar.t));
-    const prices = bars.map(bar => bar.c);
-    
-    // Calculate volume data with colors
-    const volumes = bars.map(bar => bar.v);
-    
-    // Create alternating green/red volume bars based on price movement
-    const volumeColors = bars.map((bar, i) => {
-      // If there's a previous bar, check if price went up or down
-      if (i > 0) {
-        return bar.c >= bars[i-1].c ? 'rgba(15, 206, 157, 0.6)' : 'rgba(239, 68, 68, 0.6)';
-      }
-      // For the first bar, use green
-      return 'rgba(15, 206, 157, 0.6)';
-    });
+    const labels = sortedDates.map(date => formatDate(date));
 
-    // Find max volume to scale it appropriately in relation to price
-    const maxVolume = Math.max(...volumes);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    const priceRange = maxPrice - minPrice;
-    
-    // Scale volumes to be visible but not dominate the chart
-    const scaledVolumes = volumes.map(vol => {
-      // Scale volume to be about 20% of the price range
-      return minPrice + (vol / maxVolume) * (priceRange * 0.15);
-    });
+    // Create datasets
+    const datasets = symbols.map((symbol, index) => {
+      if (!data[symbol] || data[symbol].length === 0) return null;
+
+      // Use normalized values to compare different stocks with different price ranges
+      const firstPrice = data[symbol][0]?.c || 1;
+      const normalizedData = data[symbol].map(bar => ({
+        x: formatDate(bar.t),
+        y: (bar.c / firstPrice) * 100 // Convert to percentage of first price
+      }));
+
+      // Calculate price change for label
+      const lastPrice = data[symbol][data[symbol].length - 1]?.c || 0;
+      const priceChange = lastPrice - firstPrice;
+      const percentChange = (priceChange / firstPrice) * 100;
+      
+      const color = CHART_COLORS[index % CHART_COLORS.length];
+
+      return {
+        label: `${symbol} (${priceChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}%)`,
+        data: normalizedData,
+        borderColor: color.line,
+        backgroundColor: color.background,
+        fill: false,
+        tension: 0.2,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+      };
+    }).filter(Boolean);
 
     return {
       labels,
-      datasets: [
-        // Price dataset
-        {
-          label: 'Price',
-          data: prices,
-          borderColor: '#0FCE9D',
-          backgroundColor: 'rgba(15, 206, 157, 0.1)',
-          fill: true,
-          tension: 0.2,
-          borderWidth: 2,
-          pointRadius: 0,
-          pointHoverRadius: 5,
-          yAxisID: 'y',
-          type: 'line' as const,
-        },
-        // Volume dataset
-        {
-          label: 'Volume',
-          data: scaledVolumes,
-          backgroundColor: volumeColors,
-          borderColor: 'transparent',
-          borderWidth: 0,
-          type: 'bar' as const,
-          barThickness: 3,
-          yAxisID: 'y',
-          order: 1,
-          fill: false,
-          tension: 0,
-          pointRadius: 0,
-          pointHoverRadius: 0,
-        }
-      ]
+      datasets
     };
   }, [data, symbols, isLoading]);
 
   const options: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
-    animation: {
-      duration: 600,
-    },
     interaction: {
-      mode: 'index' as const,
+      mode: 'index',
       intersect: false,
     },
     plugins: {
       tooltip: {
-        enabled: true,
-        mode: 'index' as const,
+        mode: 'index',
         intersect: false,
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleColor: '#ffffff',
-        bodyColor: '#ffffff',
-        titleFont: {
-          size: 14,
-          weight: 'normal' as const,
-        },
-        bodyFont: {
-          size: 14,
-        },
-        padding: 10,
-        displayColors: false,
         callbacks: {
-          title: (tooltipItems: any) => {
-            return tooltipItems[0].label.toLowerCase();
-          },
-          label: (context: any) => {
-            const { datasetIndex, dataset, parsed } = context;
-            const label = dataset.label;
-            
-            if (datasetIndex === 0) {
-              return `price: $${typeof parsed.y === 'number' ? parsed.y.toFixed(2) : parsed.y}`;
-            } else {
-              // Find the original volume value by reverse-engineering the scaled value
-              const symbol = symbols[0];
-              const bars = data[symbol];
-              const index = context.dataIndex;
-              if (bars && bars[index]) {
-                return `volume: ${bars[index].v}`;
-              }
-              return `volume: ${parsed.y}`;
-            }
+          label: (context) => {
+            const datasetLabel = context.dataset.label || '';
+            const symbol = datasetLabel.split(' ')[0];
+            const value = context.parsed.y;
+            return `${datasetLabel}: ${value.toFixed(2)}%`;
           }
         }
       },
       legend: {
-        display: false,
+        position: 'top',
+        labels: {
+          color: '#e5e7eb', // text-gray-200
+          usePointStyle: true,
+          pointStyle: 'line',
+        }
       },
     },
     scales: {
       x: {
-        position: 'bottom' as const,
         grid: {
           display: true,
-          color: "rgba(255, 255, 255, 0.05)",
+          color: "rgba(255, 255, 255, 0.05)"
         },
         ticks: {
           color: "#9ca3af",
           maxRotation: 0,
           autoSkip: true,
           maxTicksLimit: 8,
-          font: {
-            size: 10,
-          }
-        },
+        }
       },
       y: {
-        position: 'right' as const,
+        position: 'right',
         grid: {
-          display: true,
-          color: "rgba(255, 255, 255, 0.05)",
+          color: "rgba(255, 255, 255, 0.05)"
         },
         ticks: {
           color: "#9ca3af",
-          callback: (value: number) => `$${value.toFixed(2)}`,
-          font: {
-            size: 10,
-          }
+          callback: (value) => `${value}%`,
         },
+        title: {
+          display: true,
+          text: 'Relative Performance (%)',
+          color: '#9ca3af',
+        }
       },
     }
   };
@@ -262,7 +198,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
 
   return (
     <div className="h-full relative">
-      <Line data={chartData as ChartData<'line'>} options={options} />
+      <Line data={chartData} options={options} />
     </div>
   );
 };
