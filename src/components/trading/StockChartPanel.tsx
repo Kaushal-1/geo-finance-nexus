@@ -194,6 +194,11 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
     };
   }, [autoRefresh, fetchStockData]);
 
+  // Format data for the chart component
+  const formattedChartData = {
+    [symbol]: chartData
+  };
+
   return (
     <Card className="bg-black/20 border-gray-800 backdrop-blur-sm mb-6">
       <CardContent className="p-4">
@@ -288,7 +293,11 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
         </div>
         
         {/* Chart area */}
-        <StockChart data={chartData} symbol={symbol} isLoading={isLoading} />
+        <StockChart 
+          data={formattedChartData} 
+          symbols={[symbol]} 
+          isLoading={isLoading} 
+        />
       </CardContent>
     </Card>
   );
