@@ -58,8 +58,8 @@ type LineDataset = ChartDataset<'line', number[]> & {
 };
 
 type BarDataset = ChartDataset<'bar', number[]> & {
-  barThickness: number;
-  order: number;
+  barThickness?: number;
+  order?: number;
 };
 
 // Union type for our mixed chart
@@ -96,6 +96,8 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
     
     // Calculate volume data with colors
     const volumes = bars.map(bar => bar.v);
+    
+    // Create alternating green/red volume bars based on price movement
     const volumeColors = bars.map((bar, i) => {
       // If there's a previous bar, check if price went up or down
       if (i > 0) {
@@ -142,7 +144,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
           borderColor: 'transparent',
           borderWidth: 0,
           type: 'bar' as const,
-          barThickness: 4,
+          barThickness: 3,
           yAxisID: 'y',
           order: 1,
           fill: false,
