@@ -42,9 +42,7 @@ const DashboardHeader = () => {
             Market Map
           </Link>
           <Link to="/trading" className={`${isActive('/trading') ? 'text-white font-medium' : 'text-gray-400'} hover:text-teal-400 transition`}>Trading Dashboard</Link>
-          <Link to="/chat-research" className={`${isActive('/chat-research') ? 'text-white font-medium' : 'text-gray-400'} hover:text-teal-400 transition`}>
-            Research
-          </Link>
+          <Link to="/chat-research" className={`${isActive('/chat-research') ? 'text-white font-medium' : 'text-gray-400'} hover:text-teal-400 transition`}>Sonar Research</Link>
         </nav>
 
         {/* Mobile Navigation */}
