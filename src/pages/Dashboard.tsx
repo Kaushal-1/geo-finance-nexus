@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useTimelineData } from "@/hooks/useTimelineData";
 import { useNewsData } from "@/hooks/useNewsData";
 import { Button } from "@/components/ui/button";
-import { Newspaper } from "lucide-react";
+import { Newspaper, ArrowRightLeft } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -43,25 +43,36 @@ const Dashboard = () => {
           <div className="relative flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm">
             <MapVisualization />
             
-            {/* Financial News Button */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button 
-                  className="absolute top-4 left-4 bg-teal-600 hover:bg-teal-700 z-10"
-                  size="sm"
-                >
-                  <Newspaper className="mr-2 h-4 w-4" /> Financial News
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-full sm:w-[400px] bg-[#0a0e17] border-r border-white/10">
-                <SheetHeader>
-                  <SheetTitle className="text-white">Financial News</SheetTitle>
-                </SheetHeader>
-                <div className="mt-4 h-[calc(100vh-100px)] overflow-auto">
-                  <NewsPanel />
-                </div>
-              </SheetContent>
-            </Sheet>
+            <div className="absolute top-4 left-4 z-10 flex flex-col sm:flex-row gap-2">
+              {/* Financial News Button */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button 
+                    className="bg-teal-600 hover:bg-teal-700"
+                    size="sm"
+                  >
+                    <Newspaper className="mr-2 h-4 w-4" /> Financial News
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-full sm:w-[400px] bg-[#0a0e17] border-r border-white/10">
+                  <SheetHeader>
+                    <SheetTitle className="text-white">Financial News</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4 h-[calc(100vh-100px)] overflow-auto">
+                    <NewsPanel />
+                  </div>
+                </SheetContent>
+              </Sheet>
+              
+              {/* Stock Compare Button */}
+              <Button 
+                className="bg-violet-600 hover:bg-violet-700"
+                size="sm"
+                onClick={() => navigate('/stock-compare')}
+              >
+                <ArrowRightLeft className="mr-2 h-4 w-4" /> Compare Stocks
+              </Button>
+            </div>
           </div>
         </div>
         

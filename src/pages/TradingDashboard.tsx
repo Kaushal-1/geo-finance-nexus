@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
@@ -6,6 +5,7 @@ import { toast } from "@/components/ui/use-toast";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Link } from "react-router-dom";
 
 // Trading components
 import StockChartPanel from "@/components/trading/StockChartPanel";
@@ -97,25 +97,36 @@ const TradingDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0e17] to-[#131b2e]">
-      <DashboardHeader />
-
+    <div className="bg-gradient-to-br from-[#0a0e17] to-[#131b2e] min-h-screen">
+      <header className="py-4 px-6 bg-black/30 border-b border-white/10 flex justify-between items-center">
+        <div className="flex items-center">
+          <Link to="/" className="text-teal-400 text-xl font-bold mr-8">GeoFinance</Link>
+          <nav className="hidden md:flex space-x-6">
+            <Link to="/dashboard" className="text-white/70 hover:text-white">Dashboard</Link>
+            <Link to="/trading" className="text-white font-medium">Trading</Link>
+            <Link to="/stock-compare" className="text-white/70 hover:text-white">Compare Stocks</Link>
+            <Link to="/chat-research" className="text-white/70 hover:text-white">AI Research</Link>
+          </nav>
+        </div>
+        
+        <div className="flex gap-2 w-full sm:w-auto">
+          <SonarScreener stockSymbol={currentSymbol} />
+          <Button 
+            onClick={refreshAll}
+            className="bg-teal-600 hover:bg-teal-700 w-full sm:w-auto"
+            disabled={isLoadingAccount || isLoadingPositions || isLoadingOrders || isLoadingWatchlists}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${
+              (isLoadingAccount || isLoadingPositions || isLoadingOrders || isLoadingWatchlists) ? 'animate-spin' : ''
+            }`} />
+            Refresh All
+          </Button>
+        </div>
+      </header>
+      
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-0">
           <h1 className="text-2xl sm:text-3xl font-bold text-white">Trading Dashboard</h1>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <SonarScreener stockSymbol={currentSymbol} />
-            <Button 
-              onClick={refreshAll}
-              className="bg-teal-600 hover:bg-teal-700 w-full sm:w-auto"
-              disabled={isLoadingAccount || isLoadingPositions || isLoadingOrders || isLoadingWatchlists}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${
-                (isLoadingAccount || isLoadingPositions || isLoadingOrders || isLoadingWatchlists) ? 'animate-spin' : ''
-              }`} />
-              Refresh All
-            </Button>
-          </div>
         </div>
         
         <div className="grid grid-cols-1 gap-4 sm:gap-6">

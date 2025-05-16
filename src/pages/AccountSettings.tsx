@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,14 +8,37 @@ import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Shield, User, Bell, MessageSquare, Key, Database } from "lucide-react";
 import TelegramBotPanel from "@/components/trading/TelegramBotPanel";
+import { Link } from "react-router-dom";
 
 const AccountSettings = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("notifications");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0e17] to-[#131b2e]">
-      <DashboardHeader />
+    <div className="bg-gradient-to-br from-[#0a0e17] to-[#131b2e] min-h-screen">
+      <header className="py-4 px-6 bg-black/30 border-b border-white/10 flex justify-between items-center">
+        <div className="flex items-center">
+          <Link to="/" className="text-teal-400 text-xl font-bold mr-8">GeoFinance</Link>
+          <nav className="hidden md:flex space-x-6">
+            <Link to="/dashboard" className="text-white/70 hover:text-white">Dashboard</Link>
+            <Link to="/trading" className="text-white/70 hover:text-white">Trading</Link>
+            <Link to="/stock-compare" className="text-white/70 hover:text-white">Compare Stocks</Link>
+            <Link to="/chat-research" className="text-white/70 hover:text-white">AI Research</Link>
+            <Link to="/account-settings" className="text-white font-medium">Account</Link>
+          </nav>
+        </div>
+        
+        <div className="flex items-center">
+          <Button variant="ghost" className="text-white/70 hover:text-white">
+            <Bell className="h-4 w-4 mr-2" />
+            Notifications
+          </Button>
+          <Button variant="ghost" className="text-white/70 hover:text-white">
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Telegram Bot
+          </Button>
+        </div>
+      </header>
 
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
