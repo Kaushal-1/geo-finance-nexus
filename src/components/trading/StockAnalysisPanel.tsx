@@ -24,7 +24,7 @@ interface Fundamental {
 
 interface Technical {
   rsi: number;
-  macd: string;
+  macd: string | number; // Updated type to accept both string and number
   movingAverages: string;
   volumeAnalysis: string;
   supportLevel: number;
@@ -261,7 +261,12 @@ const StockAnalysisPanel: React.FC<StockAnalysisPanelProps> = ({ symbol }) => {
                 </div>
                 <div className="flex justify-between">
                   <span>MACD:</span>
-                  <span className={technical.macd.includes("Bullish") ? "text-green-500" : "text-red-500"}>
+                  <span className={
+                    // Check if technical.macd is a string before using includes
+                    typeof technical.macd === 'string' && technical.macd.includes("Bullish") 
+                      ? "text-green-500" 
+                      : "text-red-500"
+                  }>
                     {technical.macd}
                   </span>
                 </div>
