@@ -122,7 +122,7 @@ const UpdatedTradingViewWidget = () => {
         }
       ],
       "showSymbolLogo": true,
-      "isTransparent": true,
+      "isTransparent": false,
       "displayMode": "regular",
       "colorTheme": "dark",
       "locale": "en"
