@@ -11,6 +11,9 @@ import {
   Legend,
   Filler,
   BarElement,
+  ChartOptions,
+  ChartData,
+  ChartDataset,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,9 +48,31 @@ interface StockChartProps {
   isLoading?: boolean;
 }
 
+// Define custom dataset types to handle both line and bar charts
+type LineDataset = ChartDataset<'line', number[]> & {
+  fill: boolean;
+  tension: number;
+  borderWidth: number;
+  pointRadius: number;
+  pointHoverRadius: number;
+};
+
+type BarDataset = ChartDataset<'bar', number[]> & {
+  barThickness: number;
+  order: number;
+};
+
+// Union type for our mixed chart
+type MixedChartDataset = LineDataset | BarDataset;
+
+// Define chart data type
+type MixedChartData = Omit<ChartData<'line', number[]>, 'datasets'> & {
+  datasets: MixedChartDataset[];
+};
+
 const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => {
   // Prepare the chart data
-  const chartData = useMemo(() => {
+  const chartData = useMemo<MixedChartData | null>(() => {
     if (isLoading || !data || symbols.length === 0) return null;
 
     const symbol = symbols[0]; // We're only displaying one symbol in trading dashboard
@@ -107,6 +132,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
           pointRadius: 0,
           pointHoverRadius: 5,
           yAxisID: 'y',
+          type: 'line' as const,
         },
         // Volume dataset
         {
@@ -115,7 +141,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
           backgroundColor: volumeColors,
           borderColor: 'transparent',
           borderWidth: 0,
-          type: 'bar',
+          type: 'bar' as const,
           barThickness: 4,
           yAxisID: 'y',
           order: 1,
@@ -128,7 +154,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
     };
   }, [data, symbols, isLoading]);
 
-  const options = {
+  const options: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     animation: {
@@ -234,7 +260,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
 
   return (
     <div className="h-full relative">
-      <Line data={chartData} options={options} />
+      <Line data={chartData as ChartData<'line'>} options={options} />
     </div>
   );
 };
