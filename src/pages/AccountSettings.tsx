@@ -9,13 +9,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Shield, User, Bell, MessageSquare, Key, Database } from "lucide-react";
 import TelegramBotPanel from "@/components/trading/TelegramBotPanel";
 import { Link } from "react-router-dom";
-
 const AccountSettings = () => {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [activeTab, setActiveTab] = useState("notifications");
-
-  return (
-    <div className="bg-gradient-to-br from-[#0a0e17] to-[#131b2e] min-h-screen">
+  return <div className="bg-gradient-to-br from-[#0a0e17] to-[#131b2e] min-h-screen">
        <DashboardHeader />
 
       <main className="container mx-auto px-4 py-8">
@@ -32,7 +31,7 @@ const AccountSettings = () => {
                   <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold mb-2">
                     {user?.email?.charAt(0).toUpperCase() || "U"}
                   </div>
-                  <CardTitle className="text-white mt-2">{user?.email}</CardTitle>
+                  <CardTitle className="text-white mt-2 text-sm">{user?.email}</CardTitle>
                   <CardDescription className="text-gray-400">
                     Free Account
                   </CardDescription>
@@ -43,47 +42,27 @@ const AccountSettings = () => {
 
               <CardContent className="p-4">
                 <div className="space-y-1">
-                  <Button 
-                    variant={activeTab === "profile" ? "default" : "ghost"} 
-                    className="w-full justify-start"
-                    onClick={() => setActiveTab("profile")}
-                  >
+                  <Button variant={activeTab === "profile" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab("profile")}>
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </Button>
                   
-                  <Button 
-                    variant={activeTab === "notifications" ? "default" : "ghost"} 
-                    className="w-full justify-start"
-                    onClick={() => setActiveTab("notifications")}
-                  >
+                  <Button variant={activeTab === "notifications" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab("notifications")}>
                     <Bell className="h-4 w-4 mr-2" />
                     Notifications
                   </Button>
                   
-                  <Button 
-                    variant={activeTab === "api" ? "default" : "ghost"} 
-                    className="w-full justify-start"
-                    onClick={() => setActiveTab("api")}
-                  >
+                  <Button variant={activeTab === "api" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab("api")}>
                     <Key className="h-4 w-4 mr-2" />
                     API Keys
                   </Button>
                   
-                  <Button 
-                    variant={activeTab === "telegram" ? "default" : "ghost"} 
-                    className="w-full justify-start"
-                    onClick={() => setActiveTab("telegram")}
-                  >
+                  <Button variant={activeTab === "telegram" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab("telegram")}>
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Telegram Bot
                   </Button>
                   
-                  <Button 
-                    variant={activeTab === "data" ? "default" : "ghost"} 
-                    className="w-full justify-start"
-                    onClick={() => setActiveTab("data")}
-                  >
+                  <Button variant={activeTab === "data" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab("data")}>
                     <Database className="h-4 w-4 mr-2" />
                     Data & Privacy
                   </Button>
@@ -105,7 +84,7 @@ const AccountSettings = () => {
           </div>
 
           {/* Main Content */}
-          <div className="space-y-6">
+          <div className="space-y-6 mx-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="hidden">
                 <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -178,8 +157,6 @@ const AccountSettings = () => {
           </div>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default AccountSettings;
