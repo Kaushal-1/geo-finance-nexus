@@ -18,7 +18,7 @@ import StockAnalysisPanel from "@/components/trading/StockAnalysisPanel";
 import StockNewsPanel from "@/components/trading/StockNewsPanel";
 import StockRecommendation from "@/components/trading/StockRecommendation";
 import { alpacaService } from "@/services/alpacaService";
-import { technicalAnalysisService } from "@/services/technicalAnalysisService";
+import * as technicalAnalysis from "@/services/technicalAnalysisService";
 
 const StockCompare = () => {
   const [stock1, setStock1] = useState("AAPL");
