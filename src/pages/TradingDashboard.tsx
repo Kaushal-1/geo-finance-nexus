@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { toast } from "@/components/ui/use-toast";
-import { RefreshCw, BarChart2 } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "react-router-dom";
@@ -110,12 +110,6 @@ const TradingDashboard = () => {
         </div>
         
         <div className="flex gap-2 w-full sm:w-auto">
-          <Link to="/stock-compare" className="hidden sm:flex">
-            <Button variant="outline" size="sm" className="border-gray-700 bg-black/20">
-              <BarChart2 className="h-4 w-4 mr-2" />
-              Compare Stocks
-            </Button>
-          </Link>
           <SonarScreener stockSymbol={currentSymbol} />
           <Button 
             onClick={refreshAll}
@@ -133,14 +127,6 @@ const TradingDashboard = () => {
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-0">
           <h1 className="text-2xl sm:text-3xl font-bold text-white">Trading Dashboard</h1>
-          <div className="flex gap-2">
-            <Link to="/stock-compare" className="sm:hidden">
-              <Button variant="outline" size="sm" className="border-gray-700 bg-black/20">
-                <BarChart2 className="h-4 w-4 mr-2" />
-                Compare Stocks
-              </Button>
-            </Link>
-          </div>
         </div>
         
         <div className="grid grid-cols-1 gap-4 sm:gap-6">
