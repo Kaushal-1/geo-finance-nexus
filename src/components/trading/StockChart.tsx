@@ -6,11 +6,13 @@ import {
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
   Filler,
   ChartOptions,
+  TooltipItem,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +23,7 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
@@ -83,36 +86,57 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
 
     const labels = sortedDates.map(date => formatDate(date));
 
-    // Create datasets
-    const datasets = symbols.map((symbol, index) => {
+    // Create datasets for price data
+    const priceDatasets = symbols.map((symbol, index) => {
       if (!data[symbol] || data[symbol].length === 0) return null;
 
-      // Use normalized values to compare different stocks with different price ranges
-      const firstPrice = data[symbol][0]?.c || 1;
-      const normalizedData = data[symbol].map(bar => ({
-        x: formatDate(bar.t),
-        y: (bar.c / firstPrice) * 100 // Convert to percentage of first price
-      }));
-
+      const prices = data[symbol].map(bar => bar.c);
+      
       // Calculate price change for label
-      const lastPrice = data[symbol][data[symbol].length - 1]?.c || 0;
+      const firstPrice = prices[0] || 0;
+      const lastPrice = prices[prices.length - 1] || 0;
       const priceChange = lastPrice - firstPrice;
       const percentChange = (priceChange / firstPrice) * 100;
       
       const color = CHART_COLORS[index % CHART_COLORS.length];
+      // For the main chart, use teal color as in the reference design
+      const lineColor = index === 0 ? "#0fce9d" : color.line;
 
       return {
         label: `${symbol} (${priceChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}%)`,
-        data: normalizedData,
-        borderColor: color.line,
-        backgroundColor: color.background,
+        data: prices,
+        borderColor: lineColor,
+        backgroundColor: "rgba(15, 206, 157, 0.2)",
         fill: false,
         tension: 0.2,
         borderWidth: 2,
         pointRadius: 0,
-        pointHoverRadius: 5,
+        pointHoverRadius: 4,
+        yAxisID: 'y',
       };
     }).filter(Boolean);
+
+    // Create volume dataset for the first symbol
+    const volumeDataset = symbols.length > 0 && data[symbols[0]] ? {
+      label: 'Volume',
+      data: data[symbols[0]].map(bar => bar.v),
+      backgroundColor: data[symbols[0]].map((bar, i, arr) => {
+        if (i === 0) return "rgba(15, 206, 157, 0.5)"; // Default to green for first bar
+        return bar.c >= (arr[i-1]?.c || bar.o) ? "rgba(15, 206, 157, 0.5)" : "rgba(239, 68, 68, 0.5)";
+      }),
+      borderColor: "transparent",
+      borderWidth: 0,
+      type: 'bar' as const,
+      barThickness: 4,
+      yAxisID: 'volume',
+      order: 1,
+    } : null;
+    
+    // Combine price and volume datasets
+    const datasets = [...priceDatasets];
+    if (volumeDataset) {
+      datasets.push(volumeDataset);
+    }
 
     return {
       labels,
@@ -131,52 +155,99 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
       tooltip: {
         mode: 'index',
         intersect: false,
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        titleColor: "white",
+        bodyColor: "white",
+        borderColor: "rgba(15, 206, 157, 0.3)",
+        borderWidth: 1,
+        padding: 10,
+        displayColors: false,
+        titleFont: {
+          size: 14,
+          weight: 'bold',
+        },
         callbacks: {
-          label: (context) => {
-            const datasetLabel = context.dataset.label || '';
-            const symbol = datasetLabel.split(' ')[0];
-            const value = context.parsed.y;
-            return `${datasetLabel}: ${value.toFixed(2)}%`;
+          title: (tooltipItems) => {
+            if (tooltipItems.length > 0) {
+              // Display formatted date
+              return tooltipItems[0].label.toLowerCase();
+            }
+            return '';
+          },
+          label: (tooltipItem) => {
+            const symbol = symbols[0] || '';
+            
+            // For price dataset
+            if (tooltipItem.datasetIndex === 0) {
+              return `PRICE: $${tooltipItem.parsed.y.toFixed(2)}`;
+            }
+            
+            // For volume dataset
+            if (tooltipItem.datasetIndex === 1) {
+              const volumeValue = tooltipItem.parsed.y;
+              return `VOLUME: ${volumeValue.toLocaleString()}`;
+            }
+            
+            return '';
           }
         }
       },
       legend: {
-        position: 'top',
-        labels: {
-          color: '#e5e7eb', // text-gray-200
-          usePointStyle: true,
-          pointStyle: 'line',
-        }
+        display: false,
       },
     },
     scales: {
       x: {
         grid: {
           display: true,
-          color: "rgba(255, 255, 255, 0.05)"
+          color: "rgba(255, 255, 255, 0.05)",
+          drawBorder: false,
         },
         ticks: {
           color: "#9ca3af",
           maxRotation: 0,
           autoSkip: true,
           maxTicksLimit: 8,
+          font: {
+            size: 10
+          }
+        },
+        border: {
+          display: false
         }
       },
       y: {
         position: 'right',
         grid: {
-          color: "rgba(255, 255, 255, 0.05)"
+          color: "rgba(255, 255, 255, 0.05)",
+          drawBorder: false
         },
         ticks: {
           color: "#9ca3af",
-          callback: (value) => `${value}%`,
+          callback: (value) => `$${value.toFixed(2)}`,
+          font: {
+            size: 10
+          }
         },
-        title: {
-          display: true,
-          text: 'Relative Performance (%)',
-          color: '#9ca3af',
+        border: {
+          display: false
         }
       },
+      volume: {
+        position: 'left',
+        grid: {
+          display: false,
+        },
+        ticks: {
+          display: false,
+        },
+        border: {
+          display: false
+        }
+      }
+    },
+    animation: {
+      duration: 500
     }
   };
 
@@ -197,8 +268,8 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
   }
 
   return (
-    <div className="h-full relative">
-      <Line data={chartData} options={options} />
+    <div className="h-full relative bg-[#080a10]">
+      <Line data={chartData as any} options={options} />
     </div>
   );
 };

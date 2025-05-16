@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Search, ChevronDown } from "lucide-react";
+import { RefreshCw, Search } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import StockChart from "./StockChart";
 import { alpacaService } from "@/services/alpacaService";
@@ -200,7 +200,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
   };
 
   return (
-    <Card className="bg-black/20 border-gray-800 backdrop-blur-sm mb-6">
+    <Card className="bg-[#080a10] border-gray-800 backdrop-blur-sm mb-6">
       <CardContent className="p-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           {/* Symbol search and current symbol */}
@@ -239,13 +239,17 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
                 </Button>
               </form>
             </div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-white">
               {symbol}
-              {priceInfo.current > 0 && (
-                <span className={`text-sm font-normal ${priceInfo.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {priceInfo.change >= 0 ? '+' : ''}{priceInfo.change.toFixed(2)} ({priceInfo.changePercent.toFixed(2)}%)
-                </span>
-              )}
+              <span className={`text-lg ml-2 ${priceInfo.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {priceInfo.current > 0 ? `$${priceInfo.current.toFixed(2)}` : ''}
+                {priceInfo.change !== 0 && priceInfo.current > 0 && (
+                  <span className="ml-2">
+                    {priceInfo.change >= 0 ? '+' : ''}{priceInfo.change.toFixed(2)} 
+                    ({priceInfo.change >= 0 ? '+' : ''}{priceInfo.changePercent.toFixed(2)}%)
+                  </span>
+                )}
+              </span>
             </h2>
           </div>
           
@@ -293,11 +297,13 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
         </div>
         
         {/* Chart area */}
-        <StockChart 
-          data={formattedChartData} 
-          symbols={[symbol]} 
-          isLoading={isLoading} 
-        />
+        <div className="h-[400px]">
+          <StockChart 
+            data={formattedChartData} 
+            symbols={[symbol]} 
+            isLoading={isLoading} 
+          />
+        </div>
       </CardContent>
     </Card>
   );
