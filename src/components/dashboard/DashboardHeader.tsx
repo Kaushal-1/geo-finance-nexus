@@ -21,10 +21,10 @@ const DashboardHeader = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const links = [
-    { name: "Dashboard", path: "/dashboard" },
-    { name: "Trading", path: "/trading" },
+    { name: "Market-Map", path: "/dashboard" },
+    { name: "Trading Dashboard", path: "/trading" },
     { name: "Stock Compare", path: "/stock-compare" },
-    { name: "Research", path: "/chat-research" },
+    { name: "Sonar Research", path: "/chat-research" },
   ];
 
   const handleSignOut = async () => {
