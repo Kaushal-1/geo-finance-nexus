@@ -1,4 +1,3 @@
-
 import { getPerplexityApiKey } from './chatService';
 
 // Function to fetch relevant news using Perplexity Sonar API
@@ -64,8 +63,22 @@ export async function fetchFinancialNews(region = 'global', topic = 'financial m
   }
 }
 
-// New function to fetch country-specific stock news
+// News cache to improve performance
+const newsCache = {
+  data: null,
+  timestamp: 0,
+  expiry: 10 * 60 * 1000 // 10 minutes cache
+};
+
+// New function to fetch country-specific stock news with caching
 export async function fetchCountryStockNews(countries) {
+  // Use cached data if available and not expired
+  const now = Date.now();
+  if (newsCache.data && (now - newsCache.timestamp < newsCache.expiry)) {
+    console.log('Using cached country news data');
+    return newsCache.data;
+  }
+  
   try {
     const apiKey = getPerplexityApiKey();
     
@@ -77,7 +90,16 @@ export async function fetchCountryStockNews(countries) {
     const results = [];
     
     // Process each country with a delay to avoid rate limits
-    for (const country of countries) {
+    // Process key countries first for visible markers
+    const priorityCountries = countries.filter(c => 
+      ['US', 'UK', 'JP', 'CN', 'DE', 'IN'].includes(c.code)
+    );
+    const otherCountries = countries.filter(c => 
+      !['US', 'UK', 'JP', 'CN', 'DE', 'IN'].includes(c.code)
+    );
+    
+    // Process priority countries first (visible on initial map load)
+    for (const country of priorityCountries) {
       try {
         console.log(`Fetching stock news for ${country.name}`);
         
@@ -154,13 +176,102 @@ export async function fetchCountryStockNews(countries) {
       }
       
       // Add delay between requests to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
     }
+    
+    // Cache the results
+    newsCache.data = results;
+    newsCache.timestamp = now;
+    
+    // Process other countries in the background after returning initial results
+    setTimeout(() => {
+      processRemainingCountries(otherCountries, apiKey, results);
+    }, 100);
     
     return results;
   } catch (error) {
     console.error('Error fetching country stock news:', error);
     return [];
+  }
+}
+
+// Helper function to process remaining countries in the background
+async function processRemainingCountries(countries, apiKey, results) {
+  for (const country of countries) {
+    try {
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-sonar-small-128k-online',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a financial expert that provides accurate and concise information about stock markets and their impact on specific countries. Format your response as structured JSON.'
+            },
+            {
+              role: 'user',
+              content: `Provide recent news events in ${country.name} that have impacted major stocks with citations. Format your response as structured JSON with the following format:
+              {
+                "countryName": "${country.name}",
+                "countryCode": "${country.code}",
+                "latitude": ${country.lat},
+                "longitude": ${country.lng},
+                "news": [
+                  {
+                    "summary": "Brief summary of news event and its stock impact",
+                    "citations": ["URL to source 1", "URL to source 2"]
+                  }
+                ]
+              }`
+            }
+          ],
+          temperature: 0.2,
+          max_tokens: 1000
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content;
+        
+        if (content) {
+          try {
+            // Extract JSON from the response
+            const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/) || 
+                              content.match(/{[\s\S]*}/) || 
+                              null;
+            
+            let parsedData;
+            
+            if (jsonMatch) {
+              parsedData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+            } else {
+              parsedData = JSON.parse(content);
+            }
+            
+            // Validate the structure and update the cache
+            if (parsedData && 
+                parsedData.countryName && 
+                parsedData.news && 
+                Array.isArray(parsedData.news)) {
+              results.push(parsedData);
+              newsCache.data = [...results];
+            }
+          } catch (parseError) {
+            console.error('Failed to parse JSON for', country.name, parseError);
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Error processing ${country.name} in background:`, error);
+    }
+    
+    // Add longer delay for background processing
+    await new Promise(resolve => setTimeout(resolve, 3000));
   }
 }
 
