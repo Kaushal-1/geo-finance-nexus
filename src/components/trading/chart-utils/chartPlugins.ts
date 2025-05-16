@@ -32,9 +32,9 @@ export const crosshairPlugin: Plugin = {
     },
   },
   afterDraw: (chart, args, options: any) => {
-    if (chart.tooltip?._active && chart.tooltip._active.length) {
+    if (chart.tooltip?.active && chart.tooltip.active.length) {
       const ctx = chart.ctx;
-      const activePoint = chart.tooltip._active[0];
+      const activePoint = chart.tooltip.active[0];
       const { x, y } = activePoint.element;
       const { top, bottom, left, right } = chart.chartArea;
       
