@@ -253,7 +253,7 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
       )}
 
       {/* Dialog for Standard Analysis Results */}
-      <Dialog open={dialogOpen && !isLoading && !analysisLoading && insight && !newsAnalysisData} onOpenChange={handleCloseDialog}>
+      <Dialog open={dialogOpen && !isLoading && !analysisLoading && insight && newsAnalysisData === null} onOpenChange={handleCloseDialog}>
         <DialogContent className="bg-[#1a2035] border border-white/10 text-white max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center">
@@ -339,7 +339,7 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
       </Dialog>
 
       {/* Dialog for News Analysis Results */}
-      <Dialog open={dialogOpen && !isLoading && !analysisLoading && newsAnalysisData} onOpenChange={handleCloseDialog}>
+      <Dialog open={dialogOpen && !isLoading && !analysisLoading && newsAnalysisData !== null} onOpenChange={handleCloseDialog}>
         <DialogContent className="bg-[#1a2035] border border-white/10 text-white max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center">

@@ -86,11 +86,12 @@ const TechnicalGauge: React.FC<TechnicalGaugeProps> = ({
         </span>
       </div>
       
-      <style jsx>{`
+      {/* Fixed the style tag to use proper React styling */}
+      <style dangerouslySetInnerHTML={{ __html: `
         .text-shadow {
           text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
-      `}</style>
+      `}} />
     </div>
   );
 };
