@@ -89,7 +89,7 @@ const StockCompare = () => {
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-white mb-2">Stock Comparison Tool</h1>
           <p className="text-gray-300 max-w-3xl mx-auto">
-            Our Sonar API will help you analyze and compare stocks with in-depth technical and fundamental analysis
+            Compare stocks with in-depth technical and fundamental analysis
           </p>
         </div>
         
