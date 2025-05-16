@@ -30,6 +30,7 @@ import { registerCustomPlugins, crosshairPlugin, priceAxisPlugin } from "./chart
 import { calculateBollingerBands, calculateVWAP, calculateATR, calculateIchimokuCloud } from "./chart-utils/enhancedIndicators";
 import { BarChart2, TrendingUp, Layers, LineChart, CandlestickChart, Activity, 
   Move, ZoomIn, PanelTopOpen, PlusCircle, MinusCircle } from "lucide-react";
+import { alpacaService } from "@/services/alpacaService";
 
 // Register Chart.js components
 ChartJS.register(
