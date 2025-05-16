@@ -32,7 +32,8 @@ export const crosshairPlugin: Plugin = {
     },
   },
   afterDraw: (chart, args, options: any) => {
-    if (chart.tooltip?.active && chart.tooltip.active.length) {
+    // Fix: Check if active exists and is an array with elements
+    if (chart.tooltip?.active && Array.isArray(chart.tooltip.active) && chart.tooltip.active.length > 0) {
       const ctx = chart.ctx;
       const activePoint = chart.tooltip.active[0];
       const { x, y } = activePoint.element;
