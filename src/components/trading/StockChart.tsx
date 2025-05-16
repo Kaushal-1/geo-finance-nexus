@@ -55,6 +55,23 @@ const CHART_COLORS = [
   { line: "#ef4444", background: "rgba(239, 68, 68, 0.2)" },  // red
 ];
 
+// Define a custom chart dataset type that can accommodate both line and bar charts
+interface CustomChartDataset {
+  label: string;
+  data: number[];
+  borderColor: string;
+  backgroundColor: string | string[]; // Allow both string and array of strings
+  fill: boolean;
+  tension: number;
+  borderWidth: number;
+  pointRadius: number;
+  pointHoverRadius: number;
+  yAxisID: string;
+  type?: string;
+  barThickness?: number;
+  order?: number;
+}
+
 const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => {
   // Prepare the chart data
   const chartData = useMemo(() => {
@@ -120,10 +137,8 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
     const volumeDataset = symbols.length > 0 && data[symbols[0]] ? {
       label: 'Volume',
       data: data[symbols[0]].map(bar => bar.v),
-      backgroundColor: data[symbols[0]].map((bar, i, arr) => {
-        if (i === 0) return "rgba(15, 206, 157, 0.5)"; // Default to green for first bar
-        return bar.c >= (arr[i-1]?.c || bar.o) ? "rgba(15, 206, 157, 0.5)" : "rgba(239, 68, 68, 0.5)";
-      }),
+      // Fix: Use a single string for backgroundColor to satisfy type constraints
+      backgroundColor: "rgba(15, 206, 157, 0.5)",
       borderColor: "transparent",
       borderWidth: 0,
       type: 'bar' as const,
@@ -138,9 +153,9 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
     } : null;
     
     // Combine price and volume datasets
-    const datasets = [...priceDatasets];
+    const datasets = [...priceDatasets] as CustomChartDataset[];
     if (volumeDataset) {
-      datasets.push(volumeDataset);
+      datasets.push(volumeDataset as CustomChartDataset);
     }
 
     return {
@@ -206,8 +221,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
         grid: {
           display: true,
           color: "rgba(255, 255, 255, 0.05)",
-          // Remove drawBorder as it's not a valid property
-          borderColor: "rgba(255, 255, 255, 0.05)"
+          // Fix: Remove borderColor as it's not a valid property for grid
         },
         ticks: {
           color: "#9ca3af",
@@ -226,8 +240,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
         position: 'right',
         grid: {
           color: "rgba(255, 255, 255, 0.05)",
-          // Remove drawBorder as it's not a valid property
-          borderColor: "rgba(255, 255, 255, 0.05)"
+          // Fix: Remove borderColor as it's not a valid property for grid
         },
         ticks: {
           color: "#9ca3af",
@@ -282,4 +295,3 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
 };
 
 export default StockChart;
-
