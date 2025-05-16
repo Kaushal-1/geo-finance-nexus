@@ -114,40 +114,4 @@
   .animate-fade-in {
     animation: fade-in 0.6s ease-out forwards;
   }
-  
-  /* Custom scrollbar */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-  
-  /* TradingView widget custom styling */
-  .tradingview-widget-container {
-    background-color: rgba(26, 32, 53, 0.8) !important;
-    backdrop-filter: blur(8px);
-  }
-  
-  /* Override TradingView styles to match our UI */
-  .tradingview-widget-copyright {
-    display: none !important;
-  }
-  
-  /* Custom TradingView widget text styling */
-  .tradingview-widget-container iframe body {
-    color: #f5f7fa !important;
-    font-family: inherit !important;
-  }
 }

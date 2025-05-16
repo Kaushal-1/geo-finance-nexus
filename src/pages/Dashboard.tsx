@@ -17,7 +17,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import NewsPanel from "@/components/dashboard/NewsPanel";
-import GlobalStockNews from "@/components/dashboard/GlobalStockNews";
 
 const Dashboard = () => {
   const [is3DView] = useState(true); // Keep as true, but no longer toggleable
@@ -83,9 +82,6 @@ const Dashboard = () => {
             <div className="tradingview-widget-container__widget h-full"></div>
           </div>
         </div>
-        
-        {/* Global Stock News Section */}
-        <GlobalStockNews />
       </div>
       
       {/* TradingView Widget Script */}
