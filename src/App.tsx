@@ -17,7 +17,6 @@ import AccountSettings from "./pages/AccountSettings";
 import CreateAccount from "./pages/CreateAccount";
 import SignIn from "./pages/SignIn";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { supabase } from "./integrations/supabase/client";
 import NotFound from "./pages/NotFound";
 
 // Create a client

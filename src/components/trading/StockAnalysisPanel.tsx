@@ -24,7 +24,7 @@ interface Fundamental {
 
 interface Technical {
   rsi: number;
-  macd: string | number; // Updated type to accept both string and number
+  macd: string | number; // Accept both string and number
   movingAverages: string;
   volumeAnalysis: string;
   supportLevel: number;

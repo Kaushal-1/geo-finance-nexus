@@ -1,23 +1,18 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
-  BarElement,
   Title,
   Tooltip,
   Legend,
   Filler,
   ChartOptions,
-  ChartData,
-  BarController,
-  LineController,
-  ChartTypeRegistry,
 } from "chart.js";
-import { Chart } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Register Chart.js components
@@ -26,9 +21,6 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
-  BarElement,
-  LineController, // Explicitly register LineController
-  BarController,
   Title,
   Tooltip,
   Legend,
@@ -44,150 +36,118 @@ interface Bar {
   v: number; // volume
 }
 
-// Define a type for OHLC data point
-interface OHLCDataPoint {
-  x: number;
-  y: number;
-  o: number;
-  h: number;
-  l: number;
-  c: number;
-}
-
 interface StockChartProps {
-  data: Bar[];
-  symbol: string;
+  data: {
+    [symbol: string]: Bar[];
+  };
+  symbols: string[];
   isLoading?: boolean;
 }
 
-// Create a custom candlestick plugin for Chart.js
-const candlestickPlugin = {
-  id: 'candlestick',
-  beforeDatasetsDraw(chart: any) {
-    const { ctx, chartArea, scales } = chart;
-    
-    const dataset = chart.data.datasets[1];
-    const xScale = scales.x;
-    const yScale = scales.y;
-    
-    if (!dataset || dataset.hidden) return;
-    
-    ctx.save();
-    ctx.lineWidth = 2;
-    
-    // Draw each candlestick
-    for (let i = 0; i < dataset.data.length; i++) {
-      const dataPoint = dataset.data[i];
-      const x = xScale.getPixelForValue(dataPoint.x);
-      const open = yScale.getPixelForValue(dataPoint.o);
-      const high = yScale.getPixelForValue(dataPoint.h);
-      const low = yScale.getPixelForValue(dataPoint.l);
-      const close = yScale.getPixelForValue(dataPoint.c);
-      
-      const color = dataPoint.c >= dataPoint.o ? "#00b8a9" : "#f8485e";
-      
-      const candleWidth = (xScale.width / dataset.data.length) * 0.7;
-      
-      // Set stroke color for lines
-      ctx.strokeStyle = color;
-      
-      // Draw high/low line (wick)
-      ctx.beginPath();
-      ctx.moveTo(x, high);
-      ctx.lineTo(x, low);
-      ctx.stroke();
-      
-      // Draw candle body
-      const bodyHeight = Math.abs(close - open);
-      const y = dataPoint.c >= dataPoint.o ? close : open;
-      
-      ctx.fillStyle = dataPoint.c >= dataPoint.o ? "#00b8a920" : "#f8485e20";
-      ctx.strokeStyle = color;
-      ctx.fillRect(x - candleWidth / 2, y, candleWidth, bodyHeight);
-      ctx.strokeRect(x - candleWidth / 2, y, candleWidth, bodyHeight);
-    }
-    
-    ctx.restore();
-  }
-};
+// Define chart colors for different stocks
+const CHART_COLORS = [
+  { line: "#3b82f6", background: "rgba(59, 130, 246, 0.2)" }, // blue
+  { line: "#f59e0b", background: "rgba(245, 158, 11, 0.2)" }, // amber
+  { line: "#10b981", background: "rgba(16, 185, 129, 0.2)" }, // emerald
+  { line: "#ef4444", background: "rgba(239, 68, 68, 0.2)" },  // red
+];
 
-const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
-  if (isLoading || !data || data.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-[400px] bg-black/20 rounded-lg border border-gray-800">
-        <div className="text-xl text-gray-400">
-          {isLoading ? "Loading chart data..." : "No chart data available"}
-        </div>
-      </div>
-    );
-  }
+const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => {
+  // Prepare the chart data
+  const chartData = useMemo(() => {
+    if (isLoading || !data || symbols.length === 0) return null;
 
-  // Format dates for display
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    // Find common dates across all symbols
+    const allDates = new Set<string>();
+    symbols.forEach(symbol => {
+      if (data[symbol]) {
+        data[symbol].forEach(bar => allDates.add(bar.t));
+      }
     });
-  };
+    
+    // Convert to array and sort
+    const sortedDates = Array.from(allDates).sort((a, b) => 
+      new Date(a).getTime() - new Date(b).getTime()
+    );
 
-  // Calculate price change color
-  const firstPrice = data[0]?.c || 0;
-  const lastPrice = data[data.length - 1]?.c || 0;
-  const priceChange = lastPrice - firstPrice;
-  const changeColor = priceChange >= 0 ? "#00b8a9" : "#f8485e";
+    // Format dates for display
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
 
-  // Process closing price data for the line chart
-  const labels = data.map(bar => formatDate(bar.t));
-  const closingPrices = data.map(bar => bar.c);
-  const volumes = data.map(bar => bar.v);
-  const candleColors = data.map(bar => bar.c >= bar.o ? "#00b8a950" : "#f8485e50");
-  
-  // Create typed options for the chart
-  const options: ChartOptions = {
+    const labels = sortedDates.map(date => formatDate(date));
+
+    // Create datasets
+    const datasets = symbols.map((symbol, index) => {
+      if (!data[symbol] || data[symbol].length === 0) return null;
+
+      // Use normalized values to compare different stocks with different price ranges
+      const firstPrice = data[symbol][0]?.c || 1;
+      const normalizedData = data[symbol].map(bar => ({
+        x: formatDate(bar.t),
+        y: (bar.c / firstPrice) * 100 // Convert to percentage of first price
+      }));
+
+      // Calculate price change for label
+      const lastPrice = data[symbol][data[symbol].length - 1]?.c || 0;
+      const priceChange = lastPrice - firstPrice;
+      const percentChange = (priceChange / firstPrice) * 100;
+      
+      const color = CHART_COLORS[index % CHART_COLORS.length];
+
+      return {
+        label: `${symbol} (${priceChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}%)`,
+        data: normalizedData,
+        borderColor: color.line,
+        backgroundColor: color.background,
+        fill: false,
+        tension: 0.2,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+      };
+    }).filter(Boolean);
+
+    return {
+      labels,
+      datasets
+    };
+  }, [data, symbols, isLoading]);
+
+  const options: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     interaction: {
-      mode: "index",
-      intersect: false
+      mode: 'index',
+      intersect: false,
     },
     plugins: {
-      legend: {
-        display: false
-      },
       tooltip: {
-        mode: "index",
+        mode: 'index',
         intersect: false,
         callbacks: {
-          label: (context: any) => {
-            if (context.dataset.label === 'Volume') {
-              return `Volume: ${context.raw.toLocaleString()}`;
-            }
-            if (context.datasetIndex === 1) {
-              const dataPoint = data[context.dataIndex];
-              return [
-                `O: $${dataPoint.o.toFixed(2)}`,
-                `H: $${dataPoint.h.toFixed(2)}`,
-                `L: $${dataPoint.l.toFixed(2)}`,
-                `C: $${dataPoint.c.toFixed(2)}`
-              ];
-            }
-            return `Price: $${typeof context.raw === 'number' ? context.raw.toFixed(2) : context.raw}`;
-          },
-          title: (tooltipItems: any) => {
-            return tooltipItems[0].label;
+          label: (context) => {
+            const datasetLabel = context.dataset.label || '';
+            const symbol = datasetLabel.split(' ')[0];
+            const value = context.parsed.y;
+            return `${datasetLabel}: ${value.toFixed(2)}%`;
           }
-        },
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        titleColor: '#fff',
-        bodyColor: '#fff',
-        borderColor: '#333',
-        borderWidth: 1,
-        padding: 10,
-        displayColors: false
-      }
+        }
+      },
+      legend: {
+        position: 'top',
+        labels: {
+          color: '#e5e7eb', // text-gray-200
+          usePointStyle: true,
+          pointStyle: 'line',
+        }
+      },
     },
     scales: {
       x: {
@@ -199,7 +159,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
           color: "#9ca3af",
           maxRotation: 0,
           autoSkip: true,
-          maxTicksLimit: 8
+          maxTicksLimit: 8,
         }
       },
       y: {
@@ -209,115 +169,36 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, isLoading }) => {
         },
         ticks: {
           color: "#9ca3af",
-          callback: (value: number) => {
-            return `$${value.toFixed(2)}`;
-          }
+          callback: (value) => `${value}%`,
+        },
+        title: {
+          display: true,
+          text: 'Relative Performance (%)',
+          color: '#9ca3af',
         }
       },
-      volume: {
-        position: 'left',
-        grid: {
-          display: false
-        },
-        ticks: {
-          color: "#9ca3af",
-          callback: (value: number) => {
-            return value >= 1000000 
-              ? `${(value / 1000000).toFixed(1)}M`
-              : value >= 1000 
-                ? `${(value / 1000).toFixed(1)}K` 
-                : value;
-          }
-        },
-        display: true,
-        suggestedMax: Math.max(...data.map(bar => bar.v)) * 2.5
-      }
     }
   };
-  
-  // Define type-safe datasets
-  type ChartDatasetWithCustomData = {
-    type: 'line' | 'bar';
-    label: string;
-    data: number[] | OHLCDataPoint[];
-    borderColor: string;
-    backgroundColor: string | string[];
-    borderWidth: number;
-    pointRadius: number;
-    fill?: boolean;
-    tension?: number;
-    yAxisID: string;
-    hidden?: boolean;
-    barPercentage?: number;
-    categoryPercentage?: number;
-  };
 
-  // Create chart data with proper typing
-  const chartData: ChartData<'line' | 'bar', (number | OHLCDataPoint)[]> = {
-    labels,
-    datasets: [
-      // Price line
-      {
-        type: 'line',
-        label: `${symbol} Price`,
-        data: closingPrices,
-        borderColor: changeColor,
-        backgroundColor: `${changeColor}20`,
-        borderWidth: 2,
-        pointRadius: 0,
-        fill: true,
-        tension: 0.2,
-        yAxisID: 'y'
-      } as ChartDatasetWithCustomData,
-      // Hidden dataset with candle data (for tooltip display)
-      {
-        type: 'line',
-        label: 'OHLC Data',
-        data: data.map((bar, i) => ({
-          x: i,
-          y: bar.c,
-          o: bar.o,
-          h: bar.h,
-          l: bar.l,
-          c: bar.c
-        })),
-        borderColor: 'rgba(0,0,0,0)',
-        backgroundColor: 'rgba(0,0,0,0)',
-        borderWidth: 0,
-        pointRadius: 0,
-        yAxisID: 'y',
-        hidden: true
-      } as ChartDatasetWithCustomData,
-      // Volume bars
-      {
-        type: 'bar',
-        label: 'Volume',
-        data: volumes,
-        backgroundColor: candleColors,
-        borderColor: 'rgba(0,0,0,0)',
-        borderWidth: 0,
-        pointRadius: 0,
-        yAxisID: 'volume',
-        barPercentage: 0.6,
-        categoryPercentage: 0.8
-      } as ChartDatasetWithCustomData
-    ] as ChartDatasetWithCustomData[]
-  };
-  
-  return (
-    <div className="chart-container h-[400px] relative">
-      <div className="absolute top-2 left-2 z-10 flex flex-col">
-        <span className="text-2xl font-bold text-white">${lastPrice.toFixed(2)}</span>
-        <span className={`text-sm ${priceChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-          {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(2)} ({((priceChange / firstPrice) * 100).toFixed(2)}%)
-        </span>
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Skeleton className="h-full w-full bg-gray-800" />
       </div>
-      <Chart 
-        type="line"
-        data={chartData} 
-        options={options} 
-        plugins={[candlestickPlugin]}
-      />
+    );
+  }
+
+  if (!chartData || symbols.length === 0 || symbols.every(symbol => !data[symbol] || data[symbol].length === 0)) {
+    return (
+      <div className="flex items-center justify-center h-full bg-black/20 rounded-lg border border-gray-800">
+        <div className="text-xl text-gray-400">No chart data available</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full relative">
+      <Line data={chartData} options={options} />
     </div>
   );
 };

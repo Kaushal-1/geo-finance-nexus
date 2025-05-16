@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Menu, Settings, Bell, ChevronDown } from "lucide-react";
+import { LogOut, Menu, Settings, Bell } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +23,7 @@ const DashboardHeader = () => {
   const links = [
     { name: "Dashboard", path: "/dashboard" },
     { name: "Trading", path: "/trading" },
+    { name: "Stock Compare", path: "/stock-compare" },
     { name: "Research", path: "/chat-research" },
   ];
 
