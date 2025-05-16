@@ -11,7 +11,6 @@ import {
   TrendingDown, 
   BarChart3,
   LineChart,
-  SplitSquareVertical
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import StockComparisonChart from "@/components/trading/StockComparisonChart";
@@ -28,7 +27,6 @@ const StockCompare = () => {
   const [isComparing, setIsComparing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [realTimePrices, setRealTimePrices] = useState<{[key: string]: number}>({});
-  const [chartType, setChartType] = useState<"single" | "split">("single");
   
   // Handle comparison button click
   const handleCompare = useCallback(async () => {
@@ -123,7 +121,7 @@ const StockCompare = () => {
             
             {/* Time Period Selector */}
             <div className="mt-6 flex justify-center">
-              <div className="flex space-x-2 mb-4">
+              <div className="flex space-x-2">
                 {["1Day", "1Week", "1Month", "1Year"].map((period) => (
                   <Button
                     key={period}
@@ -136,28 +134,6 @@ const StockCompare = () => {
                   </Button>
                 ))}
               </div>
-              
-              {/* Chart Type Selector */}
-              <div className="flex space-x-2 ml-4">
-                <Button
-                  variant={chartType === "single" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setChartType("single")}
-                  className={chartType === "single" ? "bg-teal-600 hover:bg-teal-700" : "border-gray-700"}
-                >
-                  <LineChart className="h-4 w-4 mr-1" />
-                  Combined Chart
-                </Button>
-                <Button
-                  variant={chartType === "split" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setChartType("split")}
-                  className={chartType === "split" ? "bg-teal-600 hover:bg-teal-700" : "border-gray-700"}
-                >
-                  <SplitSquareVertical className="h-4 w-4 mr-1" />
-                  Split Charts
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -166,58 +142,35 @@ const StockCompare = () => {
         {isComparing && (
           <>
             {/* Chart Comparison */}
-            {chartType === "single" ? (
-              // Single chart with both stocks
-              <Card className="bg-black/20 border-gray-800 backdrop-blur-sm mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <Card className="bg-black/20 border-gray-800 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>Price Comparison</span>
-                    <div className="flex space-x-4">
-                      <span className="text-lg font-normal">
-                        {stock1}: ${realTimePrices[stock1] ? realTimePrices[stock1].toFixed(2) : "Loading..."}
-                      </span>
-                      <span className="text-lg font-normal">
-                        {stock2}: ${realTimePrices[stock2] ? realTimePrices[stock2].toFixed(2) : "Loading..."}
-                      </span>
-                    </div>
+                    <span>{stock1}</span>
+                    <span className="text-lg font-normal">
+                      ${realTimePrices[stock1] ? realTimePrices[stock1].toFixed(2) : "Loading..."}
+                    </span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <StockComparisonChart symbols={[stock1, stock2]} timeframe={timeframe} multiChart={true} />
+                  <StockComparisonChart symbol={stock1} timeframe={timeframe} />
                 </CardContent>
               </Card>
-            ) : (
-              // Split charts (original view)
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <Card className="bg-black/20 border-gray-800 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{stock1}</span>
-                      <span className="text-lg font-normal">
-                        ${realTimePrices[stock1] ? realTimePrices[stock1].toFixed(2) : "Loading..."}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <StockComparisonChart symbols={[stock1]} timeframe={timeframe} multiChart={false} />
-                  </CardContent>
-                </Card>
-                
-                <Card className="bg-black/20 border-gray-800 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{stock2}</span>
-                      <span className="text-lg font-normal">
-                        ${realTimePrices[stock2] ? realTimePrices[stock2].toFixed(2) : "Loading..."}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <StockComparisonChart symbols={[stock2]} timeframe={timeframe} multiChart={false} />
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+              
+              <Card className="bg-black/20 border-gray-800 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{stock2}</span>
+                    <span className="text-lg font-normal">
+                      ${realTimePrices[stock2] ? realTimePrices[stock2].toFixed(2) : "Loading..."}
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <StockComparisonChart symbol={stock2} timeframe={timeframe} />
+                </CardContent>
+              </Card>
+            </div>
             
             {/* Technical Analysis Panels */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
