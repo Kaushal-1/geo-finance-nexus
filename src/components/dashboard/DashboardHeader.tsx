@@ -21,6 +21,7 @@ const DashboardHeader = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const links = [
+    { name: "Home", path: "/" },
     { name: "Market-Map", path: "/dashboard" },
     { name: "Trading Dashboard", path: "/trading" },
     { name: "Stock Compare", path: "/stock-compare" },
@@ -41,7 +42,7 @@ const DashboardHeader = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <Link to="/dashboard" className="flex items-center">
+            <Link to="/" className="flex items-center">
               <div className="bg-gradient-to-r from-teal-500 to-blue-500 text-white font-bold rounded-lg w-10 h-10 flex items-center justify-center mr-2">
                 G
               </div>
