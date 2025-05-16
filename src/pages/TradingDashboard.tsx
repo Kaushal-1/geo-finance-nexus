@@ -111,17 +111,7 @@ const TradingDashboard = () => {
 
   return (
     <div className="bg-gradient-to-br from-[#0a0e17] to-[#131b2e] min-h-screen">
-      <header className="py-4 px-6 bg-black/30 border-b border-white/10 flex justify-between items-center">
-        <div className="flex items-center">
-          <Link to="/" className="text-teal-400 text-xl font-bold mr-8">GeoFinance</Link>
-          <nav className="hidden md:flex space-x-6">
-            <Link to="/dashboard" className="text-white/70 hover:text-white">Dashboard</Link>
-            <Link to="/trading" className="text-white font-medium">Trading</Link>
-            <Link to="/stock-compare" className="text-white/70 hover:text-white">Compare Stocks</Link>
-            <Link to="/chat-research" className="text-white/70 hover:text-white">AI Research</Link>
-          </nav>
-        </div>
-      </header>
+      
       
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-0">
