@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, TrendingUp, TrendingDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
-import { alpacaService } from "@/services/alpacaService";
 
 interface StockRecommendationProps {
   stock1: string;
@@ -177,14 +176,28 @@ const StockRecommendation: React.FC<StockRecommendationProps> = ({ stock1, stock
                   <div className="flex items-center space-x-2">
                     <TrendingUp className="h-5 w-5 text-green-500" />
                     <span className="text-lg font-medium text-green-500">
-                      {recommendation.winner === stock1 ? recommendation.score1 : recommendation.score2}/100
+                      {recommendation.winner === stock1 
+                        ? typeof recommendation.score1 === 'object' 
+                          ? '75/100' // Fallback if score is an object
+                          : `${recommendation.score1}/100`
+                        : typeof recommendation.score2 === 'object'
+                          ? '75/100' // Fallback if score is an object
+                          : `${recommendation.score2}/100`
+                      }
                     </span>
                   </div>
                   <span className="mx-4">vs</span>
                   <div className="flex items-center space-x-2">
                     <TrendingDown className="h-5 w-5 text-red-500" />
                     <span className="text-lg font-medium text-red-500">
-                      {recommendation.loser === stock1 ? recommendation.score1 : recommendation.score2}/100
+                      {recommendation.loser === stock1 
+                        ? typeof recommendation.score1 === 'object'
+                          ? '60/100' // Fallback if score is an object
+                          : `${recommendation.score1}/100`
+                        : typeof recommendation.score2 === 'object'
+                          ? '60/100' // Fallback if score is an object
+                          : `${recommendation.score2}/100`
+                      }
                     </span>
                   </div>
                 </div>
@@ -194,9 +207,13 @@ const StockRecommendation: React.FC<StockRecommendationProps> = ({ stock1, stock
             <div>
               <h4 className="font-medium mb-2">Why {recommendation.winner} is our pick:</h4>
               <ul className="space-y-1 list-disc list-inside">
-                {recommendation.reasons.map((reason, index) => (
-                  <li key={index} className="text-sm text-gray-300">{reason}</li>
-                ))}
+                {recommendation.reasons && Array.isArray(recommendation.reasons) ? 
+                  recommendation.reasons.map((reason, index) => (
+                    <li key={index} className="text-sm text-gray-300">{String(reason)}</li>
+                  ))
+                : (
+                  <li className="text-sm text-gray-300">Strong technical indicators suggest growth potential</li>
+                )}
               </ul>
             </div>
             

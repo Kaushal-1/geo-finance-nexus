@@ -17,8 +17,8 @@ import StockSelector from "@/components/trading/StockSelector";
 import StockAnalysisPanel from "@/components/trading/StockAnalysisPanel";
 import StockNewsPanel from "@/components/trading/StockNewsPanel";
 import StockRecommendation from "@/components/trading/StockRecommendation";
-import { useWebSocket } from "@/hooks/useWebSocket";
 import { alpacaService } from "@/services/alpacaService";
+import { technicalAnalysisService } from "@/services/technicalAnalysisService";
 
 const StockCompare = () => {
   const [stock1, setStock1] = useState("AAPL");
@@ -27,36 +27,7 @@ const StockCompare = () => {
   const [isComparing, setIsComparing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [realTimePrices, setRealTimePrices] = useState<{[key: string]: number}>({});
-  const { 
-    connectWebSocket, 
-    disconnectWebSocket,
-    isConnected
-  } = useWebSocket();
   
-  // Fetch real-time data when comparison starts
-  useEffect(() => {
-    if (isComparing) {
-      const symbols = [stock1, stock2];
-      
-      // Connect to WebSocket for real-time updates
-      connectWebSocket({
-        symbols,
-        onMessage: (data) => {
-          if (data.T === 'q') { // quote data
-            setRealTimePrices(prev => ({
-              ...prev,
-              [data.S]: data.bp // Use bid price as current price
-            }));
-          }
-        }
-      });
-      
-      return () => {
-        disconnectWebSocket();
-      };
-    }
-  }, [isComparing, stock1, stock2, connectWebSocket, disconnectWebSocket]);
-
   // Handle comparison button click
   const handleCompare = useCallback(async () => {
     if (stock1 === stock2) {
@@ -72,7 +43,7 @@ const StockCompare = () => {
     setIsComparing(false);
     
     try {
-      // Fetch initial price data to display while websocket connects
+      // Fetch initial price data
       const [stock1Data, stock2Data] = await Promise.all([
         alpacaService.getBars(stock1, timeframe),
         alpacaService.getBars(stock2, timeframe)
