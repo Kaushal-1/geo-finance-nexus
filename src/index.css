@@ -145,12 +145,6 @@
     display: none !important;
   }
   
-  .tradingview-widget-container iframe {
-    background-color: transparent !important;
-    filter: invert(0.1) hue-rotate(180deg) !important;
-    opacity: 0.9 !important;
-  }
-
   /* Custom TradingView widget text styling */
   .tradingview-widget-container iframe body {
     color: #f5f7fa !important;
