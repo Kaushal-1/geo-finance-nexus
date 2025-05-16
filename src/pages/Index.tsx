@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, ChartBar, Bell, Clock } from "lucide-react";
@@ -68,6 +67,7 @@ const Index = () => {
             <Link to="/signin" className="text-gray-300 hover:text-white transition-colors">Sign In</Link>
             <Link to="/dashboard" className="text-gray-300 hover:text-white transition-colors">Market Map</Link>
             <Link to="/trading" className="text-gray-300 hover:text-white transition-colors">Trading Dashboard</Link>
+            <Link to="/stock-compare" className="text-gray-300 hover:text-white transition-colors">Stock Compare</Link>
             <Link to="/chat-research" className="text-gray-300 hover:text-white transition-colors">AI Research</Link>
           </div>
           <div className="flex items-center gap-2">
@@ -145,6 +145,30 @@ const Index = () => {
             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
               Combine financial data with location intelligence to discover insights that traditional analytics miss.
             </p>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex flex-wrap justify-center gap-4 mb-12">
+            <Link to="/dashboard">
+              <Button variant="outline" className="border-white/20 text-white py-5 px-6 rounded-md hover:bg-white/10">
+                Market Map
+              </Button>
+            </Link>
+            <Link to="/trading">
+              <Button variant="outline" className="border-white/20 text-white py-5 px-6 rounded-md hover:bg-white/10">
+                Trading Platform
+              </Button>
+            </Link>
+            <Link to="/stock-compare">
+              <Button className="bg-teal-gradient text-white py-5 px-6 rounded-md button-glow">
+                Compare Stocks
+              </Button>
+            </Link>
+            <Link to="/chat-research">
+              <Button variant="outline" className="border-white/20 text-white py-5 px-6 rounded-md hover:bg-white/10">
+                AI Research
+              </Button>
+            </Link>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">

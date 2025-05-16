@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -73,33 +72,38 @@ const StockAnalysisPanel: React.FC<StockAnalysisPanelProps> = ({ symbol }) => {
     let bearishFactors = 0;
     
     // Price above MA50 is bullish
-    if (data.currentPrice > data.ma50) bullishFactors++;
-    else bearishFactors++;
+    if (data.currentPrice > data.ma50) bullishFactors += 2;
+    else bearishFactors += 2;
     
     // Price above MA200 is bullish
-    if (data.currentPrice > data.ma200) bullishFactors++;
-    else bearishFactors++;
+    if (data.currentPrice > data.ma200) bullishFactors += 2;
+    else bearishFactors += 2;
     
     // RSI below 30 is oversold (bullish), above 70 is overbought (bearish)
-    if (data.rsi < 30) bullishFactors++;
-    else if (data.rsi > 70) bearishFactors++;
+    if (data.rsi < 30) bullishFactors += 3;
+    else if (data.rsi > 70) bearishFactors += 3;
+    else if (data.rsi < 45) bullishFactors += 1;
+    else if (data.rsi > 55) bearishFactors += 1;
     
     // MACD above signal line is bullish
-    if (data.macdHistogram > 0) bullishFactors++;
-    else bearishFactors++;
+    if (data.macdHistogram > 0.5) bullishFactors += 3;
+    else if (data.macdHistogram < -0.5) bearishFactors += 3;
+    else if (data.macdHistogram > 0) bullishFactors += 1;
+    else bearishFactors += 1;
     
     // Volume trend
-    if (data.volumeTrend === 'Above Average') bullishFactors++;
-    else bearishFactors++;
+    if (data.volumeTrend === 'Above Average') bullishFactors += 1;
+    else bearishFactors += 1;
     
     // Calculate score (0-100)
     const totalFactors = bullishFactors + bearishFactors;
     const value = Math.round((bullishFactors / totalFactors) * 100);
     
     // Determine status
-    let bullishBearish = 'neutral';
+    let bullishBearish;
     if (value >= 70) bullishBearish = 'bullish';
     else if (value <= 30) bullishBearish = 'bearish';
+    else bullishBearish = 'neutral';
     
     return { bullishBearish, value };
   };
@@ -266,8 +270,15 @@ const StockAnalysisPanel: React.FC<StockAnalysisPanelProps> = ({ symbol }) => {
             <h3 className="text-sm font-medium text-gray-400 mb-2">Overall Trend</h3>
             <TechnicalIndicatorGauge 
               value={trendStatus.value} 
-              status={trendStatus.bullishBearish} 
+              status={trendStatus.bullishBearish}
             />
+            {technical && (
+              <div className="text-xs mt-1 text-center">
+                <span className={`font-semibold ${trendStatus.value > 60 ? 'text-blue-500' : trendStatus.value < 40 ? 'text-red-500' : 'text-gray-400'}`}>
+                  {trendStatus.value}% {trendStatus.value > 60 ? 'Bullish' : trendStatus.value < 40 ? 'Bearish' : 'Neutral'}
+                </span>
+              </div>
+            )}
           </div>
           
           {/* Moving Averages */}
@@ -281,11 +292,15 @@ const StockAnalysisPanel: React.FC<StockAnalysisPanelProps> = ({ symbol }) => {
               <div className="grid grid-cols-3 gap-2 text-xs mt-2">
                 <div>
                   <span className="text-gray-400">50-day: </span>
-                  <span>${technical.ma50.toFixed(2)}</span>
+                  <span className={technical.currentPrice > technical.ma50 ? "text-blue-500" : "text-red-500"}>
+                    ${technical.ma50.toFixed(2)}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-400">200-day: </span>
-                  <span>${technical.ma200.toFixed(2)}</span>
+                  <span className={technical.currentPrice > technical.ma200 ? "text-blue-500" : "text-red-500"}>
+                    ${technical.ma200.toFixed(2)}
+                  </span>
                 </div>
                 <div>
                   <span className="text-gray-400">Current: </span>
@@ -306,9 +321,9 @@ const StockAnalysisPanel: React.FC<StockAnalysisPanelProps> = ({ symbol }) => {
               thresholds={[30, 70]}
             />
             <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>Oversold</span>
+              <span className="text-green-500">Oversold</span>
               <span>Neutral</span>
-              <span>Overbought</span>
+              <span className="text-red-500">Overbought</span>
             </div>
           </div>
           
@@ -331,7 +346,9 @@ const StockAnalysisPanel: React.FC<StockAnalysisPanelProps> = ({ symbol }) => {
                 </div>
                 <div>
                   <span className="text-gray-400">Hist: </span>
-                  <span>{technical.macdHistogram.toFixed(2)}</span>
+                  <span className={technical.macdHistogram > 0 ? "text-blue-500" : "text-red-500"}>
+                    {technical.macdHistogram.toFixed(2)}
+                  </span>
                 </div>
               </div>
             )}
