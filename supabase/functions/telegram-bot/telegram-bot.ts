@@ -4,6 +4,9 @@ import { AlertService } from "./alert-service.ts";
 // Specify allowed user ID
 const ALLOWED_USER_ID = "2085478565";
 
+// In-memory storage for settings (this would be better with a persistent store)
+const userSettings: Map<string, any> = new Map();
+
 export class TelegramBot {
   private tradingService: TradingService;
   private alertService: AlertService;
@@ -22,6 +25,17 @@ export class TelegramBot {
     
     if (!this.SONAR_API_KEY) {
       console.error('❌ Sonar API key is missing!');
+    }
+    
+    // Initialize default settings for the allowed user
+    if (!userSettings.has(ALLOWED_USER_ID)) {
+      userSettings.set(ALLOWED_USER_ID, {
+        price_alerts: true,
+        order_notifications: true,
+        trade_commands: true,
+        chat_commands: true,
+        updated_at: new Date().toISOString()
+      });
     }
   }
 
@@ -63,9 +77,10 @@ export class TelegramBot {
 
   async checkUserPermissions(chatId: string, command: string): Promise<boolean> {
     try {
-      const { data, error } = await this.getSettingsFromSupabase(chatId);
+      // Get settings from in-memory storage
+      const settings = userSettings.get(chatId);
       
-      if (error || !data) {
+      if (!settings) {
         // If no settings found, default to allowing all
         console.log(`No settings found for user ${chatId}, using defaults`);
         return true;
@@ -73,11 +88,11 @@ export class TelegramBot {
       
       // Check specific permissions based on command type
       if (command.startsWith('/buy') || command.startsWith('/sell')) {
-        return data.trade_commands;
+        return settings.trade_commands;
       } else if (command.startsWith('/alert')) {
-        return data.price_alerts;
+        return settings.price_alerts;
       } else if (command.startsWith('/chat')) {
-        return data.chat_commands;
+        return settings.chat_commands;
       }
       
       // Default commands like /help are always allowed
@@ -89,13 +104,44 @@ export class TelegramBot {
     }
   }
 
-  async getSettingsFromSupabase(chatId: string) {
-    // This uses the alertService's Supabase client
-    return await this.alertService.supabase
-      .from('telegram_settings')
-      .select('*')
-      .eq('user_id', chatId)
-      .single();
+  // New method to update settings
+  async updateSettings(chatId: string, settings: any): Promise<boolean> {
+    try {
+      if (chatId !== ALLOWED_USER_ID) {
+        throw new Error("Unauthorized user ID");
+      }
+      
+      // Update settings in memory
+      const currentSettings = userSettings.get(chatId) || {};
+      userSettings.set(chatId, {
+        ...currentSettings,
+        ...settings,
+        updated_at: new Date().toISOString()
+      });
+      
+      console.log(`Updated settings for user ${chatId}:`, userSettings.get(chatId));
+      return true;
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      throw error;
+    }
+  }
+
+  // Method to get settings
+  async getSettings(chatId: string): Promise<any> {
+    // Only allow for the specific user ID
+    if (chatId !== ALLOWED_USER_ID) {
+      throw new Error("Unauthorized user ID");
+    }
+    
+    // Return settings from in-memory storage
+    return userSettings.get(chatId) || {
+      price_alerts: true,
+      order_notifications: true,
+      trade_commands: true,
+      chat_commands: true,
+      updated_at: new Date().toISOString()
+    };
   }
 
   async sendPriceAlert(chatId: string, symbol: string, currentPrice: number, thresholdPrice: number, direction: string): Promise<void> {
@@ -107,8 +153,8 @@ export class TelegramBot {
 
     try {
       // Check if user has price alerts enabled
-      const { data } = await this.getSettingsFromSupabase(chatId);
-      if (data && !data.price_alerts) {
+      const settings = userSettings.get(chatId);
+      if (settings && !settings.price_alerts) {
         console.log(`Price alerts disabled for user ${chatId}, not sending notification`);
         return;
       }

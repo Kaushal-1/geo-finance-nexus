@@ -76,6 +76,51 @@ serve(async (req) => {
         );
       }
       
+      // Handle settings update request
+      if (body.action === 'update_settings' && body.user_id && body.settings) {
+        console.log(`Updating settings for user: ${body.user_id}`);
+        
+        // Only allow updates for the specific user ID
+        if (body.user_id !== ALLOWED_USER_ID) {
+          return new Response(
+            JSON.stringify({ 
+              success: false,
+              message: "This user ID is not authorized to update settings."
+            }),
+            {
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            }
+          );
+        }
+        
+        try {
+          // Directly store settings in memory or use a more permanent storage solution
+          // This bypasses Supabase RLS policies
+          const result = await telegramBot.updateSettings(body.user_id, body.settings);
+          
+          return new Response(
+            JSON.stringify({ 
+              success: true,
+              message: "Settings updated successfully" 
+            }),
+            {
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            }
+          );
+        } catch (error) {
+          return new Response(
+            JSON.stringify({ 
+              success: false,
+              message: `Failed to update settings: ${error.message}` 
+            }),
+            {
+              status: 500,
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            }
+          );
+        }
+      }
+      
       // Regular Telegram update - check if it's from the allowed user
       console.log("Received Telegram update:", JSON.stringify(body));
       

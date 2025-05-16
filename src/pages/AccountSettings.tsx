@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Shield, User, Bell, MessageSquare, Key, Database, Clock } from "lucide-react";
+import { Shield, User, Bell, MessageSquare, Key, Database } from "lucide-react";
 import TelegramBotPanel from "@/components/trading/TelegramBotPanel";
 
 const AccountSettings = () => {
@@ -106,8 +106,15 @@ const AccountSettings = () => {
 
           {/* Main Content */}
           <div className="space-y-6">
-            {/* Replace the direct TabsContent usage with a proper Tabs component */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="hidden">
+                <TabsTrigger value="profile">Profile</TabsTrigger>
+                <TabsTrigger value="notifications">Notifications</TabsTrigger>
+                <TabsTrigger value="api">API Keys</TabsTrigger>
+                <TabsTrigger value="telegram">Telegram Bot</TabsTrigger>
+                <TabsTrigger value="data">Data & Privacy</TabsTrigger>
+              </TabsList>
+
               <TabsContent value="profile">
                 <Card className="bg-black/20 border-white/10 backdrop-blur-sm">
                   <CardHeader>
