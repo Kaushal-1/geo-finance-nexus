@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Search, ChevronDown } from "lucide-react";
+import { RefreshCw, Search } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import StockChart from "./StockChart";
 import { alpacaService } from "@/services/alpacaService";
@@ -233,7 +233,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
                     </div>
                   )}
                 </div>
-                <Button type="submit" variant="outline" size="sm" className="border-gray-700">
+                <Button type="submit" variant="outline" size="sm" className="border-gray-700 font-inter">
                   Go
                 </Button>
               </form>
@@ -285,14 +285,14 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
                 disabled={isLoading}
               >
                 <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-                <span className="sr-only md:not-sr-only md:inline-block">Refresh</span>
+                <span className="sr-only md:not-sr-only md:inline-block font-inter">Refresh</span>
               </Button>
             </div>
           </div>
         </div>
         
         {/* Chart area with increased height */}
-        <div className="h-[400px] mb-1">
+        <div className="h-[450px] mb-1">
           <StockChart 
             data={formattedChartData} 
             symbols={[symbol]} 

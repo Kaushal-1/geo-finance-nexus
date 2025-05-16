@@ -12,6 +12,7 @@ import {
   Filler,
   ChartOptions,
   BarElement,
+  ChartData,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,6 +84,9 @@ type BarDataset = {
 }
 
 type ChartDataset = LineDataset | BarDataset;
+type StockChartData = ChartData<'line', number[], string> & {
+  datasets: ChartDataset[];
+};
 
 const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => {
   // Prepare the chart data
@@ -153,7 +157,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
       backgroundColor: volumeColors,
       borderColor: 'rgba(0, 0, 0, 0)',
       borderWidth: 0,
-      barThickness: 4,
+      barThickness: 8, // Increased bar thickness
       yAxisID: 'y1',
       order: 1
     });
@@ -161,7 +165,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
     return {
       labels,
       datasets
-    };
+    } as StockChartData;
   }, [data, symbols, isLoading]);
 
   const options: ChartOptions<'line'> = {
@@ -179,7 +183,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
         titleFont: {
           family: "'Inter', sans-serif",
           size: 14,
-          weight: '600'
+          weight: 600 // Fix: using number instead of string
         },
         bodyFont: {
           family: "'Inter', sans-serif",
@@ -246,7 +250,11 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
             family: "'Inter', sans-serif",
             size: 11
           },
-          callback: (value) => `$${value.toFixed(2)}`
+          callback: (value) => {
+            // Ensure value is treated as a number for toFixed
+            const numValue = Number(value);
+            return `$${numValue.toFixed(2)}`;
+          }
         },
         title: {
           display: false
@@ -264,10 +272,12 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
             size: 11
           },
           callback: (value) => {
-            if (value >= 1000000) {
-              return `${(value / 1000000).toFixed(1)}M`;
-            } else if (value >= 1000) {
-              return `${(value / 1000).toFixed(1)}K`;
+            // Ensure value is treated as a number for calculations
+            const numValue = Number(value);
+            if (numValue >= 1000000) {
+              return `${(numValue / 1000000).toFixed(1)}M`;
+            } else if (numValue >= 1000) {
+              return `${(numValue / 1000).toFixed(1)}K`;
             }
             return value;
           }
@@ -296,8 +306,8 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
   }
 
   return (
-    <div className="h-[400px] relative">
-      <Line data={chartData as any} options={options} />
+    <div className="h-[450px] relative"> {/* Increased height for better visualization */}
+      <Line data={chartData} options={options} />
     </div>
   );
 };
