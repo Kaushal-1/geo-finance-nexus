@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Search, ChevronDown } from "lucide-react";
+import { RefreshCw, Search } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import StockChart from "./StockChart";
 import { alpacaService } from "@/services/alpacaService";
@@ -239,14 +239,17 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
                 </Button>
               </form>
             </div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              {symbol}
-              {priceInfo.current > 0 && (
-                <span className={`text-sm font-normal ${priceInfo.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            
+            {/* Stock symbol and price info */}
+            <div className="flex flex-col">
+              <h2 className="text-2xl font-bold text-white">{symbol}</h2>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-white">${priceInfo.current.toFixed(2)}</span>
+                <span className={`text-lg font-normal ${priceInfo.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                   {priceInfo.change >= 0 ? '+' : ''}{priceInfo.change.toFixed(2)} ({priceInfo.changePercent.toFixed(2)}%)
                 </span>
-              )}
-            </h2>
+              </div>
+            </div>
           </div>
           
           {/* Timeframe selector and refresh controls */}
@@ -265,7 +268,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
               ))}
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -292,12 +295,14 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
           </div>
         </div>
         
-        {/* Chart area */}
-        <StockChart 
-          data={formattedChartData} 
-          symbols={[symbol]} 
-          isLoading={isLoading} 
-        />
+        {/* Chart area - Height adjusted for better visualization */}
+        <div className="h-[400px]">
+          <StockChart 
+            data={formattedChartData} 
+            symbols={[symbol]} 
+            isLoading={isLoading} 
+          />
+        </div>
       </CardContent>
     </Card>
   );
