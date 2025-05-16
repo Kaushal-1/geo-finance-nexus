@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import GlobalNavbar from "@/components/shared/GlobalNavbar";
 import { 
   ArrowRightLeft, 
   ChevronDown, 
@@ -73,18 +74,7 @@ const StockCompare = () => {
   
   return (
     <div className="bg-gradient-to-br from-[#0a0e17] to-[#131b2e] min-h-screen">
-      {/* Added proper navbar */}
-      <header className="py-4 px-6 bg-black/30 border-b border-white/10 flex justify-between items-center">
-        <div className="flex items-center">
-          <Link to="/" className="text-teal-400 text-xl font-bold mr-8">GeoFinance</Link>
-          <nav className="hidden md:flex space-x-6">
-            <Link to="/dashboard" className="text-white/70 hover:text-white">Dashboard</Link>
-            <Link to="/trading" className="text-white/70 hover:text-white">Trading</Link>
-            <Link to="/stock-compare" className="text-white font-medium">Compare Stocks</Link>
-            <Link to="/chat-research" className="text-white/70 hover:text-white">AI Research</Link>
-          </nav>
-        </div>
-      </header>
+      <GlobalNavbar />
       
       <div className="container p-4 md:p-6 mx-auto">
         {/* Header Section */}
