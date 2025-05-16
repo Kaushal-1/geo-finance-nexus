@@ -106,12 +106,12 @@ const GlobalStockNews = () => {
   }, [toast]);
 
   return (
-    <div className="bg-[#1a2035]/80 backdrop-blur-sm border border-white/10 rounded-xl p-4 mt-4">
-      <h2 className="text-lg font-semibold text-white mb-4">Global Stock Market News</h2>
+    <div className="bg-[#1a2035]/80 backdrop-blur-sm border border-white/10 rounded-xl p-4 h-full">
+      <h2 className="text-lg font-semibold text-white mb-2">Global Stock Market News</h2>
       
       {loading ? (
         <div className="space-y-3">
-          {[...Array(5)].map((_, i) => (
+          {[...Array(3)].map((_, i) => (
             <div key={i} className="flex items-center space-x-3">
               <div className="flex-1">
                 <Skeleton className="h-5 w-3/4 bg-white/10 mb-1" />
@@ -122,15 +122,15 @@ const GlobalStockNews = () => {
           ))}
         </div>
       ) : news.length === 0 ? (
-        <div className="text-center py-6">
+        <div className="text-center py-2">
           <p className="text-gray-400">No news available at the moment.</p>
         </div>
       ) : (
-        <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-2 overflow-y-auto pr-2 custom-scrollbar" style={{ maxHeight: "calc(100% - 40px)" }}>
           {news.map((item, index) => (
             <div 
               key={index} 
-              className="bg-white/5 hover:bg-white/10 p-3 rounded-lg border border-white/10 transition-all duration-300"
+              className="bg-white/5 hover:bg-white/10 p-2 rounded-lg border border-white/10 transition-all duration-300"
             >
               <div className="flex justify-between">
                 <h3 className="font-medium text-white text-sm mb-1">{item.title}</h3>

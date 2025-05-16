@@ -40,7 +40,7 @@ const Dashboard = () => {
       
       <div className="flex flex-col h-[calc(100vh-120px)] p-4 gap-4">
         {/* Main Content - Interactive Map */}
-        <div className="flex-1 h-full flex flex-col relative">
+        <div className="flex-1 h-[60vh] flex flex-col relative">
           <div className="relative flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm">
             <MapVisualization />
             
@@ -84,8 +84,10 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Global Stock News Section */}
-        <GlobalStockNews />
+        {/* Global Stock News Section - now with a fixed height and scrolling */}
+        <div className="h-[calc(25vh-40px)] min-h-[200px]">
+          <GlobalStockNews />
+        </div>
       </div>
       
       {/* TradingView Widget Script */}
