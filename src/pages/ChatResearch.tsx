@@ -22,8 +22,6 @@ const ChatResearch: React.FC = () => {
   const [isApiKeyValid, setIsApiKeyValid] = useState(!!apiKey);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [visualizationData, setVisualizationData] = useState<any>(null);
-  const [visualizationType, setVisualizationType] = useState<string | null>(null);
   const [showVisualization, setShowVisualization] = useState(false);
   const [input, setInput] = useState("");
   
@@ -86,16 +84,14 @@ const ChatResearch: React.FC = () => {
     setShowVisualization(false);
 
     try {
-      // Add the user message directly to the UI for immediate feedback
-      const response = await sendMessage(input);
+      // Send the message and await the response
+      await sendMessage(input);
       
       // Reset input after sending
       setInput("");
 
       // Check if we should display visualization
-      if (response?.visualization) {
-        setVisualizationData(response.visualization);
-        setVisualizationType(response.visualization.type);
+      if (activeVisualization) {
         setShowVisualization(true);
       } else {
         setShowVisualization(false);
@@ -141,10 +137,10 @@ const ChatResearch: React.FC = () => {
             {isLoading && <div className="p-3 bg-gray-800/60 rounded-xl text-gray-300 max-w-[85%] mb-4">Thinking...</div>}
           </div>
 
-          {showVisualization && visualizationData && (
+          {showVisualization && activeVisualization && (
             <ErrorBoundary>
               <VisualizationPanel 
-                visualization={visualizationData}
+                visualization={activeVisualization}
               />
             </ErrorBoundary>
           )}
@@ -178,6 +174,13 @@ const ChatResearch: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      <ApiKeyInput
+        isOpen={isApiKeyModalOpen}
+        onClose={() => setIsApiKeyModalOpen(false)}
+        onSubmit={handleApiKeySubmit}
+        apiKey={apiKey}
+      />
     </div>
   );
 };

@@ -31,7 +31,7 @@ export function useChatState() {
       if (content.toLowerCase().includes('show') || 
           content.toLowerCase().includes('chart') || 
           content.toLowerCase().includes('map') ||
-          content.toLowerCase().includes('compare') ||
+          content.toLowerCase().includes('compare') || 
           content.toLowerCase().includes('visualization')) {
         
         // Determine visualization type based on query
