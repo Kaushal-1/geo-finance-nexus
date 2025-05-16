@@ -16,8 +16,6 @@ const SuggestedQuestions: React.FC<SuggestedQuestionsProps> = ({
   onRemoveQuestion,
   disabled = false,
 }) => {
-  if (!questions || questions.length === 0) return null;
-  
   return (
     <div className="flex flex-wrap gap-2 pb-1">
       {questions.map((question, index) => (

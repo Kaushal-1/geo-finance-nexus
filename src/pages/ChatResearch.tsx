@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,15 +21,15 @@ const ChatResearch: React.FC = () => {
   const [isApiKeyValid, setIsApiKeyValid] = useState(!!apiKey);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [visualizationData, setVisualizationData] = useState<any>(null);
+  const [visualizationType, setVisualizationType] = useState<string | null>(null);
   const [showVisualization, setShowVisualization] = useState(false);
-  const [input, setInput] = useState("");
-  
   const {
     messages,
-    loading,
-    activeVisualization,
-    suggestedQuestions,
-    sendMessage
+    input,
+    setInput,
+    addMessage,
+    generateResponse
   } = useChatState();
 
   useEffect(() => {
@@ -79,25 +78,37 @@ const ChatResearch: React.FC = () => {
 
     if (input.trim() === "") return;
 
+    const userMessage = { text: input, isUser: true };
+    addMessage(userMessage);
+    setInput("");
+
     setIsLoading(true);
     setError(null);
     setShowVisualization(false);
 
     try {
-      // Send the message and await the response
-      await sendMessage(input);
-      
-      // Reset input after sending
-      setInput("");
+      const response = await generateResponse(input, apiKey);
+      if (response) {
+        const botMessage = { text: response.text, isUser: false };
+        addMessage(botMessage);
 
-      // Check if we should display visualization
-      if (activeVisualization) {
-        setShowVisualization(true);
+        if (response.visualizationData) {
+          setVisualizationData(response.visualizationData);
+          setVisualizationType(response.visualizationType);
+          setShowVisualization(true);
+        } else {
+          setShowVisualization(false);
+        }
       } else {
-        setShowVisualization(false);
+        setError("Failed to generate response.");
+        toast({
+          title: "Error",
+          description: "Failed to generate response from the AI model.",
+          variant: "destructive",
+        });
       }
     } catch (e: any) {
-      console.error("Error sending message:", e);
+      console.error("Error generating response:", e);
       setError(e.message || "An unexpected error occurred.");
       toast({
         title: "Error",
@@ -117,6 +128,13 @@ const ChatResearch: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-[#0a0e17]">
       <DashboardHeader />
       
+      <ApiKeyInput
+        isOpen={isApiKeyModalOpen}
+        onClose={() => setIsApiKeyModalOpen(false)}
+        onSubmit={handleApiKeySubmit}
+        apiKey={apiKey}
+      />
+
       <div className="container mx-auto px-4 py-8 flex-grow">
         <h1 className="text-2xl font-bold text-white mb-4">AI Research Assistant</h1>
 
@@ -134,13 +152,14 @@ const ChatResearch: React.FC = () => {
             {messages.map((message, index) => (
               <ChatMessage key={index} message={message} />
             ))}
-            {isLoading && <div className="p-3 bg-gray-800/60 rounded-xl text-gray-300 max-w-[85%] mb-4">Thinking...</div>}
+            {isLoading && <ChatMessage message={{ text: "Thinking...", isUser: false }} />}
           </div>
 
-          {showVisualization && activeVisualization && (
+          {showVisualization && visualizationData && (
             <ErrorBoundary>
-              <VisualizationPanel 
-                visualization={activeVisualization}
+              <VisualizationPanel
+                type={visualizationType}
+                data={visualizationData}
               />
             </ErrorBoundary>
           )}
@@ -148,12 +167,7 @@ const ChatResearch: React.FC = () => {
 
         <Separator className="my-4 bg-gray-700" />
 
-        {suggestedQuestions && suggestedQuestions.length > 0 && (
-          <SuggestedQuestions 
-            questions={suggestedQuestions}
-            onSelectQuestion={handleSuggestionClick}
-          />
-        )}
+        <SuggestedQuestions onSuggestionClick={handleSuggestionClick} />
 
         <div className="flex items-center mt-4">
           <Input
@@ -168,19 +182,12 @@ const ChatResearch: React.FC = () => {
               }
             }}
           />
-          <Button onClick={handleSend} disabled={isLoading || loading}>
+          <Button onClick={handleSend} disabled={isLoading}>
             Send
             <Send className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </div>
-
-      <ApiKeyInput
-        isOpen={isApiKeyModalOpen}
-        onClose={() => setIsApiKeyModalOpen(false)}
-        onSubmit={handleApiKeySubmit}
-        apiKey={apiKey}
-      />
     </div>
   );
 };

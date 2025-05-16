@@ -60,7 +60,6 @@ const SourceCitationBlock = ({ source }: { source: SourceCitation }) => (
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const isAI = message.sender === "ai";
-  const content = message.content;
 
   return (
     <div className={`mb-6 flex ${isAI ? "flex-row" : "flex-row-reverse"}`}>
@@ -97,7 +96,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
           />
         )}
 
-        <ChatMessageContent content={content} />
+        <ChatMessageContent content={message.content} />
 
         {/* Mini Charts - If message contains charts */}
         {message.charts && message.charts.length > 0 && (
