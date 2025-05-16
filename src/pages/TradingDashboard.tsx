@@ -111,7 +111,8 @@ const TradingDashboard = () => {
 
   return (
     <div className="bg-gradient-to-br from-[#0a0e17] to-[#131b2e] min-h-screen">
-      
+     {/* Add Dashboard Header */}
+      <DashboardHeader /> 
       
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-0">
