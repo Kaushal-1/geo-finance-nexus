@@ -10,12 +10,13 @@ import StockChart from "./StockChart";
 import { alpacaService } from "@/services/alpacaService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useRealTimeMarketData } from "@/hooks/useRealTimeMarketData";
 
 interface Bar {
   t: string; // timestamp
   o: number; // open
-  h: number; // low
-  l: number; // high
+  h: number; // high
+  l: number; // low
   c: number; // close
   v: number; // volume
 }
@@ -51,18 +52,12 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
   const [searchResults, setSearchResults] = useState<Asset[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
   const [expanded, setExpanded] = useState(false);
-  const [priceInfo, setPriceInfo] = useState({ 
-    current: 0, 
-    change: 0, 
-    changePercent: 0,
-    high: 0,
-    low: 0,
-    open: 0,
-    volume: 0
-  });
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  
+  // Use real-time market data hook
+  const { marketData, isLoading: isLoadingRealTime, refetch: refetchRealTime } = useRealTimeMarketData(symbol);
   
   // Function to fetch stock data
   const fetchStockData = useCallback(async () => {
@@ -85,27 +80,8 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
         setChartData(sortedData);
         setLastUpdated(new Date());
         
-        // Calculate price info
-        if (sortedData.length > 0) {
-          const latestBar = sortedData[sortedData.length - 1];
-          const firstBar = sortedData[0];
-          const priceChange = latestBar.c - firstBar.c;
-          const priceChangePercent = (priceChange / firstBar.c) * 100;
-          
-          // Get the highest high and lowest low across all bars
-          const highestHigh = Math.max(...sortedData.map(bar => bar.h));
-          const lowestLow = Math.min(...sortedData.map(bar => bar.l));
-          
-          setPriceInfo({
-            current: latestBar.c,
-            change: priceChange,
-            changePercent: priceChangePercent,
-            high: highestHigh,
-            low: lowestLow,
-            open: firstBar.o,
-            volume: latestBar.v
-          });
-        }
+        // Also refresh real-time data
+        refetchRealTime();
       } else {
         console.error("Invalid response format:", response);
         setChartData([]);
@@ -126,7 +102,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
     } finally {
       setIsLoading(false);
     }
-  }, [symbol, timeframe]);
+  }, [symbol, timeframe, refetchRealTime]);
   
   // Function to search stocks
   const searchStocks = useCallback(async (query: string) => {
@@ -184,7 +160,8 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
   };
   
   // Format numbers for display
-  const formatNumber = (num: number, decimals = 2) => {
+  const formatNumber = (num: number | null, decimals = 2) => {
+    if (num === null) return '--';
     return num.toLocaleString(undefined, {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals
@@ -192,7 +169,8 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
   };
   
   // Format volume for display
-  const formatVolume = (volume: number) => {
+  const formatVolume = (volume: number | null) => {
+    if (volume === null) return '--';
     if (volume >= 1_000_000) {
       return `${(volume / 1_000_000).toFixed(2)}M`;
     } else if (volume >= 1_000) {
@@ -203,15 +181,82 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
   
   // Format last updated time
   const formatLastUpdated = () => {
-    if (!lastUpdated) return "Never";
+    const timestamp = marketData.lastUpdated || lastUpdated;
     
-    return lastUpdated.toLocaleTimeString('en-US', {
+    if (!timestamp) return "Never";
+    
+    return timestamp.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
       hour12: true
     });
   };
+
+  // Append real-time data to chart if it's a small timeframe (1m, 5m, 15m)
+  useEffect(() => {
+    if (!marketData.price || !marketData.lastUpdated || chartData.length === 0) {
+      return;
+    }
+    
+    // Only append real-time data for small timeframes
+    if (!['1Min', '5Min', '15Min'].includes(timeframe)) {
+      return;
+    }
+    
+    // Check if this update is new enough to add to chart
+    const lastBarTime = new Date(chartData[chartData.length - 1].t);
+    const now = marketData.lastUpdated;
+    let shouldAddBar = false;
+    
+    // Determine if we should add a new bar based on timeframe
+    if (timeframe === '1Min') {
+      shouldAddBar = now.getMinutes() !== lastBarTime.getMinutes() || 
+                    now.getHours() !== lastBarTime.getHours() ||
+                    now.getDate() !== lastBarTime.getDate();
+    } else if (timeframe === '5Min') {
+      shouldAddBar = Math.floor(now.getMinutes() / 5) !== Math.floor(lastBarTime.getMinutes() / 5) || 
+                    now.getHours() !== lastBarTime.getHours() ||
+                    now.getDate() !== lastBarTime.getDate();
+    } else if (timeframe === '15Min') {
+      shouldAddBar = Math.floor(now.getMinutes() / 15) !== Math.floor(lastBarTime.getMinutes() / 15) || 
+                    now.getHours() !== lastBarTime.getHours() ||
+                    now.getDate() !== lastBarTime.getDate();
+    }
+    
+    if (shouldAddBar && marketData.price) {
+      const lastBar = chartData[chartData.length - 1];
+      const newBar = {
+        t: now.toISOString(),
+        o: lastBar.c, // Open is the last close
+        h: marketData.price,
+        l: marketData.price,
+        c: marketData.price,
+        v: marketData.volume || 0
+      };
+      
+      setChartData(prevData => [...prevData, newBar]);
+    } else if (marketData.price) {
+      // Update the last bar with current price
+      setChartData(prevData => {
+        if (prevData.length === 0) return prevData;
+        
+        const updatedData = [...prevData];
+        const lastIndex = updatedData.length - 1;
+        const lastBar = updatedData[lastIndex];
+        
+        updatedData[lastIndex] = {
+          ...lastBar,
+          h: Math.max(lastBar.h, marketData.price!),
+          l: Math.min(lastBar.l, marketData.price!),
+          c: marketData.price!,
+          v: marketData.volume || lastBar.v
+        };
+        
+        return updatedData;
+      });
+    }
+  }, [marketData, timeframe, chartData]);
 
   // Fetch data when component mounts or symbol/timeframe changes
   useEffect(() => {
@@ -265,6 +310,10 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
   const formattedChartData = {
     [symbol]: chartData
   };
+  
+  // Determine if we should show live indicator
+  const isLiveData = marketData.lastUpdated && 
+    (new Date().getTime() - marketData.lastUpdated.getTime()) < 60000; // Within the last minute
 
   return (
     <Card className={`bg-black/20 border-gray-800 backdrop-blur-sm mb-6 ${expanded ? 'fixed inset-0 z-50 m-0 rounded-none overflow-auto' : ''}`}>
@@ -311,30 +360,36 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
               <h2 className="text-xl font-bold text-white flex items-center gap-2 font-inter">
                 <CandlestickChart className="h-5 w-5 text-teal-400" />
                 {symbol}
-                {priceInfo.current > 0 && (
-                  <span className={`text-sm font-normal ${priceInfo.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    ${formatNumber(priceInfo.current)}
+                {marketData.price !== null && (
+                  <span className={`text-sm font-normal ${marketData.change && marketData.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    ${formatNumber(marketData.price)}
+                    {isLiveData && (
+                      <span className="ml-2 text-xs inline-flex items-center">
+                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></span>
+                        LIVE
+                      </span>
+                    )}
                   </span>
                 )}
               </h2>
               
-              {priceInfo.change !== 0 && (
+              {marketData.change !== null && (
                 <div className="flex items-center space-x-2">
-                  <span className={`flex items-center ${priceInfo.change >= 0 ? 'text-green-500' : 'text-red-500'} text-sm`}>
-                    {priceInfo.change >= 0 ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
-                    {priceInfo.change >= 0 ? '+' : ''}{formatNumber(priceInfo.change)} ({priceInfo.changePercent >= 0 ? '+' : ''}{formatNumber(priceInfo.changePercent)}%)
+                  <span className={`flex items-center ${marketData.change >= 0 ? 'text-green-500' : 'text-red-500'} text-sm`}>
+                    {marketData.change >= 0 ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
+                    {marketData.change >= 0 ? '+' : ''}{formatNumber(marketData.change)} ({marketData.changePercent && marketData.changePercent >= 0 ? '+' : ''}{formatNumber(marketData.changePercent)}%)
                   </span>
                 </div>
               )}
             </div>
             
             {/* Price stats */}
-            {!isLoading && priceInfo.current > 0 && (
+            {!isLoadingRealTime && marketData.price !== null && (
               <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-400">
-                <div>Open: <span className="text-gray-300">${formatNumber(priceInfo.open)}</span></div>
-                <div>High: <span className="text-gray-300">${formatNumber(priceInfo.high)}</span></div>
-                <div>Low: <span className="text-gray-300">${formatNumber(priceInfo.low)}</span></div>
-                <div>Vol: <span className="text-gray-300">{formatVolume(priceInfo.volume)}</span></div>
+                <div>Open: <span className="text-gray-300">${formatNumber(marketData.prevClose)}</span></div>
+                <div>High: <span className="text-gray-300">${formatNumber(marketData.high)}</span></div>
+                <div>Low: <span className="text-gray-300">${formatNumber(marketData.low)}</span></div>
+                <div>Vol: <span className="text-gray-300">{formatVolume(marketData.volume)}</span></div>
                 <div className="flex items-center">
                   <Clock className="h-3 w-3 mr-1" />
                   <span>{formatLastUpdated()}</span>
@@ -419,6 +474,15 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
               <div className="flex flex-col items-center gap-2">
                 <RefreshCw className="h-6 w-6 animate-spin text-blue-400" />
                 <p className="text-sm text-gray-300">Loading {symbol} data...</p>
+              </div>
+            </div>
+          )}
+          
+          {isLiveData && (
+            <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm p-1 px-2 rounded-md border border-green-500/30">
+              <div className="flex items-center text-xs text-green-500 font-mono">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></span>
+                LIVE DATA
               </div>
             </div>
           )}
