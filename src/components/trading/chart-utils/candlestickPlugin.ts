@@ -1,37 +1,66 @@
 
-import { Chart, ChartType, LineController, LineElement, PointElement, ChartTypeRegistry } from 'chart.js';
+import { Chart, ChartType, LineController, LineElement, PointElement, ChartTypeRegistry, LineOptions } from 'chart.js';
+
+// Extend LineOptions to include candlestick properties
+interface CandlestickOptions extends LineOptions {
+  candlestickWidth?: number;
+  borderColorUp?: string;
+  borderColorDown?: string;
+  backgroundColorUp?: string;
+  backgroundColorDown?: string;
+}
 
 // Custom Candlestick element for Chart.js
 class CandlestickElement extends LineElement {
+  candlestickWidth: number;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  
+  constructor(cfg: any) {
+    super(cfg);
+    this.candlestickWidth = cfg.candlestickWidth || 8;
+    this.o = cfg.o || 0;
+    this.h = cfg.h || 0;
+    this.l = cfg.l || 0;
+    this.c = cfg.c || 0;
+  }
+  
   draw(ctx: CanvasRenderingContext2D) {
-    const { x, y, options } = this;
-    
-    const { o, h, l, c } = this.parsed;
+    const { x, options } = this;
     
     // Skip drawing if missing required data
-    if (o === undefined || h === undefined || l === undefined || c === undefined) {
+    if (this.o === undefined || this.h === undefined || 
+        this.l === undefined || this.c === undefined) {
       return;
     }
     
-    const width = options.candlestickWidth || 8;
+    const opts = options as CandlestickOptions;
+    const width = opts.candlestickWidth || 8;
     const halfWidth = width / 2;
     
     // Set colors based on movement
-    const borderColor = c >= o ? options.borderColorUp || '#22c55e' : options.borderColorDown || '#ef4444';
-    const fillColor = c >= o ? options.backgroundColorUp || 'rgba(34, 197, 94, 0.1)' : options.backgroundColorDown || 'rgba(239, 68, 68, 0.1)';
+    const borderColor = this.c >= this.o 
+      ? opts.borderColorUp || '#22c55e' 
+      : opts.borderColorDown || '#ef4444';
+      
+    const fillColor = this.c >= this.o 
+      ? opts.backgroundColorUp || 'rgba(34, 197, 94, 0.1)' 
+      : opts.backgroundColorDown || 'rgba(239, 68, 68, 0.1)';
     
     // Draw candle body
     ctx.fillStyle = fillColor;
     ctx.strokeStyle = borderColor;
     ctx.lineWidth = options.borderWidth || 1;
     
-    const bodyHeight = Math.abs(c - o);
-    const bodyY = Math.min(c, o);
+    const bodyHeight = Math.abs(this.c - this.o);
+    const bodyY = Math.min(this.c, this.o);
     
     // Draw wick (high to low)
     ctx.beginPath();
-    ctx.moveTo(x, l);
-    ctx.lineTo(x, h);
+    ctx.moveTo(x, this.l);
+    ctx.lineTo(x, this.h);
     ctx.stroke();
     
     // Draw body (open to close rectangle)
@@ -59,33 +88,47 @@ class CandlestickController extends LineController {
   // Override to properly parse candlestick data
   parseObjectData(meta: any, data: any, start: number, count: number) {
     const parsed: any[] = [];
-    let i, ilen, item;
-    
-    for (i = 0, ilen = data.length; i < ilen; ++i) {
-      item = data[i];
-      parsed.push({
-        x: i,
-        o: item.o,
-        h: item.h,
-        l: item.l,
-        c: item.c
-      });
+    for (let i = 0; i < count; ++i) {
+      const index = i + start;
+      const item = data[index];
+      if (item) {
+        parsed.push({
+          x: i,
+          o: item.o,
+          h: item.h,
+          l: item.l,
+          c: item.c
+        });
+      }
     }
-    
     return parsed;
   }
 
   // Override to update element with correct coordinates
-  updateElement(element: any, index: number, properties: any, mode: string) {
-    const parsed = this.getParsed(index);
+  updateElement(element: any, index: number, properties: any, mode: any) {
+    const me = this;
+    const parsed = me.getParsed(index);
     
-    properties.x = this.getPixelForValue(parsed.x, index);
-    properties.o = this.getPixelForValue(parsed.o, index);
-    properties.h = this.getPixelForValue(parsed.h, index);
-    properties.l = this.getPixelForValue(parsed.l, index);
-    properties.c = this.getPixelForValue(parsed.c, index);
+    if (parsed) {
+      // Use the scales to get pixel values
+      const xScale = me.getScaleForId('x');
+      const yScale = me.getScaleForId('y');
+      
+      if (xScale && yScale) {
+        properties.x = xScale.getPixelForValue(index);
+        properties.o = yScale.getPixelForValue(parsed.o);
+        properties.h = yScale.getPixelForValue(parsed.h);
+        properties.l = yScale.getPixelForValue(parsed.l);
+        properties.c = yScale.getPixelForValue(parsed.c);
+      }
+    }
     
     super.updateElement(element, index, properties, mode);
+  }
+  
+  // Required methods for scale access
+  getScaleForId(scaleID: string) {
+    return this.chart.scales[scaleID];
   }
 }
 
@@ -96,8 +139,8 @@ Chart.register(CandlestickController, CandlestickElement);
 declare module 'chart.js' {
   interface ChartTypeRegistry {
     candlestick: {
-      chartOptions: ChartTypeRegistry['line']['chartOptions'];
-      datasetOptions: ChartTypeRegistry['line']['datasetOptions'] & {
+      chartOptions: any;
+      datasetOptions: LineOptions & {
         candlestickWidth?: number;
         borderColorUp?: string;
         borderColorDown?: string;
@@ -110,14 +153,15 @@ declare module 'chart.js' {
         l: number;
         c: number;
       };
-      metaExtensions: ChartTypeRegistry['line']['metaExtensions'];
-      parsedDataType: ChartTypeRegistry['line']['parsedDataType'] & {
+      metaExtensions: {};
+      parsedDataType: {
+        x: number;
         o: number;
         h: number;
         l: number;
         c: number;
       };
-      scales: ChartTypeRegistry['line']['scales'];
+      scales: typeof Chart.defaults.scales;
     };
   }
 }

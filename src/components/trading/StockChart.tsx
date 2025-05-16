@@ -65,6 +65,9 @@ interface ChartConfig {
   emaPeriod: number;
 }
 
+// Define type for our chart data to avoid typing issues
+type StockChartData = ChartData<"line", any[]>;
+
 const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => {
   const [chartConfig, setChartConfig] = useState<ChartConfig>({
     showVolume: true,
@@ -183,7 +186,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
     return {
       labels: timestamps,
       datasets
-    };
+    } as StockChartData;
   }, [data, symbols, isLoading, chartConfig]);
 
   // Create chart options
@@ -304,7 +307,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbols, isLoading }) => 
       </div>
       
       <div className="flex-1 relative">
-        {chartData && (<Line data={chartData} options={options} ref={chartRef} />)}
+        {chartData && <Line data={chartData as ChartData<"line">} options={options} ref={chartRef} />}
       </div>
     </div>
   );
