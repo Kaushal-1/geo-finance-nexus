@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AlpacaOrder } from "@/types/alpaca";
 import { RefreshCcw, XCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 interface OrdersTableProps {
   orders: AlpacaOrder[];
@@ -107,6 +108,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders, isLoading, onRefresh,
           <RefreshCcw className="h-4 w-4 mr-1" /> Refresh
         </Button>
       </CardHeader>
+      <DropdownMenu>
       <CardContent>
         <div className="overflow-x-auto">
           <Table>
@@ -162,6 +164,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders, isLoading, onRefresh,
           </Table>
         </div>
       </CardContent>
+        </DropdownMenu>
     </Card>
   );
 };
