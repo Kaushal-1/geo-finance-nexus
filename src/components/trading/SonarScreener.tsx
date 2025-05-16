@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Search, TrendingUp, Newspaper, X, Calendar, ExternalLink, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
 import { getPerplexityApiKey } from "@/services/chatService";
 import { useSonarAnalysis, NewsAnalysisParams } from "@/hooks/useSonarAnalysis";
 import { format } from "date-fns";
@@ -199,10 +201,12 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
         return "text-blue-500";
     }
   };
+  
   const handleCloseResults = () => {
     setShowResults(false);
     setInsight(null);
   };
+  
   const formatNewsDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'MMM d, yyyy');
@@ -210,7 +214,199 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
       return dateString;
     }
   };
-  return <>
+  
+  // Create the dialog content for standard analysis results
+  const renderStandardAnalysisContent = () => {
+    if (!insight) return null;
+    
+    return (
+      <div className="p-4">
+        <div className="flex flex-col md:flex-row justify-between items-start mb-4">
+          <div className="flex items-center mb-4 md:mb-0">
+            <h3 className="text-xl font-semibold text-white">{stockSymbol} Analysis</h3>
+            <div className={`ml-3 w-3 h-3 rounded-full ${getSentimentColor(insight.sentiment)}`}></div>
+            <Badge className="ml-2" variant={insight.sentiment === "Bullish" ? "default" : insight.sentiment === "Bearish" ? "destructive" : "secondary"}>
+              {insight.sentiment}
+            </Badge>
+          </div>
+          
+          {insight.healthScore !== undefined && (
+            <div className="flex items-center">
+              <span className="text-sm text-gray-400 mr-2">Health Score:</span>
+              <div className="bg-gray-700 rounded-full h-2 w-36 overflow-hidden">
+                <div 
+                  className={`h-full ${insight.healthScore >= 70 ? 'bg-green-500' : insight.healthScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} 
+                  style={{ width: `${insight.healthScore}%` }}
+                ></div>
+              </div>
+              <span className="ml-2 text-sm font-medium text-white">{insight.healthScore}</span>
+            </div>
+          )}
+        </div>
+        
+        <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="bg-[#0f1628] mb-4">
+            <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="news">News</TabsTrigger>
+            <TabsTrigger value="citations">Citations</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="summary" className="mt-0">
+            <p className="text-gray-300 text-sm">{insight.summary}</p>
+          </TabsContent>
+          
+          <TabsContent value="news" className="mt-0">
+            {insight.news && insight.news.length > 0 ? (
+              <div className="space-y-4">
+                {insight.news.map((item, index) => (
+                  <div key={index} className="p-3 border border-white/10 rounded-lg bg-white/5">
+                    <div className="flex justify-between items-start mb-1">
+                      <h4 className="font-medium text-white text-sm">{item.title}</h4>
+                      <div className={`ml-2 w-2 h-2 rounded-full ${getSentimentColor(item.sentiment)}`}></div>
+                    </div>
+                    <p className="text-[#a0aec0] text-xs mb-2">{item.summary}</p>
+                    <div className="flex justify-between items-center text-[11px]">
+                      <span className="text-white">{item.source}</span>
+                      <a href={item.url} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-400 hover:text-blue-300">
+                        <span>Source</span>
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-400">No news data available.</p>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="citations" className="mt-0">
+            {insight.citations && insight.citations.length > 0 ? (
+              <div className="space-y-2">
+                {insight.citations.map((citation, index) => (
+                  <div key={index} className="flex gap-2 items-start p-2 rounded hover:bg-white/5">
+                    <span className="text-gray-400 text-sm">{index + 1}.</span>
+                    <div>
+                      <p className="text-sm text-gray-300">{citation.text}</p>
+                      <a href={citation.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:text-blue-300 flex items-center mt-1">
+                        {citation.url.replace(/https?:\/\//, '').split('/')[0]}
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-400">No citation data available.</p>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  };
+
+  // Create the dialog content for news analysis results
+  const renderNewsAnalysisContent = () => {
+    if (!newsAnalysisData) return null;
+    
+    return (
+      <>
+        <CardHeader className="pb-0 pt-4">
+          <div className="flex flex-col md:flex-row justify-between items-start">
+            <div className="flex items-center">
+              <h3 className="text-xl font-semibold text-white">
+                {stockSymbol} News Analysis
+              </h3>
+              <div className={`ml-3 w-3 h-3 rounded-full ${getSentimentColor(newsAnalysisData.sentiment)}`}></div>
+              <Badge className="ml-2" variant={newsAnalysisData.sentiment === "Bullish" ? "default" : newsAnalysisData.sentiment === "Bearish" ? "destructive" : "secondary"}>
+                {newsAnalysisData.sentiment}
+              </Badge>
+            </div>
+            
+            <div className="flex items-center mt-2 md:mt-0">
+              <span className="text-sm text-gray-400 mr-2">Health:</span>
+              <div className="bg-gray-700 rounded-full h-2 w-24 overflow-hidden">
+                <div 
+                  className={`h-full ${newsAnalysisData.healthScore >= 70 ? 'bg-green-500' : newsAnalysisData.healthScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} 
+                  style={{ width: `${newsAnalysisData.healthScore}%` }}
+                ></div>
+              </div>
+              <span className="ml-2 text-sm font-medium text-white">
+                {newsAnalysisData.healthScore}
+              </span>
+            </div>
+          </div>
+          
+          <div className="mt-3">
+            <p className="text-gray-300 text-sm">{newsAnalysisData.summary}</p>
+          </div>
+          
+          <div className="flex justify-between items-center mt-4">
+            <h4 className="text-white text-sm font-medium">Recent News</h4>
+            <Select 
+              value={newsTimeframe} 
+              onValueChange={value => {
+                setNewsTimeframe(value);
+                runNewsAnalysis(stockSymbol, { timeframe: value });
+              }}
+            >
+              <SelectTrigger className="w-28 h-8 bg-black/30 border-white/10 text-white text-xs">
+                <SelectValue placeholder="Time Range" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a2035] border-white/10">
+                <SelectItem value="1week">1 Week</SelectItem>
+                <SelectItem value="1month">1 Month</SelectItem>
+                <SelectItem value="3months">3 Months</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="pt-2 pb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+            {newsAnalysisData.newsItems && newsAnalysisData.newsItems.length > 0 ? (
+              newsAnalysisData.newsItems.map((item, index) => (
+                <Card key={index} className="bg-black/30 border-white/5 overflow-hidden flex flex-col">
+                  <CardContent className="p-3 flex flex-col h-full">
+                    <div className="flex justify-between items-start">
+                      <h5 className="font-medium text-white text-sm line-clamp-2">{item.title}</h5>
+                      <Badge className={`ml-1 ${item.sentiment === "Bullish" ? 'bg-green-700' : item.sentiment === "Bearish" ? 'bg-red-700' : 'bg-blue-700'} text-[10px]`}>
+                        {item.sentiment}
+                      </Badge>
+                    </div>
+                    <p className="text-[#a0aec0] text-xs mt-1 line-clamp-3 flex-grow">{item.summary}</p>
+                    <div className="flex justify-between items-center mt-2 text-[10px]">
+                      <div className="flex items-center">
+                        <Calendar className="h-3 w-3 mr-1 text-gray-400" />
+                        <span className="text-gray-400">{formatNewsDate(item.publishedAt)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`${getImpactColor(item.impact)}`}>
+                          {item.impact} Impact
+                        </span>
+                        <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-blue-400 hover:text-blue-300">
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-2 text-center py-6 text-gray-400">
+                No news data available for this timeframe.
+              </div>
+            )}
+          </div>
+        </CardContent>
+        
+        <CardFooter className="pt-0 pb-3 px-4 text-xs text-gray-500">
+          Data sourced by Perplexity Sonar API • Updated in real-time
+        </CardFooter>
+      </>
+    );
+  };
+
+  return (
+    <>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto">
@@ -224,196 +420,50 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
             <span>Comprehensive Analysis</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-white/10" />
-          
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Results Section */}
-      {(isLoading || analysisLoading) && <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10">
-          <CardContent className="p-6">
-            <div className="flex flex-col space-y-4">
-              <div className="flex items-center space-x-4">
-                <Skeleton className="h-12 w-12 rounded-full bg-white/10" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-[250px] bg-white/10" />
-                  <Skeleton className="h-4 w-[200px] bg-white/10" />
-                </div>
-              </div>
-              <Skeleton className="h-4 w-full bg-white/10" />
-              <Skeleton className="h-4 w-full bg-white/10" />
-              <Skeleton className="h-4 w-3/4 bg-white/10" />
-            </div>
-          </CardContent>
-        </Card>}
-
-      {/* Standard Analysis Results */}
-      {!isLoading && !analysisLoading && insight && showResults && !newsAnalysisData && <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10 relative">
-          <div className="absolute top-2 right-2 z-10">
-            <Button variant="ghost" size="icon" onClick={handleCloseResults} className="h-8 w-8 rounded-full bg-gray-800/50 hover:bg-gray-700/50">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row justify-between items-start mb-4">
-              <div className="flex items-center mb-4 md:mb-0">
-                <h3 className="text-xl font-semibold text-white">{stockSymbol} Analysis</h3>
-                <div className={`ml-3 w-3 h-3 rounded-full ${getSentimentColor(insight.sentiment)}`}></div>
-                <Badge className="ml-2" variant={insight.sentiment === "Bullish" ? "default" : insight.sentiment === "Bearish" ? "destructive" : "secondary"}>
-                  {insight.sentiment}
-                </Badge>
-              </div>
-              
-              {insight.healthScore !== undefined && <div className="flex items-center">
-                  <span className="text-sm text-gray-400 mr-2">Health Score:</span>
-                  <div className="bg-gray-700 rounded-full h-2 w-36 overflow-hidden">
-                    <div className={`h-full ${insight.healthScore >= 70 ? 'bg-green-500' : insight.healthScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{
-                width: `${insight.healthScore}%`
-              }}></div>
+      {/* Loading Skeleton */}
+      {(isLoading || analysisLoading) && (
+        <Dialog open={true} onOpenChange={() => {}}>
+          <DialogContent className="bg-[#1a2035]/80 backdrop-blur-sm border border-white/10 max-w-3xl">
+            <div className="p-6">
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-center space-x-4">
+                  <Skeleton className="h-12 w-12 rounded-full bg-white/10" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-[250px] bg-white/10" />
+                    <Skeleton className="h-4 w-[200px] bg-white/10" />
                   </div>
-                  <span className="ml-2 text-sm font-medium text-white">{insight.healthScore}</span>
-                </div>}
-            </div>
-            
-            <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="bg-[#0f1628] mb-4">
-                <TabsTrigger value="summary">Summary</TabsTrigger>
-                <TabsTrigger value="news">News</TabsTrigger>
-                <TabsTrigger value="citations">Citations</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="summary" className="mt-0">
-                <p className="text-gray-300 text-sm">{insight.summary}</p>
-              </TabsContent>
-              
-              <TabsContent value="news" className="mt-0">
-                {insight.news && insight.news.length > 0 ? <div className="space-y-4">
-                    {insight.news.map((item, index) => <div key={index} className="p-3 border border-white/10 rounded-lg bg-white/5">
-                        <div className="flex justify-between items-start mb-1">
-                          <h4 className="font-medium text-white text-sm">{item.title}</h4>
-                          <div className={`ml-2 w-2 h-2 rounded-full ${getSentimentColor(item.sentiment)}`}></div>
-                        </div>
-                        <p className="text-[#a0aec0] text-xs mb-2">{item.summary}</p>
-                        <div className="flex justify-between items-center text-[11px]">
-                          <span className="text-white">{item.source}</span>
-                          <a href={item.url} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-400 hover:text-blue-300">
-                            <span>Source</span>
-                          </a>
-                        </div>
-                      </div>)}
-                  </div> : <p className="text-gray-400">No news data available.</p>}
-              </TabsContent>
-              
-              <TabsContent value="citations" className="mt-0">
-                {insight.citations && insight.citations.length > 0 ? <div className="space-y-2">
-                    {insight.citations.map((citation, index) => <div key={index} className="flex gap-2 items-start p-2 rounded hover:bg-white/5">
-                        <span className="text-gray-400 text-sm">{index + 1}.</span>
-                        <div>
-                          <p className="text-sm text-gray-300">{citation.text}</p>
-                          <a href={citation.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-400 hover:text-blue-300 flex items-center mt-1">
-                            {citation.url.replace(/https?:\/\//, '').split('/')[0]}
-                          </a>
-                        </div>
-                      </div>)}
-                  </div> : <p className="text-gray-400">No citation data available.</p>}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>}
-
-      {/* News Analysis Results */}
-      {!isLoading && !analysisLoading && newsAnalysisData && showResults && <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10 relative">
-          <div className="absolute top-2 right-2 z-10">
-            <Button variant="ghost" size="icon" onClick={handleCloseResults} className="h-8 w-8 rounded-full bg-gray-800/50 hover:bg-gray-700/50">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          <CardHeader className="pb-0 pt-4">
-            <div className="flex flex-col md:flex-row justify-between items-start">
-              <div className="flex items-center">
-                <h3 className="text-xl font-semibold text-white">
-                  {stockSymbol} News Analysis
-                </h3>
-                <div className={`ml-3 w-3 h-3 rounded-full ${getSentimentColor(newsAnalysisData.sentiment)}`}></div>
-                <Badge className="ml-2" variant={newsAnalysisData.sentiment === "Bullish" ? "default" : newsAnalysisData.sentiment === "Bearish" ? "destructive" : "secondary"}>
-                  {newsAnalysisData.sentiment}
-                </Badge>
-              </div>
-              
-              <div className="flex items-center mt-2 md:mt-0">
-                <span className="text-sm text-gray-400 mr-2">Health:</span>
-                <div className="bg-gray-700 rounded-full h-2 w-24 overflow-hidden">
-                  <div className={`h-full ${newsAnalysisData.healthScore >= 70 ? 'bg-green-500' : newsAnalysisData.healthScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{
-                width: `${newsAnalysisData.healthScore}%`
-              }}></div>
                 </div>
-                <span className="ml-2 text-sm font-medium text-white">
-                  {newsAnalysisData.healthScore}
-                </span>
+                <Skeleton className="h-4 w-full bg-white/10" />
+                <Skeleton className="h-4 w-full bg-white/10" />
+                <Skeleton className="h-4 w-3/4 bg-white/10" />
               </div>
             </div>
-            
-            <div className="mt-3">
-              <p className="text-gray-300 text-sm">{newsAnalysisData.summary}</p>
-            </div>
-            
-            <div className="flex justify-between items-center mt-4">
-              <h4 className="text-white text-sm font-medium">Recent News</h4>
-              <Select value={newsTimeframe} onValueChange={value => {
-            setNewsTimeframe(value);
-            runNewsAnalysis(stockSymbol, {
-              timeframe: value
-            });
-          }}>
-                <SelectTrigger className="w-28 h-8 bg-black/30 border-white/10 text-white text-xs">
-                  <SelectValue placeholder="Time Range" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#1a2035] border-white/10">
-                  <SelectItem value="1week">1 Week</SelectItem>
-                  <SelectItem value="1month">1 Month</SelectItem>
-                  <SelectItem value="3months">3 Months</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          
-          <CardContent className="pt-2 pb-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-              {newsAnalysisData.newsItems && newsAnalysisData.newsItems.length > 0 ? newsAnalysisData.newsItems.map((item, index) => <Card key={index} className="bg-black/30 border-white/5 overflow-hidden flex flex-col">
-                    <CardContent className="p-3 flex flex-col h-full">
-                      <div className="flex justify-between items-start">
-                        <h5 className="font-medium text-white text-sm line-clamp-2">{item.title}</h5>
-                        <Badge className={`ml-1 ${item.sentiment === "Bullish" ? 'bg-green-700' : item.sentiment === "Bearish" ? 'bg-red-700' : 'bg-blue-700'} text-[10px]`}>
-                          {item.sentiment}
-                        </Badge>
-                      </div>
-                      <p className="text-[#a0aec0] text-xs mt-1 line-clamp-3 flex-grow">{item.summary}</p>
-                      <div className="flex justify-between items-center mt-2 text-[10px]">
-                        <div className="flex items-center">
-                          <Calendar className="h-3 w-3 mr-1 text-gray-400" />
-                          <span className="text-gray-400">{formatNewsDate(item.publishedAt)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`${getImpactColor(item.impact)}`}>
-                            {item.impact} Impact
-                          </span>
-                          <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-blue-400 hover:text-blue-300">
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>) : <div className="col-span-2 text-center py-6 text-gray-400">
-                  No news data available for this timeframe.
-                </div>}
-            </div>
-          </CardContent>
-          
-          <CardFooter className="pt-0 pb-3 px-4 text-xs text-gray-500">
-            Data sourced by Perplexity Sonar API • Updated in real-time
-          </CardFooter>
-        </Card>}
-    </>;
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Standard Analysis Results Dialog */}
+      {!isLoading && !analysisLoading && insight && showResults && !newsAnalysisData && (
+        <Dialog open={true} onOpenChange={handleCloseResults}>
+          <DialogContent className="bg-[#1a2035]/90 backdrop-blur-sm border border-white/10 max-w-3xl">
+            {renderStandardAnalysisContent()}
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* News Analysis Results Dialog */}
+      {!isLoading && !analysisLoading && newsAnalysisData && showResults && (
+        <Dialog open={true} onOpenChange={handleCloseResults}>
+          <DialogContent className="bg-[#1a2035]/90 backdrop-blur-sm border border-white/10 max-w-3xl">
+            {renderNewsAnalysisContent()}
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
+  );
 };
 
 export default SonarScreener;
