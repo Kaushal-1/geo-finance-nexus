@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChartBar } from "@/types/alpaca";
+import { Bar } from "@/types/alpaca";
 import { alpacaService } from "@/services/alpacaService";
 import StockChart from "./StockChart";
 
@@ -14,7 +14,7 @@ const StockComparisonChart: React.FC<StockComparisonChartProps> = ({
   symbol,
   timeframe = "1Day"
 }) => {
-  const [chartData, setChartData] = useState<ChartBar[]>([]);
+  const [chartData, setChartData] = useState<Bar[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {

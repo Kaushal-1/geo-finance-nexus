@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "./components/ui/toaster";
 import { Toaster as Sonner } from "./components/ui/sonner";
@@ -15,9 +16,9 @@ import ChatResearch from "./pages/ChatResearch";
 import AccountSettings from "./pages/AccountSettings";
 import CreateAccount from "./pages/CreateAccount";
 import SignIn from "./pages/SignIn";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 import { supabase } from "./integrations/supabase/client";
-import { PortfolioProvider } from "./hooks/usePortfolioContext";
+import NotFound from "./pages/NotFound";
 
 // Create a client
 const queryClient = new QueryClient({
