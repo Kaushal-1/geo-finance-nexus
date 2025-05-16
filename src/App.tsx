@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import ChatResearch from "./pages/ChatResearch";
 import StockDetail from "./pages/StockDetail";
 import TradingDashboard from "./pages/TradingDashboard";
+import AccountSettings from "./pages/AccountSettings"; // Add the new page
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Create a client
@@ -60,6 +61,11 @@ const App = () => {
                 <Route path="/stock/:symbol" element={
                   <ProtectedRoute>
                     <StockDetail />
+                  </ProtectedRoute>
+                } />
+                <Route path="/account-settings" element={
+                  <ProtectedRoute>
+                    <AccountSettings />
                   </ProtectedRoute>
                 } />
                 <Route path="*" element={<NotFound />} />

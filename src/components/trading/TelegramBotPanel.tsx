@@ -17,11 +17,14 @@ type TelegramSettings = {
   chatCommands: boolean;
 }
 
+// Only allow this specific user ID
+const ALLOWED_USER_ID = "2085478565";
+
 const TelegramBotPanel = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [settings, setSettings] = useState<TelegramSettings>({
-    userId: "2085478565", // Default user ID
+    userId: ALLOWED_USER_ID, // Use the specific user ID
     priceAlerts: true,
     orderNotifications: true,
     tradeCommands: true,
@@ -33,11 +36,11 @@ const TelegramBotPanel = () => {
     const fetchSettings = async () => {
       try {
         setIsLoading(true);
-        // Use the correct table name and explicitly type the response
+        // Always use the specific user ID
         const { data, error } = await supabase
           .from('telegram_settings')
           .select('*')
-          .eq('user_id', settings.userId)
+          .eq('user_id', ALLOWED_USER_ID)
           .single();
         
         if (error) {
@@ -45,7 +48,7 @@ const TelegramBotPanel = () => {
           // If no settings exist, create default ones
           if (error.code === 'PGRST116') {
             await saveSettings({
-              userId: settings.userId,
+              userId: ALLOWED_USER_ID,
               priceAlerts: true,
               orderNotifications: true,
               tradeCommands: true,
@@ -81,6 +84,9 @@ const TelegramBotPanel = () => {
   const saveSettings = async (newSettings: TelegramSettings) => {
     try {
       setIsSaving(true);
+      
+      // Force user ID to be the allowed one
+      newSettings.userId = ALLOWED_USER_ID;
       
       // Correctly format the data for the telegram_settings table
       const { error } = await supabase
@@ -124,7 +130,7 @@ const TelegramBotPanel = () => {
   const handleRefreshConnection = async () => {
     try {
       setIsLoading(true);
-      // Trigger backend function to check Telegram connection
+      // Always verify the specific user ID
       const response = await fetch(`https://qlzjoasyheqykokiljwj.supabase.co/functions/v1/telegram-bot`, {
         method: 'POST',
         headers: {
@@ -132,7 +138,7 @@ const TelegramBotPanel = () => {
         },
         body: JSON.stringify({
           action: 'verify_connection',
-          user_id: settings.userId
+          user_id: ALLOWED_USER_ID
         })
       });
       

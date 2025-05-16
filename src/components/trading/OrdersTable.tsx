@@ -1,12 +1,19 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { AlpacaOrder } from "@/types/alpaca";
-import { RefreshCcw, XCircle } from "lucide-react";
+import { RefreshCcw, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
 
 interface OrdersTableProps {
   orders: AlpacaOrder[];
@@ -16,6 +23,10 @@ interface OrdersTableProps {
 }
 
 const OrdersTable: React.FC<OrdersTableProps> = ({ orders, isLoading, onRefresh, onCancelOrder }) => {
+  // Add pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 5;
+  
   const formatTime = (timeStr: string | null) => {
     if (!timeStr) return "N/A";
     try {
@@ -24,6 +35,35 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders, isLoading, onRefresh,
       return "Invalid date";
     }
   };
+
+  // Calculate pagination details
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const totalPages = Math.ceil((orders?.length || 0) / ordersPerPage);
+  
+  // Change page handler
+  const paginate = (pageNumber: number) => {
+    if (pageNumber > 0 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
+  // Generate array of page numbers to display
+  const pageNumbers = [];
+  const maxPagesToShow = 3; // Show at most 3 page numbers
+  
+  let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+  let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+  
+  // Adjust start page if we're near the end of the pagination
+  if (endPage - startPage + 1 < maxPagesToShow) {
+    startPage = Math.max(1, endPage - maxPagesToShow + 1);
+  }
+  
+  for (let i = startPage; i <= endPage; i++) {
+    pageNumbers.push(i);
+  }
 
   if (isLoading) {
     return (
@@ -108,7 +148,6 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders, isLoading, onRefresh,
           <RefreshCcw className="h-4 w-4 mr-1" /> Refresh
         </Button>
       </CardHeader>
-      <DropdownMenu>
       <CardContent>
         <div className="overflow-x-auto">
           <Table>
@@ -124,7 +163,7 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders, isLoading, onRefresh,
               </TableRow>
             </TableHeader>
             <TableBody>
-              {orders.map((order) => (
+              {currentOrders.map((order) => (
                 <TableRow key={order.id} className="border-white/5">
                   <TableCell className="font-medium text-teal-400">{order.symbol}</TableCell>
                   <TableCell className={order.side === 'buy' ? 'text-green-500' : 'text-red-500'}>
@@ -163,8 +202,67 @@ const OrdersTable: React.FC<OrdersTableProps> = ({ orders, isLoading, onRefresh,
             </TableBody>
           </Table>
         </div>
+        
+        {/* Add pagination controls */}
+        {totalPages > 1 && (
+          <div className="mt-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => paginate(currentPage - 1)}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                
+                {currentPage > 2 && totalPages > maxPagesToShow && (
+                  <PaginationItem>
+                    <PaginationLink onClick={() => paginate(1)}>1</PaginationLink>
+                  </PaginationItem>
+                )}
+                
+                {currentPage > 3 && totalPages > maxPagesToShow && (
+                  <PaginationItem>
+                    <PaginationLink className="cursor-default">...</PaginationLink>
+                  </PaginationItem>
+                )}
+                
+                {pageNumbers.map(number => (
+                  <PaginationItem key={number}>
+                    <PaginationLink 
+                      isActive={currentPage === number}
+                      onClick={() => paginate(number)}
+                    >
+                      {number}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                
+                {currentPage < totalPages - 2 && totalPages > maxPagesToShow && (
+                  <PaginationItem>
+                    <PaginationLink className="cursor-default">...</PaginationLink>
+                  </PaginationItem>
+                )}
+                
+                {currentPage < totalPages - 1 && totalPages > maxPagesToShow && (
+                  <PaginationItem>
+                    <PaginationLink onClick={() => paginate(totalPages)}>
+                      {totalPages}
+                    </PaginationLink>
+                  </PaginationItem>
+                )}
+                
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => paginate(currentPage + 1)}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </CardContent>
-        </DropdownMenu>
     </Card>
   );
 };

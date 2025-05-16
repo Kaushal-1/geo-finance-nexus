@@ -10,6 +10,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Specify allowed user ID
+const ALLOWED_USER_ID = "2085478565";
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -45,6 +48,21 @@ serve(async (req) => {
       // Check if this is a verification request from our UI
       if (body.action === 'verify_connection' && body.user_id) {
         console.log(`Verifying Telegram connection for user: ${body.user_id}`);
+        
+        // Only allow verification for the specific user ID
+        if (body.user_id !== ALLOWED_USER_ID) {
+          return new Response(
+            JSON.stringify({ 
+              status: 'disconnected',
+              user_id: body.user_id,
+              message: "This user ID is not authorized to connect."
+            }),
+            {
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            }
+          );
+        }
+        
         const isConnected = await telegramBot.verifyConnection(body.user_id);
         
         return new Response(
@@ -58,8 +76,16 @@ serve(async (req) => {
         );
       }
       
-      // Regular Telegram update
+      // Regular Telegram update - check if it's from the allowed user
       console.log("Received Telegram update:", JSON.stringify(body));
+      
+      // Skip processing updates from unauthorized users
+      if (body.message && body.message.chat && body.message.chat.id.toString() !== ALLOWED_USER_ID) {
+        console.log(`Skipping update from unauthorized user: ${body.message.chat.id}`);
+        return new Response(JSON.stringify({ status: 'ok' }), {
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
       
       // Process the update
       await telegramBot.processUpdate(body);

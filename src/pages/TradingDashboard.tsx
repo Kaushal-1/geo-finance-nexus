@@ -15,7 +15,6 @@ import PositionsTable from "@/components/trading/PositionsTable";
 import OrdersTable from "@/components/trading/OrdersTable";
 import TradePanel from "@/components/trading/TradePanel";
 import WatchlistManager from "@/components/trading/WatchlistManager";
-import TelegramBotPanel from "@/components/trading/TelegramBotPanel";
 import SonarScreener from "@/components/trading/SonarScreener";
 import { useTradingData } from "@/hooks/useTradingData";
 
@@ -147,22 +146,14 @@ const TradingDashboard = () => {
             </div>
           </div>
 
-          {/* Two Panels Side by Side on Desktop */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            {/* Orders Table */}
-            <div className="overflow-x-auto">
-              <OrdersTable 
-                orders={orders} 
-                isLoading={isLoadingOrders} 
-                onRefresh={refreshOrders} 
-                onCancelOrder={cancelOrder}
-              />
-            </div>
-            
-            {/* Telegram Bot Panel */}
-            <div>
-              <TelegramBotPanel />
-            </div>
+          {/* Orders Table - Now with pagination */}
+          <div className="overflow-x-auto">
+            <OrdersTable 
+              orders={orders} 
+              isLoading={isLoadingOrders} 
+              onRefresh={refreshOrders} 
+              onCancelOrder={cancelOrder}
+            />
           </div>
           
           {/* Watchlist Manager */}

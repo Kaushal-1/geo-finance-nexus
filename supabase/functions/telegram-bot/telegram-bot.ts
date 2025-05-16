@@ -1,6 +1,9 @@
 import { TradingService } from "./trading-service.ts";
 import { AlertService } from "./alert-service.ts";
 
+// Specify allowed user ID
+const ALLOWED_USER_ID = "2085478565";
+
 export class TelegramBot {
   private tradingService: TradingService;
   private alertService: AlertService;
@@ -33,6 +36,12 @@ export class TelegramBot {
     const text = message.text || '';
 
     console.log(`Received message from chat ${chatId}: ${text}`);
+
+    // Verify user is authorized
+    if (chatId.toString() !== ALLOWED_USER_ID) {
+      console.log(`Unauthorized access attempt from chat ID: ${chatId}`);
+      return;
+    }
 
     // Check user settings before processing commands
     const canProcessCommands = await this.checkUserPermissions(chatId.toString(), text);
@@ -90,6 +99,12 @@ export class TelegramBot {
   }
 
   async sendPriceAlert(chatId: string, symbol: string, currentPrice: number, thresholdPrice: number, direction: string): Promise<void> {
+    // Verify user is authorized
+    if (chatId !== ALLOWED_USER_ID) {
+      console.log(`Attempted to send price alert to unauthorized user: ${chatId}`);
+      return;
+    }
+
     try {
       // Check if user has price alerts enabled
       const { data } = await this.getSettingsFromSupabase(chatId);
@@ -392,6 +407,12 @@ Examples:
   }
 
   async verifyConnection(chatId: string): Promise<boolean> {
+    // Only allow verification for the specific user
+    if (chatId !== ALLOWED_USER_ID) {
+      console.log(`Unauthorized verification attempt from: ${chatId}`);
+      return false;
+    }
+
     try {
       const response = await fetch(`https://api.telegram.org/bot${this.BOT_TOKEN}/getChat`, {
         method: 'POST',
