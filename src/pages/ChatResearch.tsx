@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,12 +25,14 @@ const ChatResearch: React.FC = () => {
   const [visualizationData, setVisualizationData] = useState<any>(null);
   const [visualizationType, setVisualizationType] = useState<string | null>(null);
   const [showVisualization, setShowVisualization] = useState(false);
+  const [input, setInput] = useState("");
+  
   const {
     messages,
-    input,
-    setInput,
-    addMessage,
-    generateResponse
+    loading,
+    activeVisualization,
+    suggestedQuestions,
+    sendMessage
   } = useChatState();
 
   useEffect(() => {
@@ -78,37 +81,27 @@ const ChatResearch: React.FC = () => {
 
     if (input.trim() === "") return;
 
-    const userMessage = { text: input, isUser: true };
-    addMessage(userMessage);
-    setInput("");
-
     setIsLoading(true);
     setError(null);
     setShowVisualization(false);
 
     try {
-      const response = await generateResponse(input, apiKey);
-      if (response) {
-        const botMessage = { text: response.text, isUser: false };
-        addMessage(botMessage);
+      // Add the user message directly to the UI for immediate feedback
+      const response = await sendMessage(input);
+      
+      // Reset input after sending
+      setInput("");
 
-        if (response.visualizationData) {
-          setVisualizationData(response.visualizationData);
-          setVisualizationType(response.visualizationType);
-          setShowVisualization(true);
-        } else {
-          setShowVisualization(false);
-        }
+      // Check if we should display visualization
+      if (response?.visualization) {
+        setVisualizationData(response.visualization);
+        setVisualizationType(response.visualization.type);
+        setShowVisualization(true);
       } else {
-        setError("Failed to generate response.");
-        toast({
-          title: "Error",
-          description: "Failed to generate response from the AI model.",
-          variant: "destructive",
-        });
+        setShowVisualization(false);
       }
     } catch (e: any) {
-      console.error("Error generating response:", e);
+      console.error("Error sending message:", e);
       setError(e.message || "An unexpected error occurred.");
       toast({
         title: "Error",
@@ -128,13 +121,6 @@ const ChatResearch: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-[#0a0e17]">
       <DashboardHeader />
       
-      <ApiKeyInput
-        isOpen={isApiKeyModalOpen}
-        onClose={() => setIsApiKeyModalOpen(false)}
-        onSubmit={handleApiKeySubmit}
-        apiKey={apiKey}
-      />
-
       <div className="container mx-auto px-4 py-8 flex-grow">
         <h1 className="text-2xl font-bold text-white mb-4">AI Research Assistant</h1>
 
@@ -152,14 +138,13 @@ const ChatResearch: React.FC = () => {
             {messages.map((message, index) => (
               <ChatMessage key={index} message={message} />
             ))}
-            {isLoading && <ChatMessage message={{ text: "Thinking...", isUser: false }} />}
+            {isLoading && <div className="p-3 bg-gray-800/60 rounded-xl text-gray-300 max-w-[85%] mb-4">Thinking...</div>}
           </div>
 
           {showVisualization && visualizationData && (
             <ErrorBoundary>
-              <VisualizationPanel
-                type={visualizationType}
-                data={visualizationData}
+              <VisualizationPanel 
+                visualization={visualizationData}
               />
             </ErrorBoundary>
           )}
@@ -167,7 +152,12 @@ const ChatResearch: React.FC = () => {
 
         <Separator className="my-4 bg-gray-700" />
 
-        <SuggestedQuestions onSuggestionClick={handleSuggestionClick} />
+        {suggestedQuestions && suggestedQuestions.length > 0 && (
+          <SuggestedQuestions 
+            questions={suggestedQuestions}
+            onSelectQuestion={handleSuggestionClick}
+          />
+        )}
 
         <div className="flex items-center mt-4">
           <Input
@@ -182,7 +172,7 @@ const ChatResearch: React.FC = () => {
               }
             }}
           />
-          <Button onClick={handleSend} disabled={isLoading}>
+          <Button onClick={handleSend} disabled={isLoading || loading}>
             Send
             <Send className="ml-2 h-4 w-4" />
           </Button>
