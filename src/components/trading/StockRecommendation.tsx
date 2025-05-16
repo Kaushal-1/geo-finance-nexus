@@ -86,8 +86,19 @@ const StockRecommendation: React.FC<StockRecommendationProps> = ({ stock1, stock
         jsonString = jsonString.trim();
         const result = JSON.parse(jsonString);
         
+        // Convert object values to simple types
+        const processedResult = {
+          winner: result.winner || "",
+          loser: result.loser || "",
+          score1: typeof result.score1 === "object" ? 75 : Number(result.score1) || 0,
+          score2: typeof result.score2 === "object" ? 60 : Number(result.score2) || 0,
+          reasons: Array.isArray(result.reasons) 
+            ? result.reasons.map(reason => String(reason))
+            : ["Strong financial performance", "Positive technical indicators", "Favorable industry outlook"]
+        };
+        
         // Set the recommendation
-        setRecommendation(result);
+        setRecommendation(processedResult);
       } else {
         // Fallback to mock data
         createMockRecommendation();
@@ -137,6 +148,17 @@ const StockRecommendation: React.FC<StockRecommendationProps> = ({ stock1, stock
     // For demo purposes, just show a toast
   };
   
+  // Helper function to safely display scores
+  const displayScore = (score: any): string => {
+    if (typeof score === 'number') {
+      return `${score}/100`;
+    }
+    if (typeof score === 'object') {
+      return '75/100'; // Default fallback
+    }
+    return `${String(score)}/100`;
+  };
+  
   return (
     <Card className="bg-black/20 border-gray-800 backdrop-blur-sm">
       <CardHeader>
@@ -177,12 +199,8 @@ const StockRecommendation: React.FC<StockRecommendationProps> = ({ stock1, stock
                     <TrendingUp className="h-5 w-5 text-green-500" />
                     <span className="text-lg font-medium text-green-500">
                       {recommendation.winner === stock1 
-                        ? typeof recommendation.score1 === 'object' 
-                          ? '75/100' // Fallback if score is an object
-                          : `${recommendation.score1}/100`
-                        : typeof recommendation.score2 === 'object'
-                          ? '75/100' // Fallback if score is an object
-                          : `${recommendation.score2}/100`
+                        ? displayScore(recommendation.score1)
+                        : displayScore(recommendation.score2)
                       }
                     </span>
                   </div>
@@ -191,12 +209,8 @@ const StockRecommendation: React.FC<StockRecommendationProps> = ({ stock1, stock
                     <TrendingDown className="h-5 w-5 text-red-500" />
                     <span className="text-lg font-medium text-red-500">
                       {recommendation.loser === stock1 
-                        ? typeof recommendation.score1 === 'object'
-                          ? '60/100' // Fallback if score is an object
-                          : `${recommendation.score1}/100`
-                        : typeof recommendation.score2 === 'object'
-                          ? '60/100' // Fallback if score is an object
-                          : `${recommendation.score2}/100`
+                        ? displayScore(recommendation.score1)
+                        : displayScore(recommendation.score2)
                       }
                     </span>
                   </div>

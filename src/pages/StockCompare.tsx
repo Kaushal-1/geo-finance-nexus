@@ -72,6 +72,20 @@ const StockCompare = () => {
     }
   }, [stock1, stock2, timeframe]);
   
+  // Safe formatter function to ensure we don't render objects directly
+  const formatValue = (value: any): string => {
+    if (value === null || value === undefined) return "N/A";
+    if (typeof value === "object") {
+      // If it's an object with bullishBearish and value properties
+      if (value.hasOwnProperty("bullishBearish") && value.hasOwnProperty("value")) {
+        return `${value.value} (${value.bullishBearish})`;
+      }
+      // For other objects, return a placeholder
+      return "Object";
+    }
+    return String(value);
+  };
+  
   return (
     <div className="container p-4 md:p-6 mx-auto">
       {/* Header Section */}
