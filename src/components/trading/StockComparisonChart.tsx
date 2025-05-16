@@ -63,16 +63,18 @@ const StockComparisonChart: React.FC<StockComparisonChartProps> = ({
   }, [symbol, timeframe]);
   
   return (
-    <div className="h-[300px]">
+    <div className="h-[300px] relative">
       {isLoading ? (
-        <Skeleton className="h-full w-full bg-gray-800" />
+        <Skeleton className="h-full w-full bg-gray-800/50" />
       ) : (
-        <StockChart 
-          key={`${symbol}-${timeframe}-${key}`} // Add unique key to force remount
-          data={chartData} 
-          symbol={symbol} 
-          isLoading={isLoading} 
-        />
+        <div className="h-full">
+          <StockChart 
+            key={`${symbol}-${timeframe}-${key}`} // Add unique key to force remount
+            data={chartData} 
+            symbol={symbol} 
+            isLoading={isLoading} 
+          />
+        </div>
       )}
     </div>
   );
