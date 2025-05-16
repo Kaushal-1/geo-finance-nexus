@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Search, ArrowUp, ArrowDown, Clock } from "lucide-react";
+import { RefreshCw, Search, ArrowUp, ArrowDown, Clock, Settings, ChevronRight, ChevronLeft, Maximize, Minimize, CandlestickChart } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import StockChart from "./StockChart";
@@ -52,6 +52,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
   const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [priceInfo, setPriceInfo] = useState({ 
     current: 0, 
     change: 0, 
@@ -266,8 +267,8 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
   };
 
   return (
-    <Card className="bg-black/20 border-gray-800 backdrop-blur-sm mb-6">
-      <CardContent className="p-4">
+    <Card className={`bg-black/20 border-gray-800 backdrop-blur-sm mb-6 ${expanded ? 'fixed inset-0 z-50 m-0 rounded-none overflow-auto' : ''}`}>
+      <CardContent className={`p-4 ${expanded ? 'h-full flex flex-col' : ''}`}>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           {/* Symbol search and current symbol */}
           <div className="flex flex-col w-full md:w-auto gap-2">
@@ -308,6 +309,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
             
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
               <h2 className="text-xl font-bold text-white flex items-center gap-2 font-inter">
+                <CandlestickChart className="h-5 w-5 text-teal-400" />
                 {symbol}
                 {priceInfo.current > 0 && (
                   <span className={`text-sm font-normal ${priceInfo.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
@@ -390,17 +392,36 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
               >
                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               </Button>
+              
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-700"
+                onClick={() => setExpanded(!expanded)}
+                title={expanded ? "Exit fullscreen" : "View fullscreen"}
+              >
+                {expanded ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+              </Button>
             </div>
           </div>
         </div>
         
         {/* Chart area with increased height */}
-        <div className="h-[450px] mb-1">
+        <div className={`${expanded ? 'flex-1' : 'h-[450px]'} mb-1 relative`}>
           <StockChart 
             data={formattedChartData} 
             symbols={[symbol]} 
             isLoading={isLoading} 
           />
+          
+          {isLoading && (
+            <div className="absolute inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2">
+                <RefreshCw className="h-6 w-6 animate-spin text-blue-400" />
+                <p className="text-sm text-gray-300">Loading {symbol} data...</p>
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

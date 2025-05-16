@@ -116,19 +116,22 @@ class CandlestickController extends LineController {
   // Override to update element with correct coordinates
   updateElement(element: any, index: number, properties: any, mode: any) {
     const me = this;
-    const parsed = me.getParsed(index) as CandlestickParsedData | undefined;
+    const parsed = me.getParsed(index);
     
     if (parsed) {
+      // Use type assertion to handle parsed data
+      const parsedData = parsed as unknown as CandlestickParsedData;
+      
       // Use the scales to get pixel values
       const xScale = me.getScaleForId('x');
       const yScale = me.getScaleForId('y');
       
       if (xScale && yScale) {
         properties.x = xScale.getPixelForValue(index);
-        properties.o = yScale.getPixelForValue(parsed.o);
-        properties.h = yScale.getPixelForValue(parsed.h);
-        properties.l = yScale.getPixelForValue(parsed.l);
-        properties.c = yScale.getPixelForValue(parsed.c);
+        properties.o = yScale.getPixelForValue(parsedData.o);
+        properties.h = yScale.getPixelForValue(parsedData.h);
+        properties.l = yScale.getPixelForValue(parsedData.l);
+        properties.c = yScale.getPixelForValue(parsedData.c);
       }
     }
     
