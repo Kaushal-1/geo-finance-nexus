@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -213,7 +212,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search stocks..."
-                    className="bg-gray-900 border-gray-700 pr-8"
+                    className="bg-gray-900 border-gray-700 pr-8 font-inter"
                   />
                   <Search className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   
@@ -223,7 +222,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
                         {searchResults.map(result => (
                           <li 
                             key={result.id} 
-                            className="p-2 hover:bg-gray-800 cursor-pointer text-sm"
+                            className="p-2 hover:bg-gray-800 cursor-pointer text-sm font-inter"
                             onClick={() => selectStock(result.symbol)}
                           >
                             <span className="font-bold text-teal-400">{result.symbol}</span>
@@ -239,7 +238,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
                 </Button>
               </form>
             </div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2 font-inter">
               {symbol}
               {priceInfo.current > 0 && (
                 <span className={`text-sm font-normal ${priceInfo.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
@@ -257,7 +256,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
                   key={tf.value} 
                   variant={timeframe === tf.value ? "default" : "outline"}
                   size="sm"
-                  className={`${timeframe === tf.value ? 'bg-teal-600 hover:bg-teal-700' : 'border-gray-700'}`}
+                  className={`${timeframe === tf.value ? 'bg-teal-600 hover:bg-teal-700' : 'border-gray-700'} font-inter`}
                   onClick={() => setTimeframe(tf.value)}
                 >
                   {tf.label}
@@ -274,7 +273,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
                   onChange={() => setAutoRefresh(!autoRefresh)}
                   className="rounded border-gray-700 bg-gray-900"
                 />
-                <label htmlFor="auto-refresh" className="text-sm text-gray-300">
+                <label htmlFor="auto-refresh" className="text-sm text-gray-300 font-inter">
                   Auto-refresh (1m)
                 </label>
               </div>
@@ -292,12 +291,14 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
           </div>
         </div>
         
-        {/* Chart area */}
-        <StockChart 
-          data={formattedChartData} 
-          symbols={[symbol]} 
-          isLoading={isLoading} 
-        />
+        {/* Chart area with increased height */}
+        <div className="h-[400px] mb-1">
+          <StockChart 
+            data={formattedChartData} 
+            symbols={[symbol]} 
+            isLoading={isLoading} 
+          />
+        </div>
       </CardContent>
     </Card>
   );
