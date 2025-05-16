@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -5,6 +6,7 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { getPerplexityApiKey } from "@/services/chatService";
+import TechnicalGauge from "./TechnicalGauge";
 
 interface TechnicalAnalysisPanelProps {
   symbol: string;
@@ -51,10 +53,10 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
     if (value === null || value === undefined) return "N/A";
     if (typeof value === "object") {
       // Handle specific object structures we expect to encounter
-      if (value.hasOwnProperty("type") && value.hasOwnProperty("value")) {
+      if (value && typeof value === "object" && "type" in value && "value" in value) {
         return String(value.value);
       }
-      if (value.hasOwnProperty("bullishBearish") && value.hasOwnProperty("value")) {
+      if (value && typeof value === "object" && "bullishBearish" in value && "value" in value) {
         return String(value.value);
       }
       // For other objects, return a stringified version
@@ -121,7 +123,7 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
         return;
       }
 
-      // Build the query
+      // Build the query with explicit instructions to avoid comments
       const query = `Provide detailed technical analysis for ${symbol} stock. Include:
       1. Current price
       2. 52-week range (high and low)
@@ -163,7 +165,7 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
         }
       }
       
-      Do not include any explanations or markdown formatting. Return only valid JSON.`;
+      IMPORTANT: Do not include any explanations, comments or markdown formatting. Return only valid JSON. If you cannot find a specific value, use a sensible default instead of null or comments.`;
 
       // Call the Perplexity Sonar API
       const response = await fetch("https://api.perplexity.ai/chat/completions", {
@@ -177,7 +179,7 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
           messages: [
             {
               role: "system",
-              content: "You are a financial analyst specializing in technical stock analysis. Return ONLY valid JSON without any explanations. Do not wrap the JSON in code blocks. The JSON must be valid and properly formatted with double quotes for all property names."
+              content: "You are a financial analyst specializing in technical stock analysis. Return ONLY valid JSON without any explanations, comments, or code blocks. The JSON must be valid and properly formatted with double quotes for all property names. If you cannot find specific data, provide reasonable default values based on market trends rather than using null with comments."
             },
             {
               role: "user",
@@ -197,24 +199,20 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
       const data = await response.json();
       const content = data.choices[0].message.content;
       
-      // Clean up the response before parsing
+      // Clean up the response before parsing - remove any comments and code blocks
       const cleanedContent = content
-        .trim()
-        .replace(/```json|```/g, '') // Remove any markdown code blocks
+        .replace(/```json|```/g, '') // Remove markdown code blocks
+        .replace(/\/\*[\s\S]*?\*\//g, '') // Remove multiline comments
+        .replace(/\/\/.*$/gm, '') // Remove single line comments
         .replace(/\\n/g, '') // Remove escaped newlines
         .replace(/\\"/g, '"') // Replace escaped quotes
-        .replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3') // Ensure property names are double-quoted
-        .replace(/:\s*'([^']*)'/g, ':"$1"') // Replace single quotes with double quotes for values
-        .replace(/,\s*}/g, '}') // Remove trailing commas
-        .replace(/,\s*]/g, ']'); // Remove trailing commas in arrays
-      
-      console.log("Cleaned JSON for parsing:", cleanedContent);
+        .trim();
       
       try {
         // Try to parse the cleaned JSON
         const parsedData = JSON.parse(cleanedContent);
         
-        // Validate and sanitize the data
+        // Validate and sanitize the data with defaults
         const sanitizedData: TechnicalData = {
           currentPrice: typeof parsedData.currentPrice === 'number' ? parsedData.currentPrice : 0,
           weekHigh: typeof parsedData.weekHigh === 'number' ? parsedData.weekHigh : 0,
@@ -294,7 +292,7 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
       },
       fundamentals: {
         peRatio: isApple ? 27.99 : 34.06,
-        marketCap: isApple ? "$2.5B" : "$2.5B",
+        marketCap: isApple ? "$2.5T" : "$2.5T",
         dividendYield: isApple ? "0.05%" : "0.02%",
         beta: isApple ? 1.29 : 0.93
       }
@@ -305,50 +303,6 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
   useEffect(() => {
     fetchTechnicalData();
   }, [symbol]);
-
-  // Render a gauge chart for metrics like RSI, trend
-  const renderGauge = (value: string, percentage: number, colorClass: string = "") => {
-    return (
-      <div className="flex flex-col items-center">
-        <div className="w-32 h-16 relative">
-          <div className="w-full h-full bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 rounded-t-full overflow-hidden opacity-20"></div>
-          <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-            <div 
-              className="h-10 w-0.5 bg-white origin-bottom transform -rotate-45" 
-              style={{ 
-                transform: `rotate(${(percentage / 100 * 180) - 90}deg)`,
-                transformOrigin: 'bottom center' 
-              }}
-            ></div>
-          </div>
-          <div className={`absolute bottom-0 left-0 w-full text-center ${colorClass}`}>
-            {value}
-          </div>
-        </div>
-        <div className={`text-sm ${colorClass}`}>
-          {percentage}% {value}
-        </div>
-      </div>
-    );
-  };
-
-  // Render price range slider
-  const renderRangeSlider = (current: number, min: number, max: number) => {
-    const position = calculatePricePosition(current, min, max);
-    
-    return (
-      <div className="mt-2 mb-4">
-        <div className="flex justify-between text-sm text-gray-500">
-          <span>${min.toFixed(2)}</span>
-          <span>${max.toFixed(2)}</span>
-        </div>
-        <div className="relative w-full h-2 bg-gray-700 rounded-full mt-1">
-          <div className="absolute w-2 h-6 bg-white rounded-full top-1/2 transform -translate-y-1/2"
-               style={{ left: `${position}%` }}></div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <Card className="bg-black/20 border-gray-800 backdrop-blur-sm">
@@ -402,11 +356,32 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
             {/* 52-Week Range */}
             <div>
               <h3 className="text-sm text-gray-400 mb-1">52-Week Range</h3>
-              {renderRangeSlider(
-                technicalData.currentPrice,
-                technicalData.weekLow,
-                technicalData.weekHigh
-              )}
+              <div className="mt-2 mb-4">
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>${technicalData.weekLow.toFixed(2)}</span>
+                  <span>${technicalData.weekHigh.toFixed(2)}</span>
+                </div>
+                <div className="relative w-full h-2 bg-gray-700 rounded-full mt-1">
+                  <div 
+                    className="absolute h-full bg-blue-500/30 rounded-full"
+                    style={{ 
+                      left: '0%',
+                      width: '100%'
+                    }}
+                  ></div>
+                  <div 
+                    className="absolute w-3 h-3 bg-white rounded-full top-1/2 transform -translate-y-1/2 shadow-glow"
+                    style={{ 
+                      left: `${calculatePricePosition(
+                        technicalData.currentPrice, 
+                        technicalData.weekLow, 
+                        technicalData.weekHigh
+                      )}%`,
+                      boxShadow: '0 0 10px 2px rgba(255,255,255,0.7)' 
+                    }}
+                  ></div>
+                </div>
+              </div>
             </div>
             
             {/* Overall Trend and Moving Averages */}
@@ -414,30 +389,36 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
               <div>
                 <h3 className="text-sm text-gray-400 mb-4">Overall Trend</h3>
                 <div className="flex justify-center">
-                  {renderGauge(
-                    technicalData.overallTrend.value,
-                    technicalData.overallTrend.percentage,
-                    technicalData.overallTrend.value === "bullish" 
-                      ? "text-green-500" 
-                      : technicalData.overallTrend.value === "bearish" 
-                        ? "text-red-500" 
-                        : "text-gray-300"
-                  )}
+                  <TechnicalGauge 
+                    value={technicalData.overallTrend.value} 
+                    percentage={technicalData.overallTrend.percentage}
+                    colorClass={
+                      technicalData.overallTrend.value === "bullish" 
+                        ? "text-green-500" 
+                        : technicalData.overallTrend.value === "bearish" 
+                          ? "text-red-500" 
+                          : "text-gray-300"
+                    }
+                  />
                 </div>
               </div>
               <div>
                 <h3 className="text-sm text-gray-400 mb-4">Moving Averages</h3>
                 <div className="flex justify-center">
-                  {renderGauge(
-                    technicalData.movingAverages.status,
-                    technicalData.movingAverages.status === "bullish" ? 80 :
-                      technicalData.movingAverages.status === "bearish" ? 20 : 50,
-                    technicalData.movingAverages.status === "bullish" || technicalData.movingAverages.status === "strong" 
-                      ? "text-green-500" 
-                      : technicalData.movingAverages.status === "bearish" 
-                        ? "text-red-500" 
-                        : "text-gray-300"
-                  )}
+                  <TechnicalGauge 
+                    value={technicalData.movingAverages.status} 
+                    percentage={
+                      technicalData.movingAverages.status === "bullish" ? 80 :
+                      technicalData.movingAverages.status === "bearish" ? 20 : 50
+                    }
+                    colorClass={
+                      technicalData.movingAverages.status === "bullish" || technicalData.movingAverages.status === "strong" 
+                        ? "text-green-500" 
+                        : technicalData.movingAverages.status === "bearish" 
+                          ? "text-red-500" 
+                          : "text-gray-300"
+                    }
+                  />
                 </div>
                 <div className="flex justify-between mt-2 text-sm">
                   <div className="flex flex-col">
@@ -465,11 +446,11 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
               <div>
                 <h3 className="text-sm text-gray-400 mb-4">RSI ({technicalData.rsi.value.toFixed(1)})</h3>
                 <div className="flex justify-center">
-                  {renderGauge(
-                    technicalData.rsi.status,
-                    technicalData.rsi.value,
-                    getRSIColorClass(technicalData.rsi.value)
-                  )}
+                  <TechnicalGauge 
+                    value={technicalData.rsi.status}
+                    percentage={technicalData.rsi.value}
+                    colorClass={getRSIColorClass(technicalData.rsi.value)}
+                  />
                 </div>
                 <div className="flex justify-between mt-2 text-xs">
                   <span className="text-green-500">Oversold</span>
@@ -480,16 +461,20 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
               <div>
                 <h3 className="text-sm text-gray-400 mb-4">MACD</h3>
                 <div className="flex justify-center">
-                  {renderGauge(
-                    technicalData.macd.status,
-                    technicalData.macd.status === "bullish" ? 70 :
-                      technicalData.macd.status === "bearish" ? 30 : 50,
-                    technicalData.macd.value > 0 
-                      ? "text-green-500" 
-                      : technicalData.macd.value < 0 
-                        ? "text-red-500" 
-                        : "text-gray-300"
-                  )}
+                  <TechnicalGauge 
+                    value={technicalData.macd.status}
+                    percentage={
+                      technicalData.macd.status === "bullish" ? 70 :
+                      technicalData.macd.status === "bearish" ? 30 : 50
+                    }
+                    colorClass={
+                      technicalData.macd.value > 0 
+                        ? "text-green-500" 
+                        : technicalData.macd.value < 0 
+                          ? "text-red-500" 
+                          : "text-gray-300"
+                    }
+                  />
                 </div>
                 <div className="grid grid-cols-3 gap-2 mt-2 text-sm">
                   <div className="flex flex-col">

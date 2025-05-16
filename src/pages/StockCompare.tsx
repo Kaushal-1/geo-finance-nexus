@@ -18,7 +18,6 @@ import TechnicalAnalysisPanel from "@/components/trading/TechnicalAnalysisPanel"
 import StockNewsPanel from "@/components/trading/StockNewsPanel";
 import StockRecommendation from "@/components/trading/StockRecommendation";
 import { alpacaService } from "@/services/alpacaService";
-import * as technicalAnalysis from "@/services/technicalAnalysisService";
 
 const StockCompare = () => {
   const [stock1, setStock1] = useState("AAPL");
@@ -27,23 +26,6 @@ const StockCompare = () => {
   const [isComparing, setIsComparing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [realTimePrices, setRealTimePrices] = useState<{[key: string]: number}>({});
-  
-  // Safe formatter function to ensure we don't render objects directly
-  const formatValue = (value: any): string => {
-    if (value === null || value === undefined) return "N/A";
-    if (typeof value === "object") {
-      // Handle specific object structures
-      if (value.hasOwnProperty("bullishBearish") && value.hasOwnProperty("value")) {
-        return String(value.value);
-      }
-      if (value.hasOwnProperty("type") && value.hasOwnProperty("value")) {
-        return String(value.value);
-      }
-      // For other objects, return a placeholder
-      return String(JSON.stringify(value));
-    }
-    return String(value);
-  };
   
   // Handle comparison button click
   const handleCompare = useCallback(async () => {
