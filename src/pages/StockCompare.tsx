@@ -32,12 +32,15 @@ const StockCompare = () => {
   const formatValue = (value: any): string => {
     if (value === null || value === undefined) return "N/A";
     if (typeof value === "object") {
-      // If it's an object with bullishBearish and value properties
+      // Handle specific object structures
       if (value.hasOwnProperty("bullishBearish") && value.hasOwnProperty("value")) {
-        return `${value.value} (${value.bullishBearish})`;
+        return String(value.value);
+      }
+      if (value.hasOwnProperty("type") && value.hasOwnProperty("value")) {
+        return String(value.value);
       }
       // For other objects, return a placeholder
-      return "Object";
+      return String(JSON.stringify(value));
     }
     return String(value);
   };

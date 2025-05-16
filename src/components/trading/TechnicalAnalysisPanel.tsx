@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -51,12 +50,14 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
   const formatValue = (value: any): string => {
     if (value === null || value === undefined) return "N/A";
     if (typeof value === "object") {
+      // Handle specific object structures we expect to encounter
       if (value.hasOwnProperty("type") && value.hasOwnProperty("value")) {
-        return `${value.value} (${value.type})`;
+        return String(value.value);
       }
       if (value.hasOwnProperty("bullishBearish") && value.hasOwnProperty("value")) {
-        return `${value.value} (${value.bullishBearish})`;
+        return String(value.value);
       }
+      // For other objects, return a stringified version
       return JSON.stringify(value);
     }
     return String(value);
@@ -130,7 +131,7 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
       6. MACD values (main, signal, histogram) and status
       7. P/E ratio, market cap (in billions), dividend yield (as percentage), and beta
       
-      Format response as JSON with the following structure:
+      Format response as valid, properly formatted JSON with the following structure:
       {
         "currentPrice": number,
         "weekHigh": number,
@@ -156,11 +157,13 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
         },
         "fundamentals": {
           "peRatio": number,
-          "marketCap": string,
-          "dividendYield": string,
+          "marketCap": "string",
+          "dividendYield": "string",
           "beta": number
         }
-      }`;
+      }
+      
+      Do not include any explanations or markdown formatting. Return only valid JSON.`;
 
       // Call the Perplexity Sonar API
       const response = await fetch("https://api.perplexity.ai/chat/completions", {
@@ -174,7 +177,7 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
           messages: [
             {
               role: "system",
-              content: "You are a financial analyst specializing in technical stock analysis. Provide accurate, data-driven information about stocks formatted in clean JSON."
+              content: "You are a financial analyst specializing in technical stock analysis. Return ONLY valid JSON without any explanations. Do not wrap the JSON in code blocks. The JSON must be valid and properly formatted with double quotes for all property names."
             },
             {
               role: "user",
@@ -194,71 +197,59 @@ const TechnicalAnalysisPanel: React.FC<TechnicalAnalysisPanelProps> = ({ symbol 
       const data = await response.json();
       const content = data.choices[0].message.content;
       
-      // Extract JSON from the response with robust error handling
+      // Clean up the response before parsing
+      const cleanedContent = content
+        .trim()
+        .replace(/```json|```/g, '') // Remove any markdown code blocks
+        .replace(/\\n/g, '') // Remove escaped newlines
+        .replace(/\\"/g, '"') // Replace escaped quotes
+        .replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3') // Ensure property names are double-quoted
+        .replace(/:\s*'([^']*)'/g, ':"$1"') // Replace single quotes with double quotes for values
+        .replace(/,\s*}/g, '}') // Remove trailing commas
+        .replace(/,\s*]/g, ']'); // Remove trailing commas in arrays
+      
+      console.log("Cleaned JSON for parsing:", cleanedContent);
+      
       try {
-        // Try different methods to extract JSON
-        let parsedData: TechnicalData | null = null;
+        // Try to parse the cleaned JSON
+        const parsedData = JSON.parse(cleanedContent);
         
-        // Method 1: Look for code blocks
-        const jsonPattern = /```(?:json)?\s*([\s\S]*?)\s*```/;
-        const match = jsonPattern.exec(content);
-        
-        if (match && match[1]) {
-          parsedData = JSON.parse(match[1]);
-        } else {
-          // Method 2: Try parsing the whole content
-          try {
-            parsedData = JSON.parse(content);
-          } catch (innerError) {
-            // Method 3: Try to find JSON-like structure with regex
-            const jsonObjectPattern = /(\{[\s\S]*\})/;
-            const objectMatch = jsonObjectPattern.exec(content);
-            
-            if (objectMatch && objectMatch[1]) {
-              parsedData = JSON.parse(objectMatch[1]);
-            }
+        // Validate and sanitize the data
+        const sanitizedData: TechnicalData = {
+          currentPrice: typeof parsedData.currentPrice === 'number' ? parsedData.currentPrice : 0,
+          weekHigh: typeof parsedData.weekHigh === 'number' ? parsedData.weekHigh : 0,
+          weekLow: typeof parsedData.weekLow === 'number' ? parsedData.weekLow : 0,
+          overallTrend: {
+            value: parsedData.overallTrend?.value || 'neutral',
+            percentage: typeof parsedData.overallTrend?.percentage === 'number' ? parsedData.overallTrend.percentage : 0
+          },
+          movingAverages: {
+            status: parsedData.movingAverages?.status || 'neutral',
+            day50: typeof parsedData.movingAverages?.day50 === 'number' ? parsedData.movingAverages.day50 : 0,
+            day200: typeof parsedData.movingAverages?.day200 === 'number' ? parsedData.movingAverages.day200 : 0
+          },
+          rsi: {
+            value: typeof parsedData.rsi?.value === 'number' ? parsedData.rsi.value : 50,
+            status: parsedData.rsi?.status || 'neutral'
+          },
+          macd: {
+            value: typeof parsedData.macd?.value === 'number' ? parsedData.macd.value : 0,
+            signal: typeof parsedData.macd?.signal === 'number' ? parsedData.macd.signal : 0,
+            histogram: typeof parsedData.macd?.histogram === 'number' ? parsedData.macd.histogram : 0,
+            status: parsedData.macd?.status || 'neutral'
+          },
+          fundamentals: {
+            peRatio: typeof parsedData.fundamentals?.peRatio === 'number' ? parsedData.fundamentals.peRatio : 0,
+            marketCap: parsedData.fundamentals?.marketCap || 'N/A',
+            dividendYield: parsedData.fundamentals?.dividendYield || 'N/A',
+            beta: typeof parsedData.fundamentals?.beta === 'number' ? parsedData.fundamentals.beta : 1
           }
-        }
+        };
         
-        if (parsedData) {
-          // Validate and sanitize the data
-          const sanitizedData: TechnicalData = {
-            currentPrice: typeof parsedData.currentPrice === 'number' ? parsedData.currentPrice : 0,
-            weekHigh: typeof parsedData.weekHigh === 'number' ? parsedData.weekHigh : 0,
-            weekLow: typeof parsedData.weekLow === 'number' ? parsedData.weekLow : 0,
-            overallTrend: {
-              value: parsedData.overallTrend?.value || 'neutral',
-              percentage: typeof parsedData.overallTrend?.percentage === 'number' ? parsedData.overallTrend.percentage : 0
-            },
-            movingAverages: {
-              status: parsedData.movingAverages?.status || 'neutral',
-              day50: typeof parsedData.movingAverages?.day50 === 'number' ? parsedData.movingAverages.day50 : 0,
-              day200: typeof parsedData.movingAverages?.day200 === 'number' ? parsedData.movingAverages.day200 : 0
-            },
-            rsi: {
-              value: typeof parsedData.rsi?.value === 'number' ? parsedData.rsi.value : 50,
-              status: parsedData.rsi?.status || 'neutral'
-            },
-            macd: {
-              value: typeof parsedData.macd?.value === 'number' ? parsedData.macd.value : 0,
-              signal: typeof parsedData.macd?.signal === 'number' ? parsedData.macd.signal : 0,
-              histogram: typeof parsedData.macd?.histogram === 'number' ? parsedData.macd.histogram : 0,
-              status: parsedData.macd?.status || 'neutral'
-            },
-            fundamentals: {
-              peRatio: typeof parsedData.fundamentals?.peRatio === 'number' ? parsedData.fundamentals.peRatio : 0,
-              marketCap: parsedData.fundamentals?.marketCap || 'N/A',
-              dividendYield: parsedData.fundamentals?.dividendYield || 'N/A',
-              beta: typeof parsedData.fundamentals?.beta === 'number' ? parsedData.fundamentals.beta : 1
-            }
-          };
-          
-          setTechnicalData(sanitizedData);
-        } else {
-          throw new Error("Could not extract valid JSON from API response");
-        }
+        setTechnicalData(sanitizedData);
       } catch (parseError) {
         console.error("JSON parsing error:", parseError);
+        console.error("Failed content:", cleanedContent);
         setError("Failed to parse data from API");
         // Use mock data as fallback
         setTechnicalData(generateMockData(symbol));
