@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, Search, ChevronDown } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import StockChart from "./StockChart";
+import StockSelector from "./StockSelector";
 import { alpacaService } from "@/services/alpacaService";
 
 interface Bar {
@@ -15,14 +16,6 @@ interface Bar {
   l: number; // high
   c: number; // close
   v: number; // volume
-}
-
-interface Asset {
-  id: string;
-  symbol: string;
-  name: string;
-  exchange: string;
-  class: string;
 }
 
 interface StockChartPanelProps {
@@ -39,11 +32,8 @@ const TIMEFRAMES = [
 
 const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => {
   const [symbol, setSymbol] = useState("AAPL"); // Default symbol
-  const [chartData, setChartData] = useState<Bar[]>([]);
+  const [chartData, setChartData] = useState<{ [symbol: string]: Bar[] }>({});
   const [timeframe, setTimeframe] = useState("1Day");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<Asset[]>([]);
-  const [showResults, setShowResults] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [priceInfo, setPriceInfo] = useState({ current: 0, change: 0, changePercent: 0 });
@@ -67,7 +57,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
           new Date(a.t).getTime() - new Date(b.t).getTime()
         );
         
-        setChartData(sortedData);
+        setChartData({ [symbol]: sortedData });
         
         // Calculate price info
         if (sortedData.length > 0) {
@@ -84,7 +74,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
         }
       } else {
         console.error("Invalid response format:", response);
-        setChartData([]);
+        setChartData({});
         toast({
           title: "Data Error",
           description: `Could not load chart data for ${symbol}`,
@@ -98,64 +88,20 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
         description: `Failed to load ${symbol} data: ${error instanceof Error ? error.message : "Unknown error"}`,
         duration: 5000
       });
-      setChartData([]);
+      setChartData({});
     } finally {
       setIsLoading(false);
     }
   }, [symbol, timeframe]);
   
-  // Function to search stocks
-  const searchStocks = useCallback(async (query: string) => {
-    if (!query || query.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-    
-    console.log(`Searching stocks with query: ${query}`);
-    try {
-      const response = await alpacaService.searchAssets(query);
-      console.log("Search results:", response);
-      if (response && Array.isArray(response)) {
-        setSearchResults(response.slice(0, 10)); // Limit to 10 results
-        setShowResults(true);
-      } else {
-        setSearchResults([]);
-      }
-    } catch (error) {
-      console.error("Failed to search stocks:", error);
-      setSearchResults([]);
-    }
-  }, []);
-  
   // Function to handle stock selection
-  const selectStock = (newSymbol: string) => {
+  const handleSelectStock = (newSymbol: string) => {
     console.log(`Selecting stock: ${newSymbol}`);
     setSymbol(newSymbol);
-    setSearchTerm("");
-    setShowResults(false);
     
     // Call the onSymbolChange callback if provided
     if (onSymbolChange) {
       onSymbolChange(newSymbol);
-    }
-  };
-  
-  // Function to handle manual stock entry
-  const handleManualEntry = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm) {
-      // Basic validation for stock symbol format
-      const isValidSymbol = /^[A-Za-z]{1,5}$/.test(searchTerm);
-      
-      if (isValidSymbol) {
-        selectStock(searchTerm.toUpperCase());
-      } else {
-        toast({
-          title: "Invalid Symbol",
-          description: "Please enter a valid stock symbol (1-5 letters)",
-          duration: 3000
-        });
-      }
     }
   };
 
@@ -163,20 +109,6 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
   useEffect(() => {
     fetchStockData();
   }, [symbol, timeframe, fetchStockData]);
-  
-  // Handle search term changes
-  useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      if (searchTerm.length >= 2) {
-        searchStocks(searchTerm);
-      } else {
-        setSearchResults([]);
-        setShowResults(false);
-      }
-    }, 300);
-    
-    return () => clearTimeout(delayDebounce);
-  }, [searchTerm, searchStocks]);
   
   // Set up auto-refresh interval
   useEffect(() => {
@@ -194,58 +126,27 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
     };
   }, [autoRefresh, fetchStockData]);
 
-  // Format data for the chart component
-  const formattedChartData = {
-    [symbol]: chartData
-  };
-
   return (
     <Card className="bg-black/20 border-gray-800 backdrop-blur-sm mb-6">
       <CardContent className="p-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
           {/* Symbol search and current symbol */}
           <div className="flex flex-col w-full md:w-auto gap-2">
-            <div className="relative">
-              <form onSubmit={handleManualEntry} className="flex gap-2">
-                <div className="relative flex-1">
-                  <Input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search stocks..."
-                    className="bg-gray-900 border-gray-700 pr-8"
-                  />
-                  <Search className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  
-                  {showResults && searchResults.length > 0 && (
-                    <div className="absolute top-full left-0 w-full z-50 mt-1">
-                      <ul className="bg-gray-900 border border-gray-700 rounded-md overflow-hidden max-h-[200px] overflow-y-auto">
-                        {searchResults.map(result => (
-                          <li 
-                            key={result.id} 
-                            className="p-2 hover:bg-gray-800 cursor-pointer text-sm"
-                            onClick={() => selectStock(result.symbol)}
-                          >
-                            <span className="font-bold text-teal-400">{result.symbol}</span>
-                            <span className="ml-2 text-gray-300">{result.name}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-                <Button type="submit" variant="outline" size="sm" className="border-gray-700">
-                  Go
-                </Button>
-              </form>
+            <div className="w-full md:w-64">
+              <StockSelector
+                value={symbol}
+                onChange={handleSelectStock}
+                placeholder="Search stocks..."
+              />
             </div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               {symbol}
-              {priceInfo.current > 0 && (
-                <span className={`text-sm font-normal ${priceInfo.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {priceInfo.change >= 0 ? '+' : ''}{priceInfo.change.toFixed(2)} ({priceInfo.changePercent.toFixed(2)}%)
-                </span>
-              )}
+              <span className={`text-lg font-normal ${priceInfo.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                ${priceInfo.current.toFixed(2)}
+              </span>
+              <span className={`text-sm font-normal ${priceInfo.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                {priceInfo.change >= 0 ? '+' : ''}{priceInfo.change.toFixed(2)} ({priceInfo.changePercent.toFixed(2)}%)
+              </span>
             </h2>
           </div>
           
@@ -265,7 +166,7 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
               ))}
             </div>
             
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -293,11 +194,13 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
         </div>
         
         {/* Chart area */}
-        <StockChart 
-          data={formattedChartData} 
-          symbols={[symbol]} 
-          isLoading={isLoading} 
-        />
+        <div className="h-[400px]">
+          <StockChart 
+            data={chartData} 
+            symbols={[symbol]} 
+            isLoading={isLoading} 
+          />
+        </div>
       </CardContent>
     </Card>
   );

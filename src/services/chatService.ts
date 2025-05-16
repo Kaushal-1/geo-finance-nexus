@@ -6,8 +6,22 @@ import { finnhubService } from '@/services/finnhubService';
 const PERPLEXITY_API_KEY = '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';
 
 // Always return the hardcoded API key
-export const getPerplexityApiKey = () => {
-  return PERPLEXITY_API_KEY;
+export const getPerplexityApiKey = (): string | null => {
+  // Check for environment variable first (when using Supabase Edge Functions)
+  const envApiKey = process.env.PERPLEXITY_API_KEY;
+  if (envApiKey) {
+    return envApiKey;
+  }
+
+  // Otherwise, use the key from localStorage (for local dev/testing)
+  // Note: In a production app, storing API keys in localStorage is not recommended
+  // But for this demo, we'll use it as a fallback
+  const localStorageKey = localStorage.getItem('perplexity_api_key');
+  
+  // If hardcoded key is provided (as per user instructions), use that as a last resort
+  const hardcodedKey = "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";
+  
+  return localStorageKey || hardcodedKey;
 };
 
 // This function is no longer needed as the API key is hardcoded
