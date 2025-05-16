@@ -49,40 +49,34 @@ const TechnicalIndicatorGauge: React.FC<TechnicalIndicatorGaugeProps> = ({
     <div className="flex flex-col items-center">
       <h3 className="text-sm font-medium mb-2">{title}</h3>
       
-      <div className="relative w-36 h-20 mb-4">
+      <div className="relative w-36 h-20 mb-6">
         {/* Gauge background */}
         <div className="absolute top-0 left-0 w-full h-full">
           <svg viewBox="0 0 100 50" className="w-full">
-            {/* Background arc */}
+            {/* Semi-circular gradient background */}
+            <defs>
+              <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#FF436A" />
+                <stop offset="50%" stopColor="#B49FFF" />
+                <stop offset="100%" stopColor="#4062FF" />
+              </linearGradient>
+            </defs>
+            
+            {/* Background track */}
             <path 
               d="M10,50 A40,40 0 0,1 90,50" 
               fill="none" 
-              stroke="#1a1f2c"
-              strokeWidth="10" 
+              stroke="rgba(255,255,255,0.05)"
+              strokeWidth="8" 
               strokeLinecap="round"
             />
-            {/* Red section (Sell) */}
+            
+            {/* Colored gauge path */}
             <path 
-              d="M10,50 A40,40 0 0,1 35,25" 
+              d="M10,50 A40,40 0 0,1 90,50" 
               fill="none" 
-              stroke="#ff4d6a" 
-              strokeWidth="10" 
-              strokeLinecap="round"
-            />
-            {/* Gray section (Neutral) */}
-            <path 
-              d="M35,25 A40,40 0 0,1 65,25" 
-              fill="none" 
-              stroke="#6e6e6e" 
-              strokeWidth="10" 
-              strokeLinecap="round"
-            />
-            {/* Blue section (Buy) */}
-            <path 
-              d="M65,25 A40,40 0 0,1 90,50" 
-              fill="none" 
-              stroke="#3b82f6" 
-              strokeWidth="10" 
+              stroke="url(#gaugeGradient)" 
+              strokeWidth="8" 
               strokeLinecap="round"
             />
           </svg>
@@ -91,17 +85,17 @@ const TechnicalIndicatorGauge: React.FC<TechnicalIndicatorGaugeProps> = ({
         {/* Needle */}
         <div className="absolute top-0 left-0 w-full h-full flex justify-center items-end">
           <div 
-            className="origin-bottom transform transition-transform duration-500 ease-out"
+            className="origin-bottom transform transition-transform duration-700 ease-out"
             style={{ transform: `rotate(${calculateNeedlePosition()}deg)` }}
           >
-            <div className="h-16 w-1 bg-white"></div>
-            <div className="h-3 w-3 rounded-full bg-white -mt-1.5 ml-[-5px]"></div>
+            <div className="h-16 w-0.5 bg-white"></div>
+            <div className="h-2 w-2 rounded-full bg-white -mt-1 -ml-0.75"></div>
           </div>
         </div>
 
-        {/* Value text */}
-        <div className="absolute bottom-[-24px] left-0 w-full text-center">
-          <span className={`text-base font-bold ${getValueColor()}`}>{value}</span>
+        {/* Value display */}
+        <div className="absolute -bottom-8 left-0 w-full text-center">
+          <span className={`text-xl font-bold ${getValueColor()}`}>{value}</span>
         </div>
       </div>
 
@@ -109,15 +103,15 @@ const TechnicalIndicatorGauge: React.FC<TechnicalIndicatorGaugeProps> = ({
       <div className="flex justify-between w-full text-sm mt-2">
         <div className="text-center">
           <div className="text-red-500">Sell</div>
-          <div>{sellCount}</div>
+          <div className="font-semibold">{sellCount}</div>
         </div>
         <div className="text-center">
           <div className="text-gray-400">Neutral</div>
-          <div>{neutralCount}</div>
+          <div className="font-semibold">{neutralCount}</div>
         </div>
         <div className="text-center">
           <div className="text-blue-500">Buy</div>
-          <div>{buyCount}</div>
+          <div className="font-semibold">{buyCount}</div>
         </div>
       </div>
     </div>

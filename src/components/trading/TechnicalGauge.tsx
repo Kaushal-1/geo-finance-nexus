@@ -41,57 +41,58 @@ const TechnicalGauge: React.FC<TechnicalGaugeProps> = ({
         <div className="w-full h-full overflow-hidden">
           <div className="absolute left-0 bottom-0 w-full h-full">
             <div className="relative w-full h-full">
-              {/* Gradient arc background with better contrast */}
-              <div className="absolute bottom-0 left-0 w-full h-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-500 opacity-25 rounded-t-full"></div>
+              {/* Simple gauge background with gradient */}
+              <svg viewBox="0 0 100 50" className="w-full h-full">
+                <defs>
+                  <linearGradient id="simpleGaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#FF436A" />
+                    <stop offset="50%" stopColor="#B49FFF" />
+                    <stop offset="100%" stopColor="#4062FF" />
+                  </linearGradient>
+                </defs>
+                
+                {/* Background track */}
+                <path 
+                  d="M10,50 A40,40 0 0,1 90,50" 
+                  fill="none" 
+                  stroke="rgba(255,255,255,0.05)"
+                  strokeWidth="6" 
+                  strokeLinecap="round"
+                />
+                
+                {/* Colored gauge path */}
+                <path 
+                  d="M10,50 A40,40 0 0,1 90,50" 
+                  fill="none" 
+                  stroke="url(#simpleGaugeGradient)" 
+                  strokeWidth="6" 
+                  strokeLinecap="round"
+                />
+              </svg>
               
-              {/* Glass effect overlay with improved depth */}
-              <div className="absolute bottom-0 left-0 w-full h-full bg-white/5 rounded-t-full backdrop-blur-[2px] shadow-inner"></div>
-              
-              {/* Enhanced tick marks */}
-              <div className="absolute bottom-0 left-1/5 h-2 w-0.5 bg-white/50"></div>
-              <div className="absolute bottom-0 left-2/5 h-2 w-0.5 bg-white/50"></div>
-              <div className="absolute bottom-0 left-3/5 h-2 w-0.5 bg-white/50"></div>
-              <div className="absolute bottom-0 left-4/5 h-2 w-0.5 bg-white/50"></div>
-              
-              {/* Center tick mark */}
-              <div className="absolute bottom-0 left-1/2 h-3 w-0.5 bg-white/60"></div>
-              
-              {/* Enhanced needle with glow effect */}
+              {/* Simple needle */}
               <div 
-                className={`absolute bottom-0 left-1/2 h-16 w-1.5 ${getNeedleColor()} origin-bottom transform transition-transform duration-1000 ease-out rounded-full shadow-lg`}
+                className="absolute bottom-0 left-1/2 h-14 w-0.5 bg-white origin-bottom transform transition-transform duration-700 ease-out"
                 style={{ transform: `translateX(-50%) rotate(${calculateGaugeAngle()}deg)` }}
               >
-                <div className={`absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 ${getNeedleColor()} rounded-full shadow-[0_0_10px_rgba(255,255,255,0.6)]`}></div>
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full"></div>
               </div>
-              
-              {/* Enhanced glow effect for needle base */}
-              <div className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-8 ${getNeedleColor()} rounded-full opacity-30 blur-md`}></div>
-              
-              {/* Enhanced needle base with inner shadow */}
-              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-gray-800 rounded-full border border-white/30 shadow-inner"></div>
             </div>
           </div>
         </div>
         
         {/* Value text with improved readability */}
-        <div className={`absolute -bottom-1 left-0 w-full text-center font-medium ${colorClass} text-shadow`}>
+        <div className={`absolute -bottom-6 left-0 w-full text-center font-medium ${colorClass}`}>
           {value}
         </div>
       </div>
       
-      {/* Enhanced percentage display with animated border */}
+      {/* Enhanced percentage display */}
       <div className={`text-sm mt-2 font-medium ${colorClass}`}>
-        <span className={`inline-block px-2.5 py-1 rounded-md bg-gradient-to-r ${getGradientColor()} bg-opacity-20 text-white border border-white/10`}>
+        <span className="inline-block px-2 py-0.5 rounded-md bg-opacity-20">
           {percentage}%
         </span>
       </div>
-      
-      {/* Fixed the style tag to use proper React styling */}
-      <style dangerouslySetInnerHTML={{ __html: `
-        .text-shadow {
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-        }
-      `}} />
     </div>
   );
 };
