@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Chart as ChartJS,
@@ -172,7 +171,7 @@ const StockChart: React.FC<StockChartProps> = ({
       new Date(a).getTime() - new Date(b).getTime()
     );
     
-    // Create datasets for each symbol
+    // Create datasets for each symbol with proper typing
     const datasets = symbols.map((sym, index) => {
       const symbolData = data[sym] || [];
       const color = getSymbolColor(index);
@@ -191,7 +190,7 @@ const StockChart: React.FC<StockChartProps> = ({
       });
       
       return {
-        type: 'line',
+        type: 'line' as const, // Use const assertion to set specific string literal type
         label: sym,
         data: closingPrices,
         borderColor: color,
@@ -267,7 +266,7 @@ const StockChart: React.FC<StockChartProps> = ({
       }
     };
     
-    const chartData: ChartData = {
+    const chartData: ChartData<'line'> = {
       labels,
       datasets
     };
@@ -432,7 +431,7 @@ const StockChart: React.FC<StockChartProps> = ({
     datasets: [
       // Price line
       {
-        type: 'line',
+        type: 'line' as const,
         label: `${symbol || ""} Price`,
         data: closingPrices,
         borderColor: changeColor,
@@ -445,7 +444,7 @@ const StockChart: React.FC<StockChartProps> = ({
       } as ChartDatasetWithCustomData,
       // Hidden dataset with candle data (for tooltip display)
       {
-        type: 'line',
+        type: 'line' as const,
         label: 'OHLC Data',
         data: barData.map((bar, i) => ({
           x: i,
@@ -464,7 +463,7 @@ const StockChart: React.FC<StockChartProps> = ({
       } as ChartDatasetWithCustomData,
       // Volume bars
       {
-        type: 'bar',
+        type: 'bar' as const,
         label: 'Volume',
         data: volumes,
         backgroundColor: candleColors,
@@ -475,7 +474,7 @@ const StockChart: React.FC<StockChartProps> = ({
         barPercentage: 0.6,
         categoryPercentage: 0.8
       } as ChartDatasetWithCustomData
-    ] as ChartDatasetWithCustomData[]
+    ]
   };
   
   return (
