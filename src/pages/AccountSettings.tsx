@@ -9,13 +9,36 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Shield, User, Bell, MessageSquare, Key, Database } from "lucide-react";
 import TelegramBotPanel from "@/components/trading/TelegramBotPanel";
 import { Link } from "react-router-dom";
+
 const AccountSettings = () => {
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("notifications");
-  return <div className="bg-gradient-to-br from-[#0a0e17] to-[#131b2e] min-h-screen">
-       <DashboardHeader />
+
+  return (
+    <div className="bg-gradient-to-br from-[#0a0e17] to-[#131b2e] min-h-screen">
+      <header className="py-4 px-6 bg-black/30 border-b border-white/10 flex justify-between items-center">
+        <div className="flex items-center">
+          <Link to="/" className="text-teal-400 text-xl font-bold mr-8">GeoFinance</Link>
+          <nav className="hidden md:flex space-x-6">
+            <Link to="/dashboard" className="text-white/70 hover:text-white">Dashboard</Link>
+            <Link to="/trading" className="text-white/70 hover:text-white">Trading</Link>
+            <Link to="/stock-compare" className="text-white/70 hover:text-white">Compare Stocks</Link>
+            <Link to="/chat-research" className="text-white/70 hover:text-white">AI Research</Link>
+            <Link to="/account-settings" className="text-white font-medium">Account</Link>
+          </nav>
+        </div>
+        
+        <div className="flex items-center">
+          <Button variant="ghost" className="text-white/70 hover:text-white">
+            <Bell className="h-4 w-4 mr-2" />
+            Notifications
+          </Button>
+          <Button variant="ghost" className="text-white/70 hover:text-white">
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Telegram Bot
+          </Button>
+        </div>
+      </header>
 
       <main className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
@@ -31,7 +54,7 @@ const AccountSettings = () => {
                   <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold mb-2">
                     {user?.email?.charAt(0).toUpperCase() || "U"}
                   </div>
-                  <CardTitle className="text-white mt-2 text-sm">{user?.email}</CardTitle>
+                  <CardTitle className="text-white mt-2">{user?.email}</CardTitle>
                   <CardDescription className="text-gray-400">
                     Free Account
                   </CardDescription>
@@ -42,27 +65,47 @@ const AccountSettings = () => {
 
               <CardContent className="p-4">
                 <div className="space-y-1">
-                  <Button variant={activeTab === "profile" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab("profile")}>
+                  <Button 
+                    variant={activeTab === "profile" ? "default" : "ghost"} 
+                    className="w-full justify-start"
+                    onClick={() => setActiveTab("profile")}
+                  >
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </Button>
                   
-                  <Button variant={activeTab === "notifications" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab("notifications")}>
+                  <Button 
+                    variant={activeTab === "notifications" ? "default" : "ghost"} 
+                    className="w-full justify-start"
+                    onClick={() => setActiveTab("notifications")}
+                  >
                     <Bell className="h-4 w-4 mr-2" />
                     Notifications
                   </Button>
                   
-                  <Button variant={activeTab === "api" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab("api")}>
+                  <Button 
+                    variant={activeTab === "api" ? "default" : "ghost"} 
+                    className="w-full justify-start"
+                    onClick={() => setActiveTab("api")}
+                  >
                     <Key className="h-4 w-4 mr-2" />
                     API Keys
                   </Button>
                   
-                  <Button variant={activeTab === "telegram" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab("telegram")}>
+                  <Button 
+                    variant={activeTab === "telegram" ? "default" : "ghost"} 
+                    className="w-full justify-start"
+                    onClick={() => setActiveTab("telegram")}
+                  >
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Telegram Bot
                   </Button>
                   
-                  <Button variant={activeTab === "data" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab("data")}>
+                  <Button 
+                    variant={activeTab === "data" ? "default" : "ghost"} 
+                    className="w-full justify-start"
+                    onClick={() => setActiveTab("data")}
+                  >
                     <Database className="h-4 w-4 mr-2" />
                     Data & Privacy
                   </Button>
@@ -84,7 +127,7 @@ const AccountSettings = () => {
           </div>
 
           {/* Main Content */}
-          <div className="space-y-6 mx-0">
+          <div className="space-y-6">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="hidden">
                 <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -157,6 +200,8 @@ const AccountSettings = () => {
           </div>
         </div>
       </main>
-    </div>;
+    </div>
+  );
 };
+
 export default AccountSettings;

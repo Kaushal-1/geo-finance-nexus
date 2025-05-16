@@ -426,9 +426,7 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 justify-items-center">
                 <TechnicalIndicatorGauge 
                   title="Oscillators" 
-                  value={indicatorRatings.oscillators.buyCount > indicatorRatings.oscillators.sellCount ? 75 : 
-                     indicatorRatings.oscillators.sellCount > indicatorRatings.oscillators.buyCount ? 25 : 50}
-                  status={indicatorRatings.oscillators.value}
+                  value={indicatorRatings.oscillators.value}
                   sellCount={indicatorRatings.oscillators.sellCount}
                   neutralCount={indicatorRatings.oscillators.neutralCount}
                   buyCount={indicatorRatings.oscillators.buyCount}
@@ -438,17 +436,10 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
                   title="Summary" 
                   value={
                     indicatorRatings.ma.buyCount > indicatorRatings.oscillators.buyCount + indicatorRatings.macd.buyCount
-                      ? 85
+                      ? "Strong buy" as SentimentValue
                       : indicatorRatings.ma.buyCount + indicatorRatings.oscillators.buyCount + indicatorRatings.macd.buyCount > 15
-                      ? 65
-                      : 50
-                  }
-                  status={
-                    indicatorRatings.ma.buyCount > indicatorRatings.oscillators.buyCount + indicatorRatings.macd.buyCount
-                      ? "Strong buy" 
-                      : indicatorRatings.ma.buyCount + indicatorRatings.oscillators.buyCount + indicatorRatings.macd.buyCount > 15
-                      ? "Buy"
-                      : "Neutral"
+                      ? "Buy" as SentimentValue
+                      : "Neutral" as SentimentValue
                   }
                   sellCount={0}
                   neutralCount={9}
@@ -457,9 +448,7 @@ const MarketAnalystPanel: React.FC<MarketAnalystPanelProps> = ({ symbol }) => {
                 
                 <TechnicalIndicatorGauge 
                   title="Moving Averages" 
-                  value={indicatorRatings.ma.buyCount > indicatorRatings.ma.sellCount ? 75 : 
-                     indicatorRatings.ma.sellCount > indicatorRatings.ma.buyCount ? 25 : 50}
-                  status={indicatorRatings.ma.value}
+                  value={indicatorRatings.ma.value}
                   sellCount={indicatorRatings.ma.sellCount}
                   neutralCount={indicatorRatings.ma.neutralCount}
                   buyCount={indicatorRatings.ma.buyCount}

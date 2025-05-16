@@ -22,9 +22,6 @@ const alpacaDataApi = axios.create({
   }
 });
 
-// Telegram bot API key for market notifications
-const TELEGRAM_BOT_API_KEY = '7594960846:AAECYafwv1rQ1oq-ZkLR6PZWvC9CBtQUZnY';
-
 // Error handler for API requests
 const handleApiError = (error: any, message: string) => {
   console.error(`${message}:`, error);
@@ -34,109 +31,6 @@ const handleApiError = (error: any, message: string) => {
     duration: 5000,
   });
   return null;
-};
-
-// Create WebSocket connection for real-time data
-let stockDataWebSocket: WebSocket | null = null;
-const stockDataCallbacks: Map<string, (data: any) => void> = new Map();
-
-const connectWebSocket = () => {
-  if (stockDataWebSocket && stockDataWebSocket.readyState === WebSocket.OPEN) {
-    return stockDataWebSocket;
-  }
-  
-  const ws = new WebSocket('wss://stream.data.alpaca.markets/v2/iex');
-  
-  ws.onopen = () => {
-    console.log('WebSocket connection established');
-    // Authenticate
-    ws.send(JSON.stringify({
-      action: 'auth',
-      key: 'PKJ1BKJG3HHOXYNCRLZK',
-      secret: 'l9KdVbejeABLTE8Z6JxcLRQwHebECBnWpiqqPhhd'
-    }));
-  };
-  
-  ws.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      
-      // Handle authentication response
-      if (data[0] && data[0].T === 'success' && data[0].msg === 'authenticated') {
-        console.log('WebSocket authenticated successfully');
-        
-        // Subscribe to symbols if any callbacks are registered
-        if (stockDataCallbacks.size > 0) {
-          const symbols = Array.from(stockDataCallbacks.keys());
-          subscribeToSymbols(symbols);
-        }
-        return;
-      }
-      
-      // Handle trade updates
-      if (data[0] && (data[0].T === 'q' || data[0].T === 't')) {
-        // 'q' for quotes, 't' for trades
-        const symbol = data[0].S;
-        const callback = stockDataCallbacks.get(symbol);
-        if (callback) {
-          callback(data[0]);
-        }
-      }
-    } catch (error) {
-      console.error('Error parsing WebSocket message:', error);
-    }
-  };
-  
-  ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
-    toast({
-      title: "WebSocket Error",
-      description: "Connection to real-time data feed failed. Retrying...",
-      duration: 5000,
-    });
-  };
-  
-  ws.onclose = () => {
-    console.log('WebSocket connection closed. Reconnecting...');
-    setTimeout(() => {
-      stockDataWebSocket = connectWebSocket();
-    }, 5000);
-  };
-  
-  stockDataWebSocket = ws;
-  return ws;
-};
-
-const subscribeToSymbols = (symbols: string[]) => {
-  if (!stockDataWebSocket || stockDataWebSocket.readyState !== WebSocket.OPEN) {
-    connectWebSocket();
-    return;
-  }
-  
-  // Subscribe to trades for the symbols
-  stockDataWebSocket.send(JSON.stringify({
-    action: 'subscribe',
-    trades: symbols,
-    quotes: symbols,
-    bars: symbols
-  }));
-  
-  console.log(`Subscribed to real-time data for: ${symbols.join(', ')}`);
-};
-
-const unsubscribeFromSymbols = (symbols: string[]) => {
-  if (!stockDataWebSocket || stockDataWebSocket.readyState !== WebSocket.OPEN) {
-    return;
-  }
-  
-  stockDataWebSocket.send(JSON.stringify({
-    action: 'unsubscribe',
-    trades: symbols,
-    quotes: symbols,
-    bars: symbols
-  }));
-  
-  console.log(`Unsubscribed from real-time data for: ${symbols.join(', ')}`);
 };
 
 // API functions
@@ -306,39 +200,28 @@ export const alpacaService = {
       
       // Determine appropriate parameters based on timeframe
       switch (timeframe) {
-        case '1Min':
-          apiTimeframe = '1Min';
-          startDate = new Date(today.setMinutes(today.getMinutes() - 120)).toISOString();
-          break;
-        case '5Min':
-          apiTimeframe = '5Min';
-          startDate = new Date(today.setMinutes(today.getMinutes() - 5 * 120)).toISOString();
-          break;
-        case '15Min':
-          apiTimeframe = '15Min';
-          startDate = new Date(today.setMinutes(today.getMinutes() - 15 * 100)).toISOString();
-          break;
-        case '1Hour':
-          apiTimeframe = '1Hour';
-          startDate = new Date(today.setHours(today.getHours() - 72)).toISOString();
-          break;
         case '1Day':
           // For 1-day view, use 5-minute bars for the current day
-          apiTimeframe = '1Day';
-          startDate = new Date(today.setDate(today.getDate() - 30)).toISOString();
+          apiTimeframe = '5Min';
+          startDate = new Date(today.setHours(0,0,0,0)).toISOString();
+          break;
+        case '5Day':
+          // For 5-day view, use 1-hour bars
+          apiTimeframe = '1Hour';
+          startDate = new Date(today.setDate(today.getDate() - 5)).toISOString();
           break;
         case '1Week':
           // For 1-week view, use 1-hour bars
-          apiTimeframe = '1Week';
-          startDate = new Date(today.setDate(today.getDate() - 7 * 52)).toISOString();
+          apiTimeframe = '1Hour';
+          startDate = new Date(today.setDate(today.getDate() - 7)).toISOString();
           break;
         case '1Month':
           // For 1-month view, use 1-day bars
-          apiTimeframe = '1Month';
-          startDate = new Date(today.setMonth(today.getMonth() - 24)).toISOString();
+          apiTimeframe = '1Day';
+          startDate = new Date(today.setMonth(today.getMonth() - 1)).toISOString();
           break;
         default:
-          apiTimeframe = timeframe;
+          apiTimeframe = '1Day';
       }
       
       // Construct request parameters
@@ -408,64 +291,6 @@ export const alpacaService = {
       return response.data;
     } catch (error) {
       return handleApiError(error, "Failed to fetch portfolio history");
-    }
-  },
-
-  // Real-time WebSocket methods
-  subscribeToRealTimeData: (symbol: string, callback: (data: any) => void) => {
-    console.log(`Setting up real-time subscription for ${symbol}`);
-    
-    // Store the callback
-    stockDataCallbacks.set(symbol, callback);
-    
-    // Connect WebSocket if not already connected
-    if (!stockDataWebSocket || stockDataWebSocket.readyState !== WebSocket.OPEN) {
-      connectWebSocket();
-    } else {
-      // If already connected, subscribe to this symbol
-      subscribeToSymbols([symbol]);
-    }
-    
-    return () => {
-      console.log(`Cleaning up real-time subscription for ${symbol}`);
-      stockDataCallbacks.delete(symbol);
-      unsubscribeFromSymbols([symbol]);
-    };
-  },
-  
-  // Get last quote for a symbol
-  getLastQuote: async (symbol: string) => {
-    try {
-      const response = await alpacaDataApi.get(`/v2/stocks/${symbol}/quotes/latest`);
-      return response.data;
-    } catch (error) {
-      return handleApiError(error, `Failed to fetch last quote for ${symbol}`);
-    }
-  },
-  
-  // Get last trade for a symbol
-  getLastTrade: async (symbol: string) => {
-    try {
-      const response = await alpacaDataApi.get(`/v2/stocks/${symbol}/trades/latest`);
-      return response.data;
-    } catch (error) {
-      return handleApiError(error, `Failed to fetch last trade for ${symbol}`);
-    }
-  },
-  
-  // Send a Telegram notification
-  sendTelegramNotification: async (chatId: string, message: string) => {
-    try {
-      const url = `https://api.telegram.org/bot${TELEGRAM_BOT_API_KEY}/sendMessage`;
-      const response = await axios.post(url, {
-        chat_id: chatId,
-        text: message,
-        parse_mode: 'HTML'
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to send Telegram notification:', error);
-      return null;
     }
   }
 };

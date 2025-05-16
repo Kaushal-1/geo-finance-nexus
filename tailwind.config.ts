@@ -22,7 +22,6 @@ export default {
 			fontFamily: {
 				sans: ['Inter', 'sans-serif'],
 				mono: ['Roboto Mono', 'monospace'],
-				inter: ['Inter', 'system-ui', 'sans-serif']
 			},
 			colors: {
 				border: 'hsl(var(--border))',
