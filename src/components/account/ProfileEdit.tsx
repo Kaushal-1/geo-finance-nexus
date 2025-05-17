@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { CheckCircle2, Pencil } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface UserProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  company?: string;
+  role?: string;
+  bio?: string;
+}
 
 const profileFormSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -25,17 +35,71 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 const ProfileEdit = () => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [saving, setSaving] = useState(false);
-
-  // Default values using user data (or empty strings)
-  const defaultValues: Partial<ProfileFormValues> = {
-    firstName: user?.firstName || "",
-    lastName: user?.lastName || "",
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    firstName: "",
+    lastName: "",
     email: user?.email || "",
-    company: user?.company || "",
-    role: user?.role || "",
-    bio: user?.bio || "",
+    company: "",
+    role: "",
+    bio: ""
+  });
+  
+  // Fetch user profile data from metadata or profiles table
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user) return;
+      
+      try {
+        // First, try to get data from user metadata
+        const metadata = user.user_metadata;
+        const firstName = metadata?.first_name || "";
+        const lastName = metadata?.last_name || "";
+        
+        // Then try to fetch from the profiles table if available
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, role, industry')
+          .eq('id', user.id)
+          .single();
+          
+        if (data && !error) {
+          setUserProfile({
+            firstName: data.first_name || firstName,
+            lastName: data.last_name || lastName,
+            email: user.email || "",
+            company: data.industry || "",
+            role: data.role || "",
+            bio: metadata?.bio || ""
+          });
+        } else {
+          // Use metadata as fallback
+          setUserProfile({
+            firstName,
+            lastName,
+            email: user.email || "",
+            company: metadata?.company || "",
+            role: metadata?.role || "",
+            bio: metadata?.bio || ""
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user]);
+
+  // Default values using the fetched profile data
+  const defaultValues: Partial<ProfileFormValues> = {
+    firstName: userProfile.firstName,
+    lastName: userProfile.lastName,
+    email: userProfile.email,
+    company: userProfile.company || "",
+    role: userProfile.role || "",
+    bio: userProfile.bio || "",
   };
 
   const form = useForm<ProfileFormValues>({
@@ -43,16 +107,64 @@ const ProfileEdit = () => {
     defaultValues,
     mode: "onChange",
   });
+  
+  // Update form values when userProfile changes
+  useEffect(() => {
+    form.reset({
+      firstName: userProfile.firstName,
+      lastName: userProfile.lastName,
+      email: userProfile.email,
+      company: userProfile.company,
+      role: userProfile.role,
+      bio: userProfile.bio
+    });
+  }, [userProfile, form]);
 
   const onSubmit = async (data: ProfileFormValues) => {
+    if (!user) return;
+    
     setSaving(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Update user metadata
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: {
+          first_name: data.firstName,
+          last_name: data.lastName,
+          company: data.company,
+          role: data.role,
+          bio: data.bio,
+        },
+      });
       
-      // In a real app, you would update the profile in your database
-      console.log("Profile updated:", data);
+      if (updateError) throw updateError;
+      
+      // Also update the profiles table if it exists
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          first_name: data.firstName,
+          last_name: data.lastName,
+          role: data.role,
+          industry: data.company,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+      
+      if (profileError) {
+        console.error("Error updating profile table:", profileError);
+        // Continue anyway as the metadata update succeeded
+      }
+      
+      // Update local state
+      setUserProfile({
+        ...userProfile,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        company: data.company,
+        role: data.role,
+        bio: data.bio
+      });
       
       toast({
         title: "Profile updated",
@@ -134,7 +246,7 @@ const ProfileEdit = () => {
                   <FormControl>
                     <Input 
                       placeholder="john.doe@example.com" 
-                      className="bg-black/30 border-white/20 text-white"
+                      className="bg-black/30 border-white/20 text-white w-full"
                       disabled 
                       {...field} 
                     />
