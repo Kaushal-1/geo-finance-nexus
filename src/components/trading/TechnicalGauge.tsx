@@ -89,9 +89,9 @@ const TechnicalGauge: React.FC<TechnicalGaugeProps> = ({
         </div>
       </div>
       
-      {/* Enhanced percentage display */}
+      {/* Enhanced percentage display with better visibility */}
       <div className="mt-5 text-sm">
-        <span className={`font-bold ${colorClass} bg-gray-800/70 px-2 py-1 rounded-md`}>
+        <span className={`font-bold ${colorClass} bg-black/90 px-3 py-1.5 rounded-md shadow-md border border-gray-800/50`}>
           {percentage}%
         </span>
       </div>
@@ -100,3 +100,4 @@ const TechnicalGauge: React.FC<TechnicalGaugeProps> = ({
 };
 
 export default TechnicalGauge;
+
