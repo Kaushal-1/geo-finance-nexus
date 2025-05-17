@@ -16,6 +16,7 @@ const ScrollAnimations: React.FC<ScrollAnimationsProps> = ({ sections }) => {
   const pathRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
   const nodesRef = useRef<HTMLDivElement[]>([]);
+  const isMobile = useRef(window.innerWidth < 768);
   
   // Calculate node positions
   const nodePositions = sections.map((_, index) => 
@@ -55,16 +56,25 @@ const ScrollAnimations: React.FC<ScrollAnimationsProps> = ({ sections }) => {
       }
     };
     
-    // Handle mouse move for magic dust effect
+    // Handle mouse move for magic dust effect - more performant version
     const handleMouseMove = (e: MouseEvent) => {
-      // Only create effects occasionally to prevent performance issues
-      if (Math.random() > 0.92) {
+      // Only create effects rarely to prevent performance issues
+      if (Math.random() > 0.96) { // Reduced frequency
         createDustParticle(e.clientX, e.clientY);
       }
     };
     
     // Create dust particles
     const createDustParticle = (x: number, y: number) => {
+      // Don't create particles on hero section to avoid interference
+      const heroElement = document.getElementById('hero');
+      if (heroElement) {
+        const heroRect = heroElement.getBoundingClientRect();
+        if (y >= heroRect.top && y <= heroRect.bottom) {
+          return; // Skip particle creation on hero section
+        }
+      }
+      
       const colors = ['#00b8d4', '#0052cc', '#8B5CF6', '#D946EF'];
       const color = colors[Math.floor(Math.random() * colors.length)];
       
@@ -77,8 +87,8 @@ const ScrollAnimations: React.FC<ScrollAnimationsProps> = ({ sections }) => {
       
       // Animate the dust
       const angle = Math.random() * Math.PI * 2; // Random direction
-      const distance = 30 + Math.random() * 50; // Random distance
-      const duration = 1000 + Math.random() * 2000; // Random duration
+      const distance = 20 + Math.random() * 40; // Reduced distance
+      const duration = 800 + Math.random() * 1200; // Slightly faster
       
       const animation = dust.animate(
         [
@@ -87,7 +97,7 @@ const ScrollAnimations: React.FC<ScrollAnimationsProps> = ({ sections }) => {
             transform: 'scale(0.4) translate(0, 0)' 
           },
           { 
-            opacity: 0.8, 
+            opacity: 0.6, // Lower max opacity
             transform: `scale(1) translate(${Math.cos(angle) * distance/3}px, ${Math.sin(angle) * distance/3}px)` 
           },
           { 
@@ -104,16 +114,23 @@ const ScrollAnimations: React.FC<ScrollAnimationsProps> = ({ sections }) => {
       animation.onfinish = () => dust.remove();
     };
     
+    const handleResize = () => {
+      isMobile.current = window.innerWidth < 768;
+    };
+    
     // Apply global smooth scrolling
     document.documentElement.classList.add('smooth-scroll');
     
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('resize', handleResize);
     handleScroll(); // Initial calculation
+    handleResize(); // Initial check
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', handleResize);
       document.documentElement.classList.remove('smooth-scroll');
     };
   }, [sections, activeSection]);
@@ -129,7 +146,13 @@ const ScrollAnimations: React.FC<ScrollAnimationsProps> = ({ sections }) => {
         createRipple(rect.left, rect.top + rect.height / 2);
       }
       
-      element.scrollIntoView({ behavior: 'smooth' });
+      // Add some offset to prevent section from starting right at the top
+      const navbarOffset = 80; // Approx navbar height
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      window.scrollTo({
+        top: elementPosition - navbarOffset,
+        behavior: 'smooth'
+      });
     }
   };
   
@@ -173,7 +196,13 @@ const ScrollAnimations: React.FC<ScrollAnimationsProps> = ({ sections }) => {
       </div>
       
       {/* Interactive background grid */}
-      <div className="bg-grid" style={{ transform: `scale(${1 + scrollProgress * 0.1}) rotate(${scrollProgress * 3}deg)` }} />
+      <div 
+        className="bg-grid" 
+        style={{ 
+          transform: `scale(${1 + scrollProgress * 0.05}) rotate(${scrollProgress * 2}deg)`,
+          opacity: 0.03 + scrollProgress * 0.02 // Subtle opacity change based on scroll
+        }} 
+      />
     </>
   );
 };

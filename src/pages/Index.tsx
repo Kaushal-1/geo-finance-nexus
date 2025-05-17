@@ -14,7 +14,7 @@ import JourneySection from "@/components/JourneySection";
 import SiteMap from "@/components/SiteMap";
 import { Separator } from "@/components/ui/separator";
 import ScrollAnimations from "@/components/ScrollAnimations";
-import { getScrollProgress, getSectionVisibility, applySmoothTransform } from "@/utils/scrollAnimations";
+import { getScrollProgress, getSectionVisibility, applySmoothTransform, isHeroSection } from "@/utils/scrollAnimations";
 
 const Index = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -50,8 +50,9 @@ const Index = () => {
       setScrollProgress(progress);
       
       // Apply parallax effect to hero section
+      // Only apply moderate parallax to avoid disrupting the hero section
       if (heroRef.current) {
-        const translateY = scrollPosition * 0.4; // Parallax speed
+        const translateY = scrollPosition * 0.25; // Reduced from 0.4 for subtler effect
         heroRef.current.style.transform = `translateY(${translateY}px)`;
       }
       
@@ -61,7 +62,7 @@ const Index = () => {
         const cards = featuresRef.current.querySelectorAll('.feature-card');
         
         cards.forEach((card, index) => {
-          const delay = index * 0.1;
+          const delay = index * 0.08; // Reduced delay for smoother overall effect
           const startThreshold = 0.1 + delay;
           
           if (visibility > startThreshold) {
@@ -74,13 +75,12 @@ const Index = () => {
       }
       
       // Determine active section based on scroll position
-      const sectionIds = ["hero", "features", "journey", "plans"];
-      for (const section of sectionIds) {
-        const element = document.getElementById(section);
+      for (const section of sections) {
+        const element = document.getElementById(section.id);
         if (element) {
           const rect = element.getBoundingClientRect();
           if (rect.top <= 150 && rect.bottom >= 150) {
-            setActiveSection(section);
+            setActiveSection(section.id);
             break;
           }
         }
@@ -89,7 +89,7 @@ const Index = () => {
     
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [sections]);
 
   const handleExploreClick = () => {
     toast({
@@ -102,7 +102,13 @@ const Index = () => {
   const handleNavClick = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+      // Add offset for navbar height
+      const offset = 80;
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      window.scrollTo({
+        top: elementPosition - offset,
+        behavior: "smooth"
+      });
     }
   };
 
@@ -164,7 +170,7 @@ const Index = () => {
       </nav>
 
       {/* Hero Section with Mapbox Globe */}
-      <section className="relative min-h-screen flex items-center" id="hero">
+      <section className="relative min-h-screen flex items-center hero-section" id="hero">
         {/* Background Globe - replaced with Mapbox Globe */}
         <div className="absolute inset-0 z-0 opacity-78 zoom-bg" 
           style={{ transform: `scale(${1 + scrollProgress * 0.05})` }}>
@@ -221,7 +227,7 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 relative" id="features" ref={featuresRef}>
+      <section className="py-20 relative content-section" id="features" ref={featuresRef}>
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 perspective-container">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 section-transition">
@@ -247,17 +253,17 @@ const Index = () => {
       </section>
 
       {/* Journey Section */}
-      <section id="journey" className="section-transition">
+      <section id="journey" className="content-section section-transition">
         <JourneySection />
       </section>
 
       {/* Subscription Plans Section */}
-      <section id="plans" className="section-transition">
+      <section id="plans" className="content-section section-transition">
         <SubscriptionPlans />
       </section>
 
       {/* Call to Action */}
-      <section className="py-20 section-transition">
+      <section className="py-20 content-section section-transition">
         <div className="container mx-auto px-4">
           <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-8 md:p-12 text-center max-w-4xl mx-auto floating-element">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">

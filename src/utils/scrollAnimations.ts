@@ -7,10 +7,10 @@
 export const getScrollProgress = (): number => {
   const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
   const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-  return scrollTop / scrollHeight;
+  return scrollTop / Math.max(scrollHeight, 1); // Prevent division by zero
 };
 
-// Get section visibility percentage
+// Get section visibility percentage with improved detection
 export const getSectionVisibility = (sectionId: string): number => {
   const element = document.getElementById(sectionId);
   if (!element) return 0;
@@ -24,46 +24,86 @@ export const getSectionVisibility = (sectionId: string): number => {
   // If element is fully in viewport
   if (rect.top >= 0 && rect.bottom <= windowHeight) return 1;
   
-  // If element is partially in viewport
+  // If element is partially in viewport - improved algorithm with bias toward center
   const visibleHeight = Math.min(rect.bottom, windowHeight) - Math.max(rect.top, 0);
   const elementHeight = rect.height;
   
-  return Math.min(visibleHeight / elementHeight, 1);
+  // Base visibility on ratio
+  let visibility = Math.min(visibleHeight / elementHeight, 1);
+  
+  // Bias toward elements in the center of the viewport
+  const elementCenter = rect.top + elementHeight / 2;
+  const viewportCenter = windowHeight / 2;
+  const distanceFromCenter = Math.abs(elementCenter - viewportCenter);
+  const maxDistance = windowHeight / 2;
+  
+  // Apply center bias (elements closer to center get slightly higher visibility)
+  const centerBias = 1 - (distanceFromCenter / maxDistance) * 0.3;
+  visibility *= centerBias;
+  
+  return Math.min(visibility, 1);
 };
 
-// Get relative position for parallax effect
-export const getParallaxPosition = (element: HTMLElement, speed: number = 0.5): number => {
+// Get relative position for parallax effect with improved smoothness
+export const getParallaxPosition = (
+  element: HTMLElement, 
+  speed: number = 0.5,
+  direction: 'vertical' | 'horizontal' = 'vertical'
+): number => {
   const rect = element.getBoundingClientRect();
   const windowHeight = window.innerHeight;
-  const centerPosition = rect.top + rect.height / 2;
-  const fromCenter = centerPosition - windowHeight / 2;
+  const windowWidth = window.innerWidth;
   
-  return -fromCenter * speed;
+  if (direction === 'vertical') {
+    const centerPosition = rect.top + rect.height / 2;
+    const fromCenter = centerPosition - windowHeight / 2;
+    
+    // Apply easing to make movement smoother
+    const easedPosition = Math.sign(fromCenter) * Math.pow(Math.abs(fromCenter), 0.85);
+    return -easedPosition * speed;
+  } else {
+    const centerPosition = rect.left + rect.width / 2;
+    const fromCenter = centerPosition - windowWidth / 2;
+    
+    // Apply easing to make movement smoother
+    const easedPosition = Math.sign(fromCenter) * Math.pow(Math.abs(fromCenter), 0.85);
+    return -easedPosition * speed;
+  }
 };
 
-// Apply smooth transform to element based on scroll position
+// Apply smooth transform to element based on scroll position with enhanced smoothing
 export const applySmoothTransform = (
   element: HTMLElement, 
   scrollProgress: number, 
   { 
     translateY = 0, 
+    translateX = 0,
     opacity = 1, 
     scale = 1, 
-    rotation = 0 
+    rotation = 0,
+    blur = 0
   }: { 
     translateY?: number; 
+    translateX?: number;
     opacity?: number; 
     scale?: number; 
-    rotation?: number; 
+    rotation?: number;
+    blur?: number;
   } = {}
 ): void => {
   if (!element) return;
   
-  element.style.transform = `translateY(${translateY}px) scale(${scale}) rotate(${rotation}deg)`;
+  element.style.transform = `translateY(${translateY}px) translateX(${translateX}px) scale(${scale}) rotate(${rotation}deg)`;
   element.style.opacity = opacity.toString();
+  
+  if (blur > 0) {
+    element.style.filter = `blur(${blur}px)`;
+  } else {
+    element.style.filter = '';
+  }
 };
 
-// Create ripple effect
+// Create ripple effect - improved with better rendering performance
 export const createRipple = (x: number, y: number, color: string = '#00b8d4'): void => {
   const ripple = document.createElement('div');
   
@@ -74,23 +114,34 @@ export const createRipple = (x: number, y: number, color: string = '#00b8d4'): v
   ripple.style.transform = 'translate(-50%, -50%) scale(0)';
   ripple.style.width = '2px';
   ripple.style.height = '2px';
-  ripple.style.opacity = '0.8';
+  ripple.style.opacity = '0.6'; // Reduced opacity
   
   document.body.appendChild(ripple);
   
-  // Animate the ripple
+  // Animate the ripple with more efficient options
   const animation = ripple.animate(
     [
-      { transform: 'translate(-50%, -50%) scale(0)', opacity: 0.8 },
-      { transform: 'translate(-50%, -50%) scale(300)', opacity: 0 }
+      { transform: 'translate(-50%, -50%) scale(0)', opacity: 0.6 },
+      { transform: 'translate(-50%, -50%) scale(250)', opacity: 0 }
     ],
     {
-      duration: 1000,
-      easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)'
+      duration: 800, // Faster animation
+      easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
+      composite: 'add' // More efficient compositing
     }
   );
   
   animation.onfinish = () => {
     ripple.remove();
   };
+};
+
+// Check if element is hero section to treat it specially
+export const isHeroSection = (element: HTMLElement): boolean => {
+  return element.id === 'hero' || element.classList.contains('hero-section');
+};
+
+// Check if device is mobile
+export const isMobileDevice = (): boolean => {
+  return window.innerWidth < 768;
 };
