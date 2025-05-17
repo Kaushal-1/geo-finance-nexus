@@ -3,15 +3,15 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, ChartBar, Bell, Clock } from "lucide-react";
 import FeatureCard from "@/components/FeatureCard";
-import WelcomeModal from "@/components/WelcomeModal";
 import { toast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
 import HomeMapboxGlobe from "@/components/HomeMapboxGlobe";
 import "@/components/home-mapbox.css";
+import APIModal from "@/components/APIModal";
 
 const Index = () => {
-  const [showWelcomeModal, setShowWelcomeModal] = useState(true);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [showAPIModal, setShowAPIModal] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -213,11 +213,13 @@ const Index = () => {
               <span className="text-white text-lg font-bold">GeoFinance</span>
             </div>
             <div className="flex flex-wrap gap-6 text-sm text-gray-400">
-              <a href="#" className="hover:text-teal transition-colors">Terms</a>
-              <a href="#" className="hover:text-teal transition-colors">Privacy</a>
+              <button 
+                onClick={() => setShowAPIModal(true)}
+                className="hover:text-teal transition-colors cursor-pointer"
+              >
+                APIs Used
+              </button>
               <a href="#" className="hover:text-teal transition-colors">Documentation</a>
-              <a href="#" className="hover:text-teal transition-colors">API</a>
-              <a href="#" className="hover:text-teal transition-colors">Contact</a>
             </div>
             <div className="mt-6 md:mt-0 text-sm text-gray-500">
               © 2025 GeoFinance. All rights reserved.
@@ -226,10 +228,11 @@ const Index = () => {
         </div>
       </footer>
 
-      {/* Welcome Modal */}
-      <WelcomeModal isOpen={showWelcomeModal} onClose={() => setShowWelcomeModal(false)} />
+      {/* API Modal */}
+      <APIModal open={showAPIModal} onClose={() => setShowAPIModal(false)} />
     </div>
   );
 };
 
 export default Index;
+
