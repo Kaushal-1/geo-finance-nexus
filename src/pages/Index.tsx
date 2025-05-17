@@ -16,14 +16,37 @@ import { Separator } from "@/components/ui/separator";
 const Index = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [showAPIModal, setShowAPIModal] = useState(false);
+  const [activeSection, setActiveSection] = useState("hero");
+
+  const navLinks = [
+    { name: "Analytics", path: "#features", anchor: true },
+    { name: "Journey", path: "#journey", anchor: true },
+    { name: "Plans", path: "#plans", anchor: true }
+  ];
+
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
       setHasScrolled(scrollPosition > 50);
+      
+      // Determine active section based on scroll position
+      const sections = ["hero", "features", "journey", "plans"];
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          if (rect.top <= 150 && rect.bottom >= 150) {
+            setActiveSection(section);
+            break;
+          }
+        }
+      }
     };
+    
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
   const handleExploreClick = () => {
     toast({
       title: "Welcome to GeoFinance",
@@ -31,6 +54,14 @@ const Index = () => {
       duration: 5000
     });
   };
+
+  const handleNavClick = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   const features = [{
     title: "Geospatial Insights",
     description: "Visualize financial data layered onto geographic maps to identify regional trends and opportunities.",
@@ -48,6 +79,7 @@ const Index = () => {
     description: "Plot your investments on a global scale and visualize exposure across different geographic regions.",
     icon: Clock
   }];
+  
   return <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] overflow-x-hidden">
       {/* Navbar */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${hasScrolled ? "py-3 bg-black/70 backdrop-blur-md" : "py-5 bg-transparent"}`}>
@@ -59,11 +91,17 @@ const Index = () => {
             <span className="text-white text-xl font-bold">GeoFinance</span>
           </div>
           <div className="hidden md:flex items-center space-x-6">
-            
-            {/* <Link to="/dashboard" className="text-gray-300 hover:text-white transition-colors">Market Map</Link>
-            <Link to="/trading" className="text-gray-300 hover:text-white transition-colors">Trading Dashboard</Link> */}
-            {/* <Link to="/stock-compare" className="text-gray-300 hover:text-white transition-colors">Compare Stocks</Link>
-            <Link to="/chat-research" className="text-gray-300 hover:text-white transition-colors">AI Research</Link> */}
+            {navLinks.map((link) => (
+              <button 
+                key={link.path}
+                onClick={() => handleNavClick(link.path.substring(1))} 
+                className={`text-gray-300 hover:text-white transition-colors ${
+                  activeSection === link.path.substring(1) ? "text-white font-medium" : ""
+                }`}
+              >
+                {link.name}
+              </button>
+            ))}
             <Link to="/signin" className="text-gray-300 hover:text-white transition-colors absolute right-20">Sign In</Link>
           </div>
           <div className="flex items-center gap-2">
@@ -89,7 +127,7 @@ const Index = () => {
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="space-y-6 animate-fade-in">
               <div className="p-2 px-4 rounded-full border border-teal/30 bg-teal/5 backdrop-blur-sm inline-flex items-center">
-                <span className="text-sm text-teal font-medium">New Feature: Sonar Powered Deep Research & Stock Comparer added !  </span>
+                <span className="text-sm text-teal font-medium">New Feature: Sonar Powered Deep Research & Stock Comparer added !  </span>
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
                 Unlock the Power of Geospatial Financial Intelligence
