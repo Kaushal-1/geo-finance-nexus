@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MapVisualization from "@/components/dashboard/MapVisualization";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import GlobalNavbar from "@/components/shared/GlobalNavbar";
 import { useTimelineData } from "@/hooks/useTimelineData";
 import { Button } from "@/components/ui/button";
 import { Newspaper } from "lucide-react";
@@ -23,7 +23,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] text-[#f5f7fa] overflow-hidden">
-      <DashboardHeader />
+      <GlobalNavbar />
       
       <div className="flex flex-col h-[calc(100vh-120px)] p-4 gap-4">
         {/* Main Content - Interactive Map with fixed height */}

@@ -26,7 +26,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import VisualizationPanel from "@/components/chat/VisualizationPanel";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import GlobalNavbar from "@/components/shared/GlobalNavbar";
 
 const ChatResearch = () => {
   const [apiKey, setApiKey] = useState<string | null>(
@@ -169,8 +169,7 @@ const ChatResearch = () => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] text-[#f5f7fa]">
-      {/* Add Dashboard Header */}
-      <DashboardHeader />
+      <GlobalNavbar />
 
       <div className="container mx-auto py-8 px-4">
         {/* Header */}
