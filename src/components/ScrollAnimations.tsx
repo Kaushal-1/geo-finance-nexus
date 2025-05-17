@@ -1,6 +1,11 @@
-
 import React, { useEffect, useRef, useState } from 'react';
-import { getScrollProgress, getSectionVisibility, createRipple } from '@/utils/scrollAnimations';
+import { 
+  getScrollProgress, 
+  getSectionVisibility, 
+  createRipple, 
+  createHeroParticles, 
+  createHeroConstellation 
+} from '@/utils/scrollAnimations';
 import './scroll-animations.css';
 
 interface ScrollAnimationsProps {
@@ -17,11 +22,76 @@ const ScrollAnimations: React.FC<ScrollAnimationsProps> = ({ sections }) => {
   const progressRef = useRef<HTMLDivElement>(null);
   const nodesRef = useRef<HTMLDivElement[]>([]);
   const isMobile = useRef(window.innerWidth < 768);
+  const cleanupFunctionsRef = useRef<(() => void)[]>([]);
   
   // Calculate node positions
   const nodePositions = sections.map((_, index) => 
     (index / (sections.length - 1)) * 100
   );
+
+  // Initialize hero section effects
+  useEffect(() => {
+    const heroSection = document.getElementById('hero');
+    if (heroSection) {
+      // Add cosmic dust background
+      const cosmicDustContainer = document.createElement('div');
+      cosmicDustContainer.className = 'cosmic-dust-container';
+      heroSection.appendChild(cosmicDustContainer);
+      
+      // Add multiple cosmic dust particles
+      for (let i = 0; i < 5; i++) {
+        const dust = document.createElement('div');
+        dust.className = 'cosmic-dust';
+        
+        // Randomize position, size and animation delay
+        dust.style.left = `${Math.random() * 100}%`;
+        dust.style.top = `${Math.random() * 100}%`;
+        dust.style.width = `${200 + Math.random() * 300}px`;
+        dust.style.height = dust.style.width;
+        dust.style.animationDelay = `${-Math.random() * 25}s`; // Negative for immediate start at different positions
+        
+        cosmicDustContainer.appendChild(dust);
+      }
+      
+      // Add glowing orb
+      const orb = document.createElement('div');
+      orb.className = 'hero-orb';
+      orb.style.left = '70%';
+      orb.style.top = '30%';
+      heroSection.appendChild(orb);
+      
+      // Add particles
+      createHeroParticles(heroSection);
+      
+      // Add constellation effect
+      const cleanupConstellation = createHeroConstellation(heroSection);
+      cleanupFunctionsRef.current.push(cleanupConstellation);
+      
+      // Create "fixed" effect for hero content
+      const heroContent = heroSection.querySelector('.hero-content') as HTMLElement;
+      if (heroContent) {
+        heroContent.classList.add('hero-content-fixed');
+      }
+    }
+    
+    return () => {
+      // Clean up all effects
+      cleanupFunctionsRef.current.forEach(cleanup => cleanup());
+      
+      // Remove manually added elements
+      const heroSection = document.getElementById('hero');
+      if (heroSection) {
+        const cosmicDustContainer = heroSection.querySelector('.cosmic-dust-container');
+        if (cosmicDustContainer) cosmicDustContainer.remove();
+        
+        const orb = heroSection.querySelector('.hero-orb');
+        if (orb) orb.remove();
+        
+        const particles = heroSection.querySelectorAll('.hero-particle');
+        particles.forEach(p => p.remove());
+      }
+    };
+  }, []);
 
   // Handle scroll events
   useEffect(() => {
@@ -53,6 +123,18 @@ const ScrollAnimations: React.FC<ScrollAnimationsProps> = ({ sections }) => {
       
       if (mostVisibleSection !== activeSection) {
         setActiveSection(mostVisibleSection);
+      }
+      
+      // Enhance hero section text - no scrolling movement
+      const heroSection = document.getElementById('hero');
+      const heroContent = heroSection?.querySelector('.hero-content') as HTMLElement;
+      if (heroContent) {
+        // Keep hero content visually fixed until we're past the hero section
+        const heroRect = heroSection?.getBoundingClientRect();
+        if (heroRect && heroRect.bottom > 0) {
+          // Only apply the transform if we're still seeing part of the hero
+          heroContent.style.transform = `translateY(${window.scrollY}px)`;
+        }
       }
     };
     
@@ -116,6 +198,12 @@ const ScrollAnimations: React.FC<ScrollAnimationsProps> = ({ sections }) => {
     
     const handleResize = () => {
       isMobile.current = window.innerWidth < 768;
+      
+      // Recreate hero particles on resize for responsive layout
+      const heroSection = document.getElementById('hero');
+      if (heroSection) {
+        createHeroParticles(heroSection);
+      }
     };
     
     // Apply global smooth scrolling

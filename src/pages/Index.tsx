@@ -14,7 +14,7 @@ import JourneySection from "@/components/JourneySection";
 import SiteMap from "@/components/SiteMap";
 import { Separator } from "@/components/ui/separator";
 import ScrollAnimations from "@/components/ScrollAnimations";
-import { getScrollProgress, getSectionVisibility, applySmoothTransform, isHeroSection } from "@/utils/scrollAnimations";
+import { getScrollProgress, getSectionVisibility } from "@/utils/scrollAnimations";
 
 const Index = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -23,8 +23,8 @@ const Index = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   
   // Section elements refs
-  const heroRef = useRef(null);
-  const featuresRef = useRef(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef<HTMLDivElement>(null);
 
   const navLinks = [
     { name: "Analytics", path: "#features", anchor: true },
@@ -48,13 +48,6 @@ const Index = () => {
       // Calculate overall scroll progress
       const progress = getScrollProgress();
       setScrollProgress(progress);
-      
-      // Apply parallax effect to hero section
-      // Only apply moderate parallax to avoid disrupting the hero section
-      if (heroRef.current) {
-        const translateY = scrollPosition * 0.25; // Reduced from 0.4 for subtler effect
-        heroRef.current.style.transform = `translateY(${translateY}px)`;
-      }
       
       // Apply effects to feature cards
       if (featuresRef.current) {
@@ -99,7 +92,7 @@ const Index = () => {
     });
   };
 
-  const handleNavClick = (sectionId) => {
+  const handleNavClick = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
       // Add offset for navbar height
@@ -178,14 +171,14 @@ const Index = () => {
         </div>
         
         {/* Content overlay */}
-        <div className="container mx-auto relative z-10 pt-20" ref={heroRef}>
+        <div className="container mx-auto relative z-10 pt-20 hero-content" ref={heroRef}>
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="space-y-6 animate-fade-in">
               <div className="p-2 px-4 rounded-full border border-teal/30 bg-teal/5 backdrop-blur-sm inline-flex items-center">
                 <span className="text-sm text-teal font-medium">New Feature: Sonar Powered Deep Research & Stock Comparer added!</span>
               </div>
               <div className="reveal-container">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight reveal-element revealed">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight reveal-element revealed hero-heading">
                   <span className="gradient-text-animated">Unlock</span> the Power of Geospatial Financial Intelligence
                 </h1>
               </div>

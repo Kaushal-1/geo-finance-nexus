@@ -50,13 +50,13 @@
 /* Path Animation - Repositioned to be very close to the left side */
 .path-animation {
   position: fixed;
-  left: 10px; /* Moved closer to the left edge */
+  left: 5px; /* Even closer to the left edge */
   top: 0;
   bottom: 0;
   width: 1px; /* Made thinner */
   z-index: 10;
   pointer-events: none;
-  opacity: 0.6; /* Reduced opacity to be less intrusive */
+  opacity: 0.5; /* Reduced opacity to be less intrusive */
 }
 
 .path-line {
@@ -106,6 +106,7 @@
   z-index: 15; /* Higher z-index to ensure hero content stays visible */
   min-height: 100vh;
   position: relative;
+  overflow: hidden; /* Prevent animations from leaking out */
 }
 
 /* Magic dust effect */
@@ -141,6 +142,99 @@
 
 .floating-element {
   animation: float 6s ease-in-out infinite;
+}
+
+/* Hero section particle animation */
+@keyframes float-particle {
+  0%, 100% { 
+    transform: translate(0, 0); 
+    opacity: 0.4;
+  }
+  25% { 
+    transform: translate(-20px, 15px); 
+    opacity: 0.8;
+  }
+  50% { 
+    transform: translate(10px, -20px); 
+    opacity: 0.6;
+  }
+  75% { 
+    transform: translate(20px, 10px); 
+    opacity: 0.8;
+  }
+}
+
+.hero-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  will-change: transform, opacity; /* Performance optimization */
+}
+
+/* Hero text glow animation */
+@keyframes text-glow {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(0, 184, 212, 0.5),
+                 0 0 20px rgba(0, 184, 212, 0.3),
+                 0 0 30px rgba(0, 184, 212, 0.1);
+  }
+  50% {
+    text-shadow: 0 0 15px rgba(0, 184, 212, 0.7),
+                 0 0 30px rgba(0, 184, 212, 0.5),
+                 0 0 45px rgba(0, 184, 212, 0.3);
+  }
+}
+
+.hero-heading {
+  animation: text-glow 4s ease-in-out infinite;
+  position: relative;
+  z-index: 15;
+}
+
+/* Hero constellation animation */
+.hero-constellation {
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.8;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Hero glowing orb animation */
+@keyframes orb-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+    box-shadow: 0 0 30px rgba(0, 184, 212, 0.7),
+                0 0 60px rgba(0, 184, 212, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+    box-shadow: 0 0 40px rgba(0, 184, 212, 0.9),
+                0 0 80px rgba(0, 184, 212, 0.6);
+  }
+}
+
+.hero-orb {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(0, 212, 212, 0.9), rgba(0, 184, 212, 0.7), rgba(0, 100, 200, 0.5));
+  filter: blur(5px);
+  animation: orb-pulse 6s ease-in-out infinite;
+  z-index: 1;
+}
+
+/* Hero content appears fixed while scrolling */
+.hero-content-fixed {
+  position: relative;
+  z-index: 15;
+  will-change: transform;
 }
 
 /* Zoom background effect */
@@ -222,11 +316,47 @@
   transition: transform 0.5s ease;
 }
 
+/* Hero cosmic dust particles */
+@keyframes cosmic-dust {
+  0% {
+    transform: rotate(0deg) translate(0, 0) scale(0.8);
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: rotate(360deg) translate(0, 0) scale(1.2);
+    opacity: 0.2;
+  }
+}
+
+.cosmic-dust-container {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.cosmic-dust {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background-image: radial-gradient(circle, rgba(0, 184, 212, 0.2) 10%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(10px);
+  animation: cosmic-dust 25s linear infinite;
+  will-change: transform, opacity;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .path-animation {
-    left: 5px; /* Even closer to edge on mobile */
-    opacity: 0.4; /* More subtle on mobile */
+    left: 3px; /* Even closer to edge on mobile */
+    opacity: 0.3; /* More subtle on mobile */
   }
   
   .scroll-indicator {
@@ -236,5 +366,10 @@
   
   .content-section {
     padding: 4rem 0; /* Less padding on mobile */
+  }
+  
+  .hero-orb {
+    width: 80px;
+    height: 80px;
   }
 }

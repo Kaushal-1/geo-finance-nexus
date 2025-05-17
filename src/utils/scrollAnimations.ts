@@ -136,6 +136,173 @@ export const createRipple = (x: number, y: number, color: string = '#00b8d4'): v
   };
 };
 
+// Create hero particles effect
+export const createHeroParticles = (container: HTMLElement): void => {
+  if (!container) return;
+  
+  // Clear any existing particles
+  const existingParticles = container.querySelectorAll('.hero-particle');
+  existingParticles.forEach(p => p.remove());
+  
+  // Create new particles
+  const particleCount = window.innerWidth < 768 ? 30 : 60; // Less particles on mobile
+  
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('hero-particle');
+    
+    // Randomize size (smaller for a more sophisticated look)
+    const size = 1 + Math.random() * 3;
+    
+    // Randomize color with a bias towards the teal spectrum for brand consistency
+    const colors = ['#00b8d4', '#00d4d4', '#00d4b8', '#ffffff', '#b8e6ff'];
+    const colorIndex = Math.floor(Math.pow(Math.random(), 1.5) * colors.length); // Bias towards first colors
+    const color = colors[colorIndex];
+    
+    // Randomize opacity for depth
+    const opacity = 0.1 + Math.random() * 0.7;
+    
+    // Position randomly within container
+    const posX = Math.random() * 100;
+    const posY = Math.random() * 100;
+    
+    // Set CSS properties
+    particle.style.position = 'absolute';
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+    particle.style.backgroundColor = color;
+    particle.style.borderRadius = '50%';
+    particle.style.left = `${posX}%`;
+    particle.style.top = `${posY}%`;
+    particle.style.opacity = `${opacity}`;
+    particle.style.boxShadow = `0 0 ${size * 2}px ${color}`;
+    
+    // Add animation
+    const duration = 15 + Math.random() * 20;
+    const delay = Math.random() * -30; // Negative delay for immediate start
+    particle.style.animation = `float-particle ${duration}s ${delay}s infinite ease-in-out`;
+    
+    container.appendChild(particle);
+  }
+};
+
+// Apply hero constellation effect
+export const createHeroConstellation = (container: HTMLElement): (() => void) => {
+  if (!container) return () => {};
+  
+  // Create canvas for lines
+  const canvas = document.createElement('canvas');
+  canvas.classList.add('hero-constellation');
+  canvas.style.position = 'absolute';
+  canvas.style.top = '0';
+  canvas.style.left = '0';
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  canvas.style.pointerEvents = 'none';
+  canvas.style.zIndex = '0';
+  container.appendChild(canvas);
+  
+  // Setup canvas
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return () => {};
+  
+  // Create particle nodes
+  const nodes: {x: number, y: number, vx: number, vy: number, radius: number}[] = [];
+  const nodeCount = window.innerWidth < 768 ? 40 : 100;
+  const connectionDistance = window.innerWidth < 768 ? 100 : 150;
+  
+  const resizeCanvas = () => {
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+  };
+  
+  // Initialize nodes
+  const initNodes = () => {
+    nodes.length = 0;
+    for (let i = 0; i < nodeCount; i++) {
+      nodes.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: Math.random() * 0.2 - 0.1,
+        vy: Math.random() * 0.2 - 0.1,
+        radius: 1 + Math.random() * 2
+      });
+    }
+  };
+  
+  // Draw function
+  const draw = () => {
+    if (!ctx) return;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Update and draw nodes
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      
+      // Update position
+      node.x += node.vx;
+      node.y += node.vy;
+      
+      // Bounce off edges
+      if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
+      if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
+      
+      // Draw node
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0, 184, 212, ${0.1 + Math.random() * 0.1})`;
+      ctx.fill();
+      
+      // Draw connections
+      for (let j = i + 1; j < nodes.length; j++) {
+        const node2 = nodes[j];
+        const dx = node.x - node2.x;
+        const dy = node.y - node2.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < connectionDistance) {
+          ctx.beginPath();
+          ctx.moveTo(node.x, node.y);
+          ctx.lineTo(node2.x, node2.y);
+          
+          // Opacity based on distance
+          const opacity = 1 - distance / connectionDistance;
+          ctx.strokeStyle = `rgba(0, 184, 212, ${opacity * 0.15})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+  };
+  
+  // Handle resize
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    initNodes();
+  });
+  
+  // Initial setup
+  resizeCanvas();
+  initNodes();
+  
+  // Animation frame
+  let animationId: number;
+  const animate = () => {
+    draw();
+    animationId = requestAnimationFrame(animate);
+  };
+  
+  animate();
+  
+  // Return cleanup function
+  return () => {
+    cancelAnimationFrame(animationId);
+    canvas.remove();
+  };
+};
+
 // Check if element is hero section to treat it specially
 export const isHeroSection = (element: HTMLElement): boolean => {
   return element.id === 'hero' || element.classList.contains('hero-section');
