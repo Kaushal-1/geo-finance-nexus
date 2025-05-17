@@ -8,6 +8,8 @@ import HomeMapboxGlobe from "@/components/HomeMapboxGlobe";
 import "@/components/home-mapbox.css";
 import APIModal from "@/components/APIModal";
 import SubscriptionPlans from "@/components/SubscriptionPlans";
+import ChatbotWidget from "@/components/chatbot/ChatbotWidget";
+
 const Index = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [showAPIModal, setShowAPIModal] = useState(false);
@@ -148,7 +150,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Subscription Plans Section (replacing Stats Section) */}
+      {/* Subscription Plans Section */}
       <SubscriptionPlans />
 
       {/* Call to Action */}
@@ -196,6 +198,10 @@ const Index = () => {
 
       {/* API Modal */}
       <APIModal open={showAPIModal} onClose={() => setShowAPIModal(false)} />
+
+      {/* Chatbot Widget */}
+      <ChatbotWidget />
     </div>;
 };
+
 export default Index;
