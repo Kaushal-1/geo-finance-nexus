@@ -23,6 +23,7 @@ const DashboardHeader = () => {
   const links = [
     { name: "Dashboard", path: "/dashboard" },
     { name: "Trading", path: "/trading" },
+    { name: "Compare Stocks", path: "/stock-compare" },
     { name: "Research", path: "/chat-research" },
   ];
 

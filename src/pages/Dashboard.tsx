@@ -5,7 +5,7 @@ import MapVisualization from "@/components/dashboard/MapVisualization";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { useTimelineData } from "@/hooks/useTimelineData";
 import { Button } from "@/components/ui/button";
-import { Newspaper, ArrowRightLeft } from "lucide-react";
+import { Newspaper } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -51,15 +51,6 @@ const Dashboard = () => {
                   </div>
                 </SheetContent>
               </Sheet>
-              
-              {/* Stock Compare Button */}
-              <Button 
-                className="bg-violet-600 hover:bg-violet-700"
-                size="sm"
-                onClick={() => navigate('/stock-compare')}
-              >
-                <ArrowRightLeft className="mr-2 h-4 w-4" /> Compare Stocks
-              </Button>
             </div>
           </div>
         </div>
