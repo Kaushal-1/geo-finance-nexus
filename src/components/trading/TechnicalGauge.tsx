@@ -1,12 +1,9 @@
-
 import React from "react";
-
 interface TechnicalGaugeProps {
   value: string;
   percentage: number;
   colorClass?: string;
 }
-
 const TechnicalGauge: React.FC<TechnicalGaugeProps> = ({
   value,
   percentage,
@@ -15,7 +12,7 @@ const TechnicalGauge: React.FC<TechnicalGaugeProps> = ({
   // Calculate gauge angle (from -90 to 90 degrees)
   const calculateGaugeAngle = () => {
     // Map percentage (0-100) to angle (-90 to 90)
-    return (percentage / 100 * 180) - 90;
+    return percentage / 100 * 180 - 90;
   };
 
   // Determine color based on percentage
@@ -33,9 +30,7 @@ const TechnicalGauge: React.FC<TechnicalGaugeProps> = ({
     if (percentage < 70) return "bg-yellow-400";
     return "bg-green-500";
   };
-
-  return (
-    <div className="flex flex-col items-center">
+  return <div className="flex flex-col items-center">
       <div className="w-32 h-16 relative">
         {/* Gauge background */}
         <div className="w-full h-full overflow-hidden">
@@ -52,29 +47,16 @@ const TechnicalGauge: React.FC<TechnicalGaugeProps> = ({
                 </defs>
                 
                 {/* Background track */}
-                <path 
-                  d="M10,50 A40,40 0 0,1 90,50" 
-                  fill="none" 
-                  stroke="rgba(255,255,255,0.05)"
-                  strokeWidth="6" 
-                  strokeLinecap="round"
-                />
+                <path d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" strokeLinecap="round" />
                 
                 {/* Colored gauge path */}
-                <path 
-                  d="M10,50 A40,40 0 0,1 90,50" 
-                  fill="none" 
-                  stroke="url(#simpleGaugeGradient)" 
-                  strokeWidth="6" 
-                  strokeLinecap="round"
-                />
+                <path d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="url(#simpleGaugeGradient)" strokeWidth="6" strokeLinecap="round" />
               </svg>
               
               {/* Simple needle */}
-              <div 
-                className="absolute bottom-0 left-1/2 h-14 w-0.5 bg-white origin-bottom transform transition-transform duration-700 ease-out"
-                style={{ transform: `translateX(-50%) rotate(${calculateGaugeAngle()}deg)` }}
-              >
+              <div className="absolute bottom-0 left-1/2 h-14 w-0.5 bg-white origin-bottom transform transition-transform duration-700 ease-out" style={{
+              transform: `translateX(-50%) rotate(${calculateGaugeAngle()}deg)`
+            }}>
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full"></div>
               </div>
             </div>
@@ -91,13 +73,10 @@ const TechnicalGauge: React.FC<TechnicalGaugeProps> = ({
       
       {/* Enhanced percentage display with better visibility */}
       <div className="mt-5 text-sm">
-        <span className={`font-bold ${colorClass} bg-black/90 px-3 py-1.5 rounded-md shadow-md border border-gray-800/50`}>
+        <span className="text-xs">
           {percentage}%
         </span>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default TechnicalGauge;
-
