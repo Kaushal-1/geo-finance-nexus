@@ -75,9 +75,9 @@ const Index = () => {
       </nav>
 
       {/* Hero Section with Mapbox Globe */}
-      <section className="relative min-h-screen flex items-center absolute right-50">
+      <section className="relative min-h-screen flex items-center ">
         {/* Background Globe - replaced with Mapbox Globe */}
-        <div className="absolute inset-0 z-0 opacity-80">
+        <div className="absolute inset-0 z-0 opacity-78 absolute right-50">
           <HomeMapboxGlobe className="w-full h-full" />
         </div>
         
