@@ -9,58 +9,97 @@ import HomeMapboxGlobe from "@/components/HomeMapboxGlobe";
 import "@/components/home-mapbox.css";
 import APIModal from "@/components/APIModal";
 import SubscriptionPlans from "@/components/SubscriptionPlans";
-import { motion, useAnimation } from "framer-motion";
+import gsap from "gsap";
 
 const Index = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [showAPIModal, setShowAPIModal] = useState(false);
   const [globeAnimated, setGlobeAnimated] = useState(false);
-  const controls = useAnimation();
   const globeWrapperRef = useRef<HTMLDivElement>(null);
   const navbarGlobeRef = useRef<HTMLDivElement>(null);
+  const heroGlobeRef = useRef<HTMLDivElement>(null);
+  const tl = useRef<gsap.core.Timeline | null>(null);
 
-  // Handle scroll effect for navbar
+  // Handle scroll effect for navbar and globe animation
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
-      setHasScrolled(scrollPosition > 50);
+      const wasScrolled = hasScrolled;
+      const isScrolled = scrollPosition > 50;
+      
+      setHasScrolled(isScrolled);
+      
+      // If we're scrolling back to top and the globe was previously animated
+      if (wasScrolled && !isScrolled && globeAnimated) {
+        // Reverse the animation - bring the globe back to the hero section
+        reverseGlobeAnimation();
+      } 
+      // If we're scrolling down and the globe wasn't animated yet or is back in the hero
+      else if (!wasScrolled && isScrolled && !globeAnimated) {
+        // Animate the globe to the navbar
+        animateGlobeToNavbar();
+      }
     };
+    
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [hasScrolled, globeAnimated]);
 
-  // Handle globe animation
+  // Initialize globe animation when components are ready
   useEffect(() => {
-    // Wait for components to render before calculating positions
+    // Wait for components to render before setting up the animation
     const timer = setTimeout(() => {
       if (globeWrapperRef.current && navbarGlobeRef.current) {
-        const startRect = globeWrapperRef.current.getBoundingClientRect();
-        const endRect = navbarGlobeRef.current.getBoundingClientRect();
-        
-        // Calculate the transform values
-        const xMove = endRect.left - startRect.left + (endRect.width/2 - startRect.width/2);
-        const yMove = endRect.top - startRect.top + (endRect.height/2 - startRect.height/2);
-        const scaleValue = endRect.width / startRect.width;
-
-        // Animate the globe
-        controls.start({
-          x: xMove,
-          y: yMove,
-          scale: scaleValue,
-          opacity: [0.8, 1],
-          transition: { 
-            duration: 1.2, 
-            ease: "easeInOut",
-            delay: 0.5
-          }
-        }).then(() => {
-          setGlobeAnimated(true);
-        });
+        setupGlobeAnimation();
       }
     }, 1000);
     
     return () => clearTimeout(timer);
-  }, [controls]);
+  }, []);
+
+  // Setup GSAP animation but don't run it yet
+  const setupGlobeAnimation = () => {
+    if (!globeWrapperRef.current || !navbarGlobeRef.current) return;
+    
+    // Get the positions and sizes of the elements
+    const startRect = globeWrapperRef.current.getBoundingClientRect();
+    const endRect = navbarGlobeRef.current.getBoundingClientRect();
+    
+    // Calculate the transform values
+    const xMove = endRect.left - startRect.left + (endRect.width/2 - startRect.width/2);
+    const yMove = endRect.top - startRect.top + (endRect.height/2 - startRect.height/2);
+    const scaleValue = endRect.width / startRect.width;
+    
+    // Create a GSAP timeline that we can reuse for both animation and reversal
+    tl.current = gsap.timeline({
+      paused: true,
+      onComplete: () => setGlobeAnimated(true),
+      onReverseComplete: () => setGlobeAnimated(false),
+    });
+    
+    // Only animate the globe wrapper, not its contents
+    tl.current.to(globeWrapperRef.current, {
+      x: xMove,
+      y: yMove,
+      scale: scaleValue,
+      duration: 1.2,
+      ease: "power2.inOut",
+    });
+  };
+  
+  // Function to animate the globe to the navbar
+  const animateGlobeToNavbar = () => {
+    if (tl.current) {
+      tl.current.play();
+    }
+  };
+  
+  // Function to animate the globe back to the hero section
+  const reverseGlobeAnimation = () => {
+    if (tl.current) {
+      tl.current.reverse();
+    }
+  };
 
   const handleExploreClick = () => {
     toast({
@@ -133,16 +172,17 @@ const Index = () => {
         {/* Background Globe - replaced with Mapbox Globe */}
         <div className="absolute inset-0 z-0 opacity-80">
           {/* Animated globe wrapper */}
-          <motion.div 
+          <div 
             ref={globeWrapperRef}
-            animate={controls}
             className="w-full h-full"
             style={{
               transformOrigin: 'center center',
             }}
           >
-            <HomeMapboxGlobe className={`w-full h-full ${globeAnimated ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`} />
-          </motion.div>
+            <div ref={heroGlobeRef}>
+              <HomeMapboxGlobe className="w-full h-full" />
+            </div>
+          </div>
         </div>
         
         {/* Content overlay */}
@@ -214,7 +254,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Subscription Plans Section (replacing Stats Section) */}
+      {/* Subscription Plans Section */}
       <SubscriptionPlans />
 
       {/* Call to Action */}

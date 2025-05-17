@@ -1,16 +1,16 @@
-
 import React, { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface HomeMapboxGlobeProps {
   className?: string;
+  isVisible?: boolean;
 }
 
 // Set the Mapbox token
 mapboxgl.accessToken = 'pk.eyJ1Ijoia2F1c2hhbG1hcCIsImEiOiJjbWFrdTdoZXkwMWxuMmtzZGI0YjJzMm8yIn0.YMJoyUNjklC3jrOmzG7xUA';
 
-const HomeMapboxGlobe: React.FC<HomeMapboxGlobeProps> = ({ className }) => {
+const HomeMapboxGlobe: React.FC<HomeMapboxGlobeProps> = ({ className, isVisible = true }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
 
@@ -203,7 +203,7 @@ const HomeMapboxGlobe: React.FC<HomeMapboxGlobeProps> = ({ className }) => {
     });
   };
 
-  return <div ref={mapContainer} className={`${className || ''}`} />;
+  return <div ref={mapContainer} className={`${className || ''} ${!isVisible ? 'opacity-0' : 'opacity-100'}`} />;
 };
 
 export default HomeMapboxGlobe;
