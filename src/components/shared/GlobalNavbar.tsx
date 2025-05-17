@@ -21,7 +21,7 @@ const GlobalNavbar = () => {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const links = [
-    { name: "Dashboard", path: "/dashboard" },
+    { name: "Mapboard", path: "/dashboard" },
     { name: "Trading", path: "/trading" },
     { name: "Compare Stocks", path: "/stock-compare" },
     { name: "Research", path: "/chat-research" },
