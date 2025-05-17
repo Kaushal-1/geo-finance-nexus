@@ -1,0 +1,216 @@
+
+/* Scroll Animation Styles */
+.smooth-scroll {
+  scroll-behavior: smooth;
+}
+
+/* Scroll Journey Indicators */
+.scroll-indicator {
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.scroll-indicator-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.scroll-indicator-dot.active {
+  background-color: #00b8d4;
+  transform: scale(1.5);
+  box-shadow: 0 0 10px rgba(0, 184, 212, 0.5);
+}
+
+.scroll-indicator-label {
+  position: absolute;
+  right: 25px;
+  white-space: nowrap;
+  font-size: 14px;
+  color: white;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+}
+
+.scroll-indicator-item:hover .scroll-indicator-label {
+  opacity: 0.9;
+  transform: translateX(0);
+}
+
+/* Path Animation */
+.path-animation {
+  position: fixed;
+  left: 50px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.path-line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(to bottom, transparent, #00b8d4, transparent);
+}
+
+.path-node {
+  position: absolute;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #00b8d4;
+  transform: translateX(-4px) scale(0);
+  box-shadow: 0 0 10px rgba(0, 184, 212, 0.7);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.path-node.active {
+  transform: translateX(-4px) scale(1);
+}
+
+/* Section transitions */
+.section-transition {
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+              opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.perspective-container {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+/* Magic dust effect */
+.magic-dust {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 50;
+}
+
+/* Scroll progress bar */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(to right, #00b8d4, #0052cc);
+  z-index: 1000;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+}
+
+/* Floating element animation */
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+  100% { transform: translateY(0); }
+}
+
+.floating-element {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Zoom background effect */
+.zoom-bg {
+  transition: transform 1s ease-out;
+}
+
+/* Feature cards entrance animation */
+@keyframes cards-entrance {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.feature-card-animated {
+  animation: cards-entrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+/* Reveal animation */
+.reveal-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.reveal-element {
+  transform: translateY(100%);
+  opacity: 0;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.revealed {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Gradient text animation */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-text-animated {
+  background: linear-gradient(90deg, #00b8d4, #0052cc, #8B5CF6, #D946EF, #00b8d4);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: gradient-shift 4s linear infinite;
+}
+
+/* Interactive background grid */
+.bg-grid {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  opacity: 0.05;
+  pointer-events: none;
+  background-size: 50px 50px;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  transform-origin: center;
+  transition: transform 0.5s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .path-animation, .scroll-indicator {
+    display: none;
+  }
+}

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, ChartBar, Bell, Clock } from "lucide-react";
@@ -12,16 +13,31 @@ import ChatbotWidget from "@/components/chatbot/ChatbotWidget";
 import JourneySection from "@/components/JourneySection";
 import SiteMap from "@/components/SiteMap";
 import { Separator } from "@/components/ui/separator";
+import ScrollAnimations from "@/components/ScrollAnimations";
+import { getScrollProgress, getSectionVisibility, applySmoothTransform } from "@/utils/scrollAnimations";
 
 const Index = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [showAPIModal, setShowAPIModal] = useState(false);
   const [activeSection, setActiveSection] = useState("hero");
+  const [scrollProgress, setScrollProgress] = useState(0);
+  
+  // Section elements refs
+  const heroRef = useRef(null);
+  const featuresRef = useRef(null);
 
   const navLinks = [
     { name: "Analytics", path: "#features", anchor: true },
     { name: "Journey", path: "#journey", anchor: true },
     { name: "Plans", path: "#plans", anchor: true }
+  ];
+  
+  // Define sections for scroll animations
+  const sections = [
+    { id: "hero", name: "Home" },
+    { id: "features", name: "Analytics" },
+    { id: "journey", name: "Journey" },
+    { id: "plans", name: "Plans" }
   ];
 
   useEffect(() => {
@@ -29,9 +45,37 @@ const Index = () => {
       const scrollPosition = window.scrollY;
       setHasScrolled(scrollPosition > 50);
       
+      // Calculate overall scroll progress
+      const progress = getScrollProgress();
+      setScrollProgress(progress);
+      
+      // Apply parallax effect to hero section
+      if (heroRef.current) {
+        const translateY = scrollPosition * 0.4; // Parallax speed
+        heroRef.current.style.transform = `translateY(${translateY}px)`;
+      }
+      
+      // Apply effects to feature cards
+      if (featuresRef.current) {
+        const visibility = getSectionVisibility("features");
+        const cards = featuresRef.current.querySelectorAll('.feature-card');
+        
+        cards.forEach((card, index) => {
+          const delay = index * 0.1;
+          const startThreshold = 0.1 + delay;
+          
+          if (visibility > startThreshold) {
+            card.classList.add('revealed');
+            card.style.transitionDelay = `${delay}s`;
+          } else {
+            card.classList.remove('revealed');
+          }
+        });
+      }
+      
       // Determine active section based on scroll position
-      const sections = ["hero", "features", "journey", "plans"];
-      for (const section of sections) {
+      const sectionIds = ["hero", "features", "journey", "plans"];
+      for (const section of sectionIds) {
         const element = document.getElementById(section);
         if (element) {
           const rect = element.getBoundingClientRect();
@@ -80,7 +124,11 @@ const Index = () => {
     icon: Clock
   }];
   
-  return <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] overflow-x-hidden">
+  return (
+    <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] overflow-x-hidden">
+      {/* Scroll Animations Component */}
+      <ScrollAnimations sections={sections} />
+      
       {/* Navbar */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${hasScrolled ? "py-3 bg-black/70 backdrop-blur-md" : "py-5 bg-transparent"}`}>
         <div className="container mx-auto flex items-center justify-between">
@@ -118,24 +166,27 @@ const Index = () => {
       {/* Hero Section with Mapbox Globe */}
       <section className="relative min-h-screen flex items-center" id="hero">
         {/* Background Globe - replaced with Mapbox Globe */}
-        <div className="absolute inset-0 z-0 opacity-78 ">
+        <div className="absolute inset-0 z-0 opacity-78 zoom-bg" 
+          style={{ transform: `scale(${1 + scrollProgress * 0.05})` }}>
           <HomeMapboxGlobe className="w-full h-full" />
         </div>
         
         {/* Content overlay */}
-        <div className="container mx-auto relative z-10 pt-20">
+        <div className="container mx-auto relative z-10 pt-20" ref={heroRef}>
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="space-y-6 animate-fade-in">
               <div className="p-2 px-4 rounded-full border border-teal/30 bg-teal/5 backdrop-blur-sm inline-flex items-center">
-                <span className="text-sm text-teal font-medium">New Feature: Sonar Powered Deep Research & Stock Comparer added !  </span>
+                <span className="text-sm text-teal font-medium">New Feature: Sonar Powered Deep Research & Stock Comparer added!</span>
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
-                Unlock the Power of Geospatial Financial Intelligence
-              </h1>
-              <p className="text-xl text-gray-300">
+              <div className="reveal-container">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight reveal-element revealed">
+                  <span className="gradient-text-animated">Unlock</span> the Power of Geospatial Financial Intelligence
+                </h1>
+              </div>
+              <p className="text-xl text-gray-300 reveal-element revealed" style={{ transitionDelay: '0.2s' }}>
                 Visualize market insights with dynamic maps and AI-driven data overlays
               </p>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-4 reveal-element revealed" style={{ transitionDelay: '0.4s' }}>
                 <Link to="/dashboard">
                   <Button className="bg-teal-gradient text-white py-6 px-8 rounded-md button-glow">
                     Explore Mapboard <ArrowRight className="ml-2 h-4 w-4" />
@@ -147,12 +198,12 @@ const Index = () => {
                   </Button>
                 </Link>
               </div>
-              <div className="flex items-center space-x-2 pt-6">
+              <div className="flex items-center space-x-2 pt-6 reveal-element revealed" style={{ transitionDelay: '0.6s' }}>
                 <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map(idx => <div key={idx} className="w-8 h-8 rounded-full bg-gray-500 border-2 border-white/20"></div>)}
                 </div>
                 <span className="text-gray-400 text-sm font-mono">
-                  <span className="text-teal font-bold">1000+</span> stocks analysed deeply using Sonar API !
+                  <span className="text-teal font-bold">1000+</span> stocks analysed deeply using Sonar API!
                 </span>
               </div>
             </div>
@@ -170,41 +221,45 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 relative" id="features">
+      <section className="py-20 relative" id="features" ref={featuresRef}>
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+          <div className="text-center mb-16 perspective-container">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 section-transition">
               Advanced Geospatial Analytics
             </h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto section-transition">
               Combine financial data with location intelligence to discover insights that traditional analytics miss.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => <div key={index} className="transition-all duration-500 opacity-0 translate-y-10" style={{
-            animation: `fade-in 0.5s ease-out ${0.1 * (index + 1)}s forwards`
-          }}>
+            {features.map((feature, index) => (
+              <div 
+                key={index} 
+                className="feature-card reveal-element"
+                style={{ transitionDelay: `${index * 0.1}s` }}
+              >
                 <FeatureCard title={feature.title} description={feature.description} icon={feature.icon} />
-              </div>)}
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Journey Section */}
-      <section id="journey">
+      <section id="journey" className="section-transition">
         <JourneySection />
       </section>
 
       {/* Subscription Plans Section */}
-      <section id="plans">
+      <section id="plans" className="section-transition">
         <SubscriptionPlans />
       </section>
 
       {/* Call to Action */}
-      <section className="py-20">
+      <section className="py-20 section-transition">
         <div className="container mx-auto px-4">
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-8 md:p-12 text-center max-w-4xl mx-auto">
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-8 md:p-12 text-center max-w-4xl mx-auto floating-element">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
               Ready to transform your financial analysis?
             </h2>
@@ -237,12 +292,6 @@ const Index = () => {
                 </div>
                 <span className="text-white text-lg font-bold items-center">GeoFinance</span>
               </div>
-              {/* <div className="flex flex-wrap gap-6 text-sm text-gray-400">
-                <button onClick={() => setShowAPIModal(true)} className="hover:text-teal transition-colors cursor-pointer">
-                  APIs Used
-                </button>
-                <a href="#" className="hover:text-teal transition-colors">Documentation</a>
-              </div> */}
               <div className="mt-6 md:mt-0 text-sm text-gray-500">
                 © 2025 GeoFinance. All rights reserved.              
               </div>
@@ -256,7 +305,8 @@ const Index = () => {
 
       {/* Chatbot Widget */}
       <ChatbotWidget />
-    </div>;
+    </div>
+  );
 };
 
 export default Index;
