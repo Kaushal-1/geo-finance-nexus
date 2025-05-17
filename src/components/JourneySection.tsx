@@ -9,7 +9,7 @@ const journeyMilestones = [
   {
     id: 1,
     title: "Concept & Research",
-    date: "2023 Q2",
+    date: "1st of May 2025 Q2",
     icon: Flag,
     description: "Initial market research and concept validation with financial analysts",
     achievement: "Identified key market gap in geospatial analytics",
@@ -18,7 +18,7 @@ const journeyMilestones = [
   {
     id: 2,
     title: "Technology Foundation",
-    date: "2023 Q3",
+    date: "10th of May 2025 Q2",
     icon: MapPin,
     description: "Built core mapping technology and data integration architecture",
     achievement: "Completed prototype of GeoMapboard",
@@ -27,7 +27,7 @@ const journeyMilestones = [
   {
     id: 3,
     title: "Core Product Development",
-    date: "2024 Q1",
+    date: "14th of May 2025 Q2",
     icon: Rocket,
     description: "Developed full working platform with trading integration and analytics",
     achievement: "Successful alpha testing with select partners",
@@ -36,7 +36,7 @@ const journeyMilestones = [
   {
     id: 4,
     title: "Market Validation",
-    date: "2024 Q2",
+    date: "16th of May 2025 Q2",
     icon: Star,
     description: "Expanded to beta program with 50+ investment firms",
     achievement: "Secured first paying enterprise clients",
@@ -45,11 +45,11 @@ const journeyMilestones = [
   {
     id: 5,
     title: "Current Growth",
-    date: "2025 Q2",
+    date: "17th of May 2025 Q2",
     icon: Award,
     description: "Platform expansion with Sonar API integration and global coverage",
     achievement: "Growing user base with strong retention metrics",
-    metric: "1000+ active users"
+    metric: "1000+ stocks analyzed"
   }
 ];
 
