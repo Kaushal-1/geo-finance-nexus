@@ -190,7 +190,7 @@ const Index = () => {
             </div>
             <div className="mt-6 md:mt-0 text-sm text-gray-500">
               © 2025 GeoFinance. All rights reserved. <br>
-              Made with '\u2764\uFE0F' by Radonix!
+             
             </div>
           </div>
         </div>
