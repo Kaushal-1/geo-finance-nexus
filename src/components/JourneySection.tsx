@@ -13,7 +13,7 @@ const journeyMilestones = [
     icon: Flag,
     description: "Initial market research and concept validation with financial analysts",
     achievement: "Identified key market gap in geospatial analytics",
-    metric: "35+ interviews with financial experts"
+    metric: "Analyzed 100+ sources"
   },
   {
     id: 2,
@@ -38,9 +38,9 @@ const journeyMilestones = [
     title: "Market Validation",
     date: "16th of May 2025 Q2",
     icon: Star,
-    description: "Expanded to beta program with 50+ investment firms",
-    achievement: "Secured first paying enterprise clients",
-    metric: "$750K+ annual recurring revenue"
+    description: "Expanded to beta program ",
+    achievement: "Secured the mentorship program",
+    metric: "Published the website for the public"
   },
   {
     id: 5,
