@@ -61,7 +61,7 @@ const Index = () => {
             <Link to="/trading" className="text-gray-300 hover:text-white transition-colors">Trading Dashboard</Link> */}
             {/* <Link to="/stock-compare" className="text-gray-300 hover:text-white transition-colors">Compare Stocks</Link>
             <Link to="/chat-research" className="text-gray-300 hover:text-white transition-colors">AI Research</Link> */}
-            <Link to="/signin" className="text-gray-300 hover:text-white transition-colors">Sign In</Link>
+            <Link to="/signin" className="text-gray-300 hover:text-white transition-colors absolute right-0">Sign In</Link>
           </div>
           <div className="flex items-center gap-2">
             <Link to="/signin">
