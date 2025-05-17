@@ -3,7 +3,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Menu, Settings, Bell } from "lucide-react";
+import { LogOut, User, Menu, Settings, Bell, Globe } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,11 +42,7 @@ const GlobalNavbar = () => {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link to="/dashboard" className="flex items-center">
-              <img 
-                src="/lovable-uploads/e4325a91-f0a2-4e5e-8721-0c586cf592c0.png" 
-                alt="GeoFinance Logo"
-                className="h-10 w-10 mr-2"
-              />
+              <Globe className="h-6 w-6 text-teal-500 mr-2" />
               <span className="text-white font-bold text-xl">GeoFinance</span>
             </Link>
             
