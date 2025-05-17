@@ -82,14 +82,16 @@ const TechnicalGauge: React.FC<TechnicalGaugeProps> = ({
         </div>
         
         {/* Value text with improved readability */}
-        <div className={`absolute -bottom-6 left-0 w-full text-center font-medium ${colorClass}`}>
-          {value}
+        <div className="absolute -bottom-7 left-0 w-full text-center">
+          <span className={`font-medium px-2 py-0.5 rounded bg-gray-800/80 ${colorClass}`}>
+            {value}
+          </span>
         </div>
       </div>
       
       {/* Enhanced percentage display */}
-      <div className={`text-sm mt-2 font-medium ${colorClass}`}>
-        <span className="inline-block px-2 py-0.5 rounded-md bg-opacity-20">
+      <div className="mt-5 text-sm">
+        <span className={`font-bold ${colorClass} bg-gray-800/70 px-2 py-1 rounded-md`}>
           {percentage}%
         </span>
       </div>
