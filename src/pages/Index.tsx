@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, ChartBar, Bell, Clock } from "lucide-react";
 import FeatureCard from "@/components/FeatureCard";
@@ -9,97 +9,19 @@ import HomeMapboxGlobe from "@/components/HomeMapboxGlobe";
 import "@/components/home-mapbox.css";
 import APIModal from "@/components/APIModal";
 import SubscriptionPlans from "@/components/SubscriptionPlans";
-import gsap from "gsap";
 
 const Index = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [showAPIModal, setShowAPIModal] = useState(false);
-  const [globeAnimated, setGlobeAnimated] = useState(false);
-  const globeWrapperRef = useRef<HTMLDivElement>(null);
-  const navbarGlobeRef = useRef<HTMLDivElement>(null);
-  const heroGlobeRef = useRef<HTMLDivElement>(null);
-  const tl = useRef<gsap.core.Timeline | null>(null);
 
-  // Handle scroll effect for navbar and globe animation
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
-      const wasScrolled = hasScrolled;
-      const isScrolled = scrollPosition > 50;
-      
-      setHasScrolled(isScrolled);
-      
-      // If we're scrolling back to top and the globe was previously animated
-      if (wasScrolled && !isScrolled && globeAnimated) {
-        // Reverse the animation - bring the globe back to the hero section
-        reverseGlobeAnimation();
-      } 
-      // If we're scrolling down and the globe wasn't animated yet or is back in the hero
-      else if (!wasScrolled && isScrolled && !globeAnimated) {
-        // Animate the globe to the navbar
-        animateGlobeToNavbar();
-      }
+      setHasScrolled(scrollPosition > 50);
     };
-    
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [hasScrolled, globeAnimated]);
-
-  // Initialize globe animation when components are ready
-  useEffect(() => {
-    // Wait for components to render before setting up the animation
-    const timer = setTimeout(() => {
-      if (globeWrapperRef.current && navbarGlobeRef.current) {
-        setupGlobeAnimation();
-      }
-    }, 1000);
-    
-    return () => clearTimeout(timer);
   }, []);
-
-  // Setup GSAP animation but don't run it yet
-  const setupGlobeAnimation = () => {
-    if (!globeWrapperRef.current || !navbarGlobeRef.current) return;
-    
-    // Get the positions and sizes of the elements
-    const startRect = globeWrapperRef.current.getBoundingClientRect();
-    const endRect = navbarGlobeRef.current.getBoundingClientRect();
-    
-    // Calculate the transform values
-    const xMove = endRect.left - startRect.left + (endRect.width/2 - startRect.width/2);
-    const yMove = endRect.top - startRect.top + (endRect.height/2 - startRect.height/2);
-    const scaleValue = endRect.width / startRect.width;
-    
-    // Create a GSAP timeline that we can reuse for both animation and reversal
-    tl.current = gsap.timeline({
-      paused: true,
-      onComplete: () => setGlobeAnimated(true),
-      onReverseComplete: () => setGlobeAnimated(false),
-    });
-    
-    // Only animate the globe wrapper, not its contents
-    tl.current.to(globeWrapperRef.current, {
-      x: xMove,
-      y: yMove,
-      scale: scaleValue,
-      duration: 1.2,
-      ease: "power2.inOut",
-    });
-  };
-  
-  // Function to animate the globe to the navbar
-  const animateGlobeToNavbar = () => {
-    if (tl.current) {
-      tl.current.play();
-    }
-  };
-  
-  // Function to animate the globe back to the hero section
-  const reverseGlobeAnimation = () => {
-    if (tl.current) {
-      tl.current.reverse();
-    }
-  };
 
   const handleExploreClick = () => {
     toast({
@@ -138,14 +60,8 @@ const Index = () => {
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${hasScrolled ? "py-3 bg-black/70 backdrop-blur-md" : "py-5 bg-transparent"}`}>
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center">
-            <div className="rounded-lg bg-teal p-1 mr-2 relative">
-              {/* This is the target logo globe that will be shown after animation completes */}
-              <div 
-                ref={navbarGlobeRef} 
-                className={`transition-opacity duration-300 ${globeAnimated ? 'opacity-100' : 'opacity-0'}`}
-              >
-                <Globe className="h-6 w-6 text-white" />
-              </div>
+            <div className="rounded-lg bg-teal p-1 mr-2">
+              <Globe className="h-6 w-6 text-white" />
             </div>
             <span className="text-white text-xl font-bold">GeoFinance</span>
           </div>
@@ -171,18 +87,7 @@ const Index = () => {
       <section className="relative min-h-screen flex items-center">
         {/* Background Globe - replaced with Mapbox Globe */}
         <div className="absolute inset-0 z-0 opacity-80">
-          {/* Animated globe wrapper */}
-          <div 
-            ref={globeWrapperRef}
-            className="w-full h-full"
-            style={{
-              transformOrigin: 'center center',
-            }}
-          >
-            <div ref={heroGlobeRef}>
-              <HomeMapboxGlobe className="w-full h-full" />
-            </div>
-          </div>
+          <HomeMapboxGlobe className="w-full h-full" />
         </div>
         
         {/* Content overlay */}
@@ -254,7 +159,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Subscription Plans Section */}
+      {/* Subscription Plans Section (replacing Stats Section) */}
       <SubscriptionPlans />
 
       {/* Call to Action */}
