@@ -42,9 +42,9 @@ const DashboardHeader = () => {
           <div className="flex items-center">
             <Link to="/dashboard" className="flex items-center">
               <img 
-                src="/lovable-uploads/9d42a4c4-8967-4ed0-9024-68943ff832c9.png" 
+                src="/lovable-uploads/e4325a91-f0a2-4e5e-8721-0c586cf592c0.png" 
                 alt="GeoFinance Logo"
-                className="w-10 h-10 mr-2"
+                className="h-10 w-10 mr-2"
               />
               <span className="text-white font-bold text-xl">GeoFinance</span>
             </Link>
