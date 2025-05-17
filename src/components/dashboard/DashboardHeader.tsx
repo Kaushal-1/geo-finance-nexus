@@ -41,9 +41,11 @@ const DashboardHeader = () => {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link to="/dashboard" className="flex items-center">
-              <div className="bg-gradient-to-r from-teal-500 to-blue-500 text-white font-bold rounded-lg w-10 h-10 flex items-center justify-center mr-2">
-                G
-              </div>
+              <img 
+                src="/lovable-uploads/9d42a4c4-8967-4ed0-9024-68943ff832c9.png" 
+                alt="GeoFinance Logo"
+                className="w-10 h-10 mr-2"
+              />
               <span className="text-white font-bold text-xl">GeoFinance</span>
             </Link>
             

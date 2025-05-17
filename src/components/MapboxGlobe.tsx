@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -74,6 +75,8 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
   const [countryNews, setCountryNews] = useState<{[country: string]: NewsItem[]}>({});
   const [countryStockNews, setCountryStockNews] = useState<CountryNewsData[]>([]);
   const { toast } = useToast();
+  const [isSpinningPaused, setIsSpinningPaused] = useState(false);
+  const spinEnabledRef = useRef(true);
   
   // Financial centers data with country names for news fetching
   const financialCenters: FinancialCenter[] = [
@@ -230,6 +233,20 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
     };
   }, [mapLoaded]);
 
+  // Function to toggle globe spinning
+  const toggleGlobeSpinning = (shouldSpin: boolean) => {
+    spinEnabledRef.current = shouldSpin;
+    setIsSpinningPaused(!shouldSpin);
+    
+    toast({
+      title: shouldSpin ? "Globe Rotation Resumed" : "Globe Rotation Paused",
+      description: shouldSpin 
+        ? "The globe is now rotating automatically." 
+        : "Globe rotation paused. Click anywhere on the map to resume.",
+      duration: 3000,
+    });
+  };
+
   // Initialize map
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -313,11 +330,11 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
 
       // Set up automatic rotation for the globe
       let userInteracting = false;
-      let spinEnabled = true;
+      spinEnabledRef.current = true;
       const secondsPerRevolution = 240;
 
       function spinGlobe() {
-        if (!map.current || !spinEnabled || userInteracting) return;
+        if (!map.current || !spinEnabledRef.current || userInteracting) return;
         
         const center = map.current.getCenter();
         center.lng -= 360 / secondsPerRevolution;
@@ -331,7 +348,9 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
       
       map.current.on('mouseup', () => {
         userInteracting = false;
-        setTimeout(spinGlobe, 1000);
+        if (spinEnabledRef.current) {
+          setTimeout(spinGlobe, 1000);
+        }
       });
 
       map.current.on('touchstart', () => {
@@ -340,7 +359,16 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
       
       map.current.on('touchend', () => {
         userInteracting = false;
-        setTimeout(spinGlobe, 1000);
+        if (spinEnabledRef.current) {
+          setTimeout(spinGlobe, 1000);
+        }
+      });
+      
+      // Resume spinning when clicking on the map (not on markers)
+      map.current.on('click', () => {
+        if (isSpinningPaused) {
+          toggleGlobeSpinning(true);
+        }
       });
 
       // Start spinning
@@ -360,7 +388,7 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
         variant: "destructive",
       });
     }
-  }, []);
+  }, [isSpinningPaused]);
 
   // Effect to add country news markers when data is available
   useEffect(() => {
@@ -418,11 +446,19 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
       
       popup.setDOMContent(popupContent);
       
-      // Add marker to map
+      // Add marker to map with click handler to pause spinning
       const marker = new mapboxgl.Marker(el)
         .setLngLat([country.longitude, country.latitude])
         .setPopup(popup)
         .addTo(map);
+      
+      // Add event listener to pause globe rotation when clicking on this marker
+      el.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent the map click event from firing
+        if (spinEnabledRef.current) {
+          toggleGlobeSpinning(false);
+        }
+      });
         
       // Store reference to marker
       markersRef.current[`country-${country.countryCode}`] = marker;
