@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, ChartBar, Bell, Clock } from "lucide-react";
 import FeatureCard from "@/components/FeatureCard";
@@ -9,11 +9,17 @@ import HomeMapboxGlobe from "@/components/HomeMapboxGlobe";
 import "@/components/home-mapbox.css";
 import APIModal from "@/components/APIModal";
 import SubscriptionPlans from "@/components/SubscriptionPlans";
+import { motion, useAnimation } from "framer-motion";
 
 const Index = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [showAPIModal, setShowAPIModal] = useState(false);
+  const [globeAnimated, setGlobeAnimated] = useState(false);
+  const controls = useAnimation();
+  const globeWrapperRef = useRef<HTMLDivElement>(null);
+  const navbarGlobeRef = useRef<HTMLDivElement>(null);
 
+  // Handle scroll effect for navbar
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
@@ -22,6 +28,39 @@ const Index = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Handle globe animation
+  useEffect(() => {
+    // Wait for components to render before calculating positions
+    const timer = setTimeout(() => {
+      if (globeWrapperRef.current && navbarGlobeRef.current) {
+        const startRect = globeWrapperRef.current.getBoundingClientRect();
+        const endRect = navbarGlobeRef.current.getBoundingClientRect();
+        
+        // Calculate the transform values
+        const xMove = endRect.left - startRect.left + (endRect.width/2 - startRect.width/2);
+        const yMove = endRect.top - startRect.top + (endRect.height/2 - startRect.height/2);
+        const scaleValue = endRect.width / startRect.width;
+
+        // Animate the globe
+        controls.start({
+          x: xMove,
+          y: yMove,
+          scale: scaleValue,
+          opacity: [0.8, 1],
+          transition: { 
+            duration: 1.2, 
+            ease: "easeInOut",
+            delay: 0.5
+          }
+        }).then(() => {
+          setGlobeAnimated(true);
+        });
+      }
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [controls]);
 
   const handleExploreClick = () => {
     toast({
@@ -60,8 +99,14 @@ const Index = () => {
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${hasScrolled ? "py-3 bg-black/70 backdrop-blur-md" : "py-5 bg-transparent"}`}>
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center">
-            <div className="rounded-lg bg-teal p-1 mr-2">
-              <Globe className="h-6 w-6 text-white" />
+            <div className="rounded-lg bg-teal p-1 mr-2 relative">
+              {/* This is the target logo globe that will be shown after animation completes */}
+              <div 
+                ref={navbarGlobeRef} 
+                className={`transition-opacity duration-300 ${globeAnimated ? 'opacity-100' : 'opacity-0'}`}
+              >
+                <Globe className="h-6 w-6 text-white" />
+              </div>
             </div>
             <span className="text-white text-xl font-bold">GeoFinance</span>
           </div>
@@ -87,7 +132,17 @@ const Index = () => {
       <section className="relative min-h-screen flex items-center">
         {/* Background Globe - replaced with Mapbox Globe */}
         <div className="absolute inset-0 z-0 opacity-80">
-          <HomeMapboxGlobe className="w-full h-full" />
+          {/* Animated globe wrapper */}
+          <motion.div 
+            ref={globeWrapperRef}
+            animate={controls}
+            className="w-full h-full"
+            style={{
+              transformOrigin: 'center center',
+            }}
+          >
+            <HomeMapboxGlobe className={`w-full h-full ${globeAnimated ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`} />
+          </motion.div>
         </div>
         
         {/* Content overlay */}
