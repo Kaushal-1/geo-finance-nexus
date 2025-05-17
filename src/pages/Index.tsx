@@ -9,6 +9,7 @@ import "@/components/home-mapbox.css";
 import APIModal from "@/components/APIModal";
 import SubscriptionPlans from "@/components/SubscriptionPlans";
 import ChatbotWidget from "@/components/chatbot/ChatbotWidget";
+import JourneySection from "@/components/JourneySection";
 
 const Index = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -149,6 +150,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Journey Section */}
+      <JourneySection />
 
       {/* Subscription Plans Section */}
       <SubscriptionPlans />
