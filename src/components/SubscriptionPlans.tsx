@@ -10,12 +10,13 @@ const SubscriptionPlans = () => {
   const plans = [
     {
       name: "Free Plan",
-      price: "Free",
+      price: "$0/month",
       features: [
         "Paper trading access",
         "Basic stock analysis",
         "5 watchlists max",
         "Standard API limits",
+        "Mapwise Stock News"
       ],
       buttonText: "Start Free",
       buttonClass: "bg-gradient-to-r from-blue-500 to-blue-600",
