@@ -59,8 +59,8 @@ const Index = () => {
             
             {/* <Link to="/dashboard" className="text-gray-300 hover:text-white transition-colors">Market Map</Link>
             <Link to="/trading" className="text-gray-300 hover:text-white transition-colors">Trading Dashboard</Link> */}
-            <Link to="/stock-compare" className="text-gray-300 hover:text-white transition-colors">Compare Stocks</Link>
-            <Link to="/chat-research" className="text-gray-300 hover:text-white transition-colors">AI Research</Link>
+            {/* <Link to="/stock-compare" className="text-gray-300 hover:text-white transition-colors">Compare Stocks</Link>
+            <Link to="/chat-research" className="text-gray-300 hover:text-white transition-colors">AI Research</Link> */}
             <Link to="/signin" className="text-gray-300 hover:text-white transition-colors">Sign In</Link>
           </div>
           <div className="flex items-center gap-2">
@@ -97,7 +97,7 @@ const Index = () => {
               <div className="flex flex-wrap gap-4">
                 <Link to="/dashboard">
                   <Button className="bg-teal-gradient text-white py-6 px-8 rounded-md button-glow">
-                    Explore Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+                    Explore Mapboard <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
                 <Link to="/trading">
