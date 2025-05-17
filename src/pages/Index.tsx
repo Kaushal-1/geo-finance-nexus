@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, ChartBar, Bell, Clock } from "lucide-react";
@@ -9,11 +8,9 @@ import HomeMapboxGlobe from "@/components/HomeMapboxGlobe";
 import "@/components/home-mapbox.css";
 import APIModal from "@/components/APIModal";
 import SubscriptionPlans from "@/components/SubscriptionPlans";
-
 const Index = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [showAPIModal, setShowAPIModal] = useState(false);
-
   useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
@@ -22,7 +19,6 @@ const Index = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
   const handleExploreClick = () => {
     toast({
       title: "Welcome to GeoFinance",
@@ -30,32 +26,24 @@ const Index = () => {
       duration: 5000
     });
   };
-
-  const features = [
-    {
-      title: "Geospatial Insights",
-      description: "Visualize financial data layered onto geographic maps to identify regional trends and opportunities.",
-      icon: Globe
-    },
-    {
-      title: "Real-Time Dashboards",
-      description: "Monitor market changes with customizable dashboards that update in real-time with global financial data.",
-      icon: ChartBar
-    },
-    {
-      title: "Custom Alerts",
-      description: "Set up personalized notifications for market events based on geospatial and financial parameters.",
-      icon: Bell
-    },
-    {
-      title: "Portfolio Mapping",
-      description: "Plot your investments on a global scale and visualize exposure across different geographic regions.",
-      icon: Clock
-    }
-  ];
-
-  return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] overflow-x-hidden">
+  const features = [{
+    title: "Geospatial Insights",
+    description: "Visualize financial data layered onto geographic maps to identify regional trends and opportunities.",
+    icon: Globe
+  }, {
+    title: "Real-Time Dashboards",
+    description: "Monitor market changes with customizable dashboards that update in real-time with global financial data.",
+    icon: ChartBar
+  }, {
+    title: "Custom Alerts",
+    description: "Set up personalized notifications for market events based on geospatial and financial parameters.",
+    icon: Bell
+  }, {
+    title: "Portfolio Mapping",
+    description: "Plot your investments on a global scale and visualize exposure across different geographic regions.",
+    icon: Clock
+  }];
+  return <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] overflow-x-hidden">
       {/* Navbar */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${hasScrolled ? "py-3 bg-black/70 backdrop-blur-md" : "py-5 bg-transparent"}`}>
         <div className="container mx-auto flex items-center justify-between">
@@ -95,7 +83,7 @@ const Index = () => {
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="space-y-6 animate-fade-in">
               <div className="p-2 px-4 rounded-full border border-teal/30 bg-teal/5 backdrop-blur-sm inline-flex items-center">
-                <span className="text-sm text-teal font-medium">New Feature: Market Correlation Maps</span>
+                <span className="text-sm text-teal font-medium">New Feature: Sonar Powered Deep Research & Stock Comparer added !  </span>
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
                 Unlock the Power of Geospatial Financial Intelligence
@@ -192,10 +180,7 @@ const Index = () => {
               <span className="text-white text-lg font-bold">GeoFinance</span>
             </div>
             <div className="flex flex-wrap gap-6 text-sm text-gray-400">
-              <button 
-                onClick={() => setShowAPIModal(true)}
-                className="hover:text-teal transition-colors cursor-pointer"
-              >
+              <button onClick={() => setShowAPIModal(true)} className="hover:text-teal transition-colors cursor-pointer">
                 APIs Used
               </button>
               <a href="#" className="hover:text-teal transition-colors">Documentation</a>
@@ -209,8 +194,6 @@ const Index = () => {
 
       {/* API Modal */}
       <APIModal open={showAPIModal} onClose={() => setShowAPIModal(false)} />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
