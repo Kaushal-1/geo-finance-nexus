@@ -1,4 +1,3 @@
-
 import React from "react";
 interface TechnicalGaugeProps {
   value: string;
@@ -54,11 +53,11 @@ const TechnicalGauge: React.FC<TechnicalGaugeProps> = ({
                 <path d="M10,50 A40,40 0 0,1 90,50" fill="none" stroke="url(#simpleGaugeGradient)" strokeWidth="6" strokeLinecap="round" />
               </svg>
               
-              {/* Indicator needle - corrected rotation direction */}
+              {/* Simple needle */}
               <div className="absolute bottom-0 left-1/2 h-14 w-0.5 bg-white origin-bottom transform transition-transform duration-700 ease-out" style={{
               transform: `translateX(-50%) rotate(${calculateGaugeAngle()}deg)`
             }}>
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-glow"></div>
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full"></div>
               </div>
             </div>
           </div>
@@ -66,15 +65,15 @@ const TechnicalGauge: React.FC<TechnicalGaugeProps> = ({
         
         {/* Value text with improved readability */}
         <div className="absolute -bottom-7 left-0 w-full text-center">
-          <span className="text-sm font-medium px-2 py-0.5 bg-black/30 rounded backdrop-blur-sm border border-white/10">
+          <span className="text-sm">
             {value}
           </span>
         </div>
       </div>
       
       {/* Enhanced percentage display with better visibility */}
-      <div className="mt-6 inline-block px-3 py-1 bg-black/40 rounded-full backdrop-blur-sm border border-white/10 shadow-glow">
-        <span className="text-xs font-bold">
+      <div className="mt-5 text-sm">
+        <span className="text-xs">
           {percentage}%
         </span>
       </div>
