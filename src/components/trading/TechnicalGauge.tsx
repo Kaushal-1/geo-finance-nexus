@@ -65,7 +65,7 @@ const TechnicalGauge: React.FC<TechnicalGaugeProps> = ({
         
         {/* Value text with improved readability */}
         <div className="absolute -bottom-7 left-0 w-full text-center">
-          <span className={`font-medium px-2 py-0.5 rounded bg-gray-800/80 ${colorClass}`}>
+          <span className="text-sm">
             {value}
           </span>
         </div>
