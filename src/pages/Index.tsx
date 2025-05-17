@@ -197,14 +197,14 @@ const Index = () => {
                 <div className="rounded-lg bg-teal p-1 mr-2">
                   <Globe className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-white text-lg font-bold">GeoFinance</span>
+                <span className="text-white text-lg font-bold items-center">GeoFinance</span>
               </div>
-              <div className="flex flex-wrap gap-6 text-sm text-gray-400">
+              {/* <div className="flex flex-wrap gap-6 text-sm text-gray-400">
                 <button onClick={() => setShowAPIModal(true)} className="hover:text-teal transition-colors cursor-pointer">
                   APIs Used
                 </button>
                 <a href="#" className="hover:text-teal transition-colors">Documentation</a>
-              </div>
+              </div> */}
               <div className="mt-6 md:mt-0 text-sm text-gray-500">
                 © 2025 GeoFinance. All rights reserved.              
               </div>
