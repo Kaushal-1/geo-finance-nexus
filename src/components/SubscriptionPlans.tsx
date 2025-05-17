@@ -16,7 +16,8 @@ const SubscriptionPlans = () => {
         "Basic stock analysis",
         "5 watchlists max",
         "Standard API limits",
-        "Mapwise Stock News"
+        "Mapwise Stock News",
+        "AI Assistant"
       ],
       buttonText: "Start Free",
       buttonClass: "bg-gradient-to-r from-blue-500 to-blue-600",
