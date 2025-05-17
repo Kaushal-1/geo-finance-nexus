@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,13 +9,12 @@ import TelegramBotPanel from "@/components/trading/TelegramBotPanel";
 import { Link } from "react-router-dom";
 import ProfileEdit from "@/components/account/ProfileEdit";
 import SecuritySettings from "@/components/account/SecuritySettings";
-
 const AccountSettings = () => {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
-
-  return (
-    <div className="bg-gradient-to-br from-[#0a0e17] to-[#131b2e] min-h-screen">
+  return <div className="bg-gradient-to-br from-[#0a0e17] to-[#131b2e] min-h-screen">
       <header className="py-4 px-6 bg-black/30 border-b border-white/10 flex justify-between items-center">
         <div className="flex items-center">
           <Link to="/" className="text-teal-400 text-xl font-bold mr-8">GeoFinance</Link>
@@ -55,7 +53,7 @@ const AccountSettings = () => {
                   <div className="h-20 w-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold mb-2">
                     {user?.email?.charAt(0).toUpperCase() || "U"}
                   </div>
-                  <CardTitle className="text-white mt-2 text-center">
+                  <CardTitle className="text-white mt-2 text-center text-xs">
                     {user?.email || "user@example.com"}
                   </CardTitle>
                   <CardDescription className="text-gray-400">
@@ -68,38 +66,22 @@ const AccountSettings = () => {
 
               <CardContent className="p-4">
                 <div className="space-y-1">
-                  <Button 
-                    variant={activeTab === "profile" ? "default" : "ghost"} 
-                    className="w-full justify-start"
-                    onClick={() => setActiveTab("profile")}
-                  >
+                  <Button variant={activeTab === "profile" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab("profile")}>
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </Button>
                   
-                  <Button 
-                    variant={activeTab === "security" ? "default" : "ghost"} 
-                    className="w-full justify-start"
-                    onClick={() => setActiveTab("security")}
-                  >
+                  <Button variant={activeTab === "security" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab("security")}>
                     <Shield className="h-4 w-4 mr-2" />
                     Security
                   </Button>
                   
-                  <Button 
-                    variant={activeTab === "telegram" ? "default" : "ghost"} 
-                    className="w-full justify-start"
-                    onClick={() => setActiveTab("telegram")}
-                  >
+                  <Button variant={activeTab === "telegram" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab("telegram")}>
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Telegram Bot
                   </Button>
                   
-                  <Button 
-                    variant={activeTab === "data" ? "default" : "ghost"} 
-                    className="w-full justify-start"
-                    onClick={() => setActiveTab("data")}
-                  >
+                  <Button variant={activeTab === "data" ? "default" : "ghost"} className="w-full justify-start" onClick={() => setActiveTab("data")}>
                     <Database className="h-4 w-4 mr-2" />
                     Data & Privacy
                   </Button>
@@ -159,8 +141,6 @@ const AccountSettings = () => {
           </div>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default AccountSettings;
