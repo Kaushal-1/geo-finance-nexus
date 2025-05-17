@@ -189,8 +189,7 @@ const Index = () => {
               <a href="#" className="hover:text-teal transition-colors">Documentation</a>
             </div>
             <div className="mt-6 md:mt-0 text-sm text-gray-500">
-              © 2025 GeoFinance. All rights reserved. <br>
-             
+              © 2025 GeoFinance. All rights reserved.              
             </div>
           </div>
         </div>
