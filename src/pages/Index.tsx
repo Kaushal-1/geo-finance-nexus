@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, ChartBar, Bell, Clock } from "lucide-react";
@@ -60,7 +59,7 @@ const Index = () => {
           
           if (visibility > startThreshold) {
             card.classList.add('revealed');
-            card.style.transitionDelay = `${delay}s`;
+            (card as HTMLElement).style.transitionDelay = `${delay}s`;
           } else {
             card.classList.remove('revealed');
           }
