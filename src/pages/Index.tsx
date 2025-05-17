@@ -55,8 +55,8 @@ const Index = () => {
           </div>
           <div className="hidden md:flex items-center space-x-6">
             <Link to="/signin" className="text-gray-300 hover:text-white transition-colors">Sign In</Link>
-            <Link to="/dashboard" className="text-gray-300 hover:text-white transition-colors">Market Map</Link>
-            <Link to="/trading" className="text-gray-300 hover:text-white transition-colors">Trading Dashboard</Link>
+            {/* <Link to="/dashboard" className="text-gray-300 hover:text-white transition-colors">Market Map</Link>
+            <Link to="/trading" className="text-gray-300 hover:text-white transition-colors">Trading Dashboard</Link> */}
             <Link to="/stock-compare" className="text-gray-300 hover:text-white transition-colors">Compare Stocks</Link>
             <Link to="/chat-research" className="text-gray-300 hover:text-white transition-colors">AI Research</Link>
           </div>
