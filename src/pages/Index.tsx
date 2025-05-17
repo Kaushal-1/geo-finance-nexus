@@ -10,6 +10,8 @@ import APIModal from "@/components/APIModal";
 import SubscriptionPlans from "@/components/SubscriptionPlans";
 import ChatbotWidget from "@/components/chatbot/ChatbotWidget";
 import JourneySection from "@/components/JourneySection";
+import SiteMap from "@/components/SiteMap";
+import { Separator } from "@/components/ui/separator";
 
 const Index = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -76,7 +78,7 @@ const Index = () => {
       </nav>
 
       {/* Hero Section with Mapbox Globe */}
-      <section className="relative min-h-screen flex items-center ">
+      <section className="relative min-h-screen flex items-center" id="hero">
         {/* Background Globe - replaced with Mapbox Globe */}
         <div className="absolute inset-0 z-0 opacity-78 ">
           <HomeMapboxGlobe className="w-full h-full" />
@@ -130,7 +132,7 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 relative">
+      <section className="py-20 relative" id="features">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
@@ -152,10 +154,14 @@ const Index = () => {
       </section>
 
       {/* Journey Section */}
-      <JourneySection />
+      <section id="journey">
+        <JourneySection />
+      </section>
 
       {/* Subscription Plans Section */}
-      <SubscriptionPlans />
+      <section id="plans">
+        <SubscriptionPlans />
+      </section>
 
       {/* Call to Action */}
       <section className="py-20">
@@ -177,23 +183,31 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-10 bg-black/50 border-t border-white/10">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center mb-6 md:mb-0">
-              <div className="rounded-lg bg-teal p-1 mr-2">
-                <Globe className="h-5 w-5 text-white" />
+      <footer className="bg-black/50 border-t border-white/10">
+        {/* Site Map Section */}
+        <SiteMap onApiModalToggle={() => setShowAPIModal(true)} />
+        
+        <Separator className="bg-white/10" />
+        
+        {/* Footer Bottom */}
+        <div className="py-10">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <div className="flex items-center mb-6 md:mb-0">
+                <div className="rounded-lg bg-teal p-1 mr-2">
+                  <Globe className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-white text-lg font-bold">GeoFinance</span>
               </div>
-              <span className="text-white text-lg font-bold">GeoFinance</span>
-            </div>
-            <div className="flex flex-wrap gap-6 text-sm text-gray-400">
-              <button onClick={() => setShowAPIModal(true)} className="hover:text-teal transition-colors cursor-pointer">
-                APIs Used
-              </button>
-              <a href="#" className="hover:text-teal transition-colors">Documentation</a>
-            </div>
-            <div className="mt-6 md:mt-0 text-sm text-gray-500">
-              © 2025 GeoFinance. All rights reserved.              
+              <div className="flex flex-wrap gap-6 text-sm text-gray-400">
+                <button onClick={() => setShowAPIModal(true)} className="hover:text-teal transition-colors cursor-pointer">
+                  APIs Used
+                </button>
+                <a href="#" className="hover:text-teal transition-colors">Documentation</a>
+              </div>
+              <div className="mt-6 md:mt-0 text-sm text-gray-500">
+                © 2025 GeoFinance. All rights reserved.              
+              </div>
             </div>
           </div>
         </div>
