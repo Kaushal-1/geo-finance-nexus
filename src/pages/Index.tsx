@@ -165,7 +165,7 @@ const Index = () => {
       <section className="relative min-h-screen flex items-center hero-section" id="hero">
         {/* Background Globe - replaced with Mapbox Globe */}
         <div className="absolute inset-0 z-0 opacity-78 zoom-bg" 
-          style={{ transform: `scale(${1 + scrollProgress * 0.05})` }}
+          {/* style={{ transform: `scale(${1 + scrollProgress * 0.05})` }}> */}
           <HomeMapboxGlobe className="w-full h-full" />
         </div>
         
