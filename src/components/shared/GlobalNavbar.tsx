@@ -41,7 +41,7 @@ const GlobalNavbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <Link to="/dashboard" className="flex items-center">
+            <Link to="/" className="flex items-center">
               <Globe className="h-6 w-6 text-teal-500 mr-2" />
               <span className="text-white font-bold text-xl">GeoFinance</span>
             </Link>
