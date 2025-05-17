@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -75,7 +74,6 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
   const [countryNews, setCountryNews] = useState<{[country: string]: NewsItem[]}>({});
   const [countryStockNews, setCountryStockNews] = useState<CountryNewsData[]>([]);
   const { toast } = useToast();
-  const spinEnabledRef = useRef<boolean>(true);
   
   // Financial centers data with country names for news fetching
   const financialCenters: FinancialCenter[] = [
@@ -306,15 +304,20 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
         }
         
         setMapLoaded(true);
+        
+        toast({
+          title: "Map Loaded",
+          description: "Interactive financial globe is now ready.",
+        });
       });
 
       // Set up automatic rotation for the globe
       let userInteracting = false;
-      spinEnabledRef.current = true;
+      let spinEnabled = true;
       const secondsPerRevolution = 240;
 
       function spinGlobe() {
-        if (!map.current || !spinEnabledRef.current || userInteracting) return;
+        if (!map.current || !spinEnabled || userInteracting) return;
         
         const center = map.current.getCenter();
         center.lng -= 360 / secondsPerRevolution;
@@ -382,19 +385,6 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
       el.style.borderRadius = '50%';
       el.style.cursor = 'pointer';
       el.style.boxShadow = '0 0 10px 2px rgba(249, 115, 22, 0.6)';
-
-      // Add click event to pause rotation
-      el.addEventListener('click', () => {
-        // Pause the globe rotation when clicking on a news marker
-        spinEnabledRef.current = false;
-        
-        // Show a toast notification that rotation is paused
-        toast({
-          title: "Globe rotation paused",
-          description: "Click on the map background to resume rotation",
-          duration: 3000,
-        });
-      });
       
       // Create popup content with clickable citations
       const popup = new mapboxgl.Popup({ 
@@ -433,23 +423,9 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
         .setLngLat([country.longitude, country.latitude])
         .setPopup(popup)
         .addTo(map);
-
-      // When popup is closed, resume rotation
-      popup.on('close', () => {
-        spinEnabledRef.current = true;
-      });
         
       // Store reference to marker
       markersRef.current[`country-${country.countryCode}`] = marker;
-    });
-
-    // Add a click handler to the map to resume rotation
-    map.on('click', (e) => {
-      // Only handle clicks on the map background, not on markers
-      if (e.originalEvent.target === mapContainer.current || 
-          e.originalEvent.target === map.getCanvas()) {
-        spinEnabledRef.current = true;
-      }
     });
   };
 
