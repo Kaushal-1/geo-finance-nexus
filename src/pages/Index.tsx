@@ -108,7 +108,7 @@ const Index = () => {
                   {[1, 2, 3, 4].map(idx => <div key={idx} className="w-8 h-8 rounded-full bg-gray-500 border-2 border-white/20"></div>)}
                 </div>
                 <span className="text-gray-400 text-sm font-mono">
-                  <span className="text-teal font-bold">2400+</span> financial analysts trust our platform
+                  <span className="text-teal font-bold">1000+</span> financial analysts trust our platform
                 </span>
               </div>
             </div>
