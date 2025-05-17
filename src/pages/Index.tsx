@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import HomeMapboxGlobe from "@/components/HomeMapboxGlobe";
 import "@/components/home-mapbox.css";
 import APIModal from "@/components/APIModal";
+import SubscriptionPlans from "@/components/SubscriptionPlans";
 
 const Index = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -158,31 +159,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-black/30">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
-            {[{
-            value: "2.4B+",
-            label: "Data Points Analyzed"
-          }, {
-            value: "184",
-            label: "Countries Covered"
-          }, {
-            value: "93%",
-            label: "Prediction Accuracy"
-          }, {
-            value: "12ms",
-            label: "Average Response Time"
-          }].map((stat, index) => <div key={index} className="p-6">
-                <div className="font-mono text-3xl md:text-4xl font-bold text-teal mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-gray-400">{stat.label}</div>
-              </div>)}
-          </div>
-        </div>
-      </section>
+      {/* Subscription Plans Section (replacing Stats Section) */}
+      <SubscriptionPlans />
 
       {/* Call to Action */}
       <section className="py-20">
