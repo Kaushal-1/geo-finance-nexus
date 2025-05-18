@@ -13,10 +13,10 @@ const siteMapData = [
     title: "Platform",
     links: [
       { name: "Home", path: "/" },
-      { name: "Dashboard", path: "/dashboard" },
+      { name: "Mapboard", path: "/dashboard" },
       { name: "Trading Platform", path: "/trading" },
-      { name: "Stock Comparison", path: "/stock-compare" },
-      { name: "AI Research", path: "/chat-research" }
+      { name: "Stock Comparer", path: "/stock-compare" },
+      { name: "Sonar Research", path: "/chat-research" }
     ]
   },
   {
