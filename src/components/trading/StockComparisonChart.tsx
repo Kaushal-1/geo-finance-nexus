@@ -31,25 +31,13 @@ const StockComparisonChart: React.FC<StockComparisonChartProps> = ({
     const fetchChartData = async () => {
       setIsLoading(true);
       try {
-        // Set appropriate limit and API timeframe based on selected timeframe
-        let limit = 26; // Default for 1Day
-        let apiTimeframe = "15Min"; // Default for 1Day
+        // Set appropriate limit based on timeframe
+        let limit = 60; // Default
+        if (timeframe === "1Week") limit = 7 * 24; // 7 days of hourly bars
+        if (timeframe === "1Month") limit = 30; // 30 daily bars
+        if (timeframe === "1Year") limit = 365; // 365 daily bars
         
-        if (timeframe === "1Day") {
-          limit = 26; // For 15-minute bars covering a trading day (6.5 hours)
-          apiTimeframe = "15Min";
-        } else if (timeframe === "1Week") {
-          limit = 7 * 8; // 7 days with 8 bars per day
-          apiTimeframe = "2Hour";
-        } else if (timeframe === "1Month") {
-          limit = 30; // 30 daily bars
-          apiTimeframe = "1Day";
-        } else if (timeframe === "1Year") {
-          limit = 52; // 52 weekly bars
-          apiTimeframe = "1Week";
-        }
-        
-        const data = await alpacaService.getBars(symbol, apiTimeframe, limit);
+        const data = await alpacaService.getBars(symbol, timeframe, limit);
         
         if (data && Array.isArray(data)) {
           // Ensure bars are sorted by time

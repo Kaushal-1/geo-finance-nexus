@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,25 +53,13 @@ const StockChartPanel: React.FC<StockChartPanelProps> = ({ onSymbolChange }) => 
     console.log(`Fetching stock data for ${symbol} with timeframe ${timeframe}`);
     setIsLoading(true);
     try {
-      // Set appropriate limit and timeframe parameters based on selected timeframe
+      // Set appropriate limit based on timeframe
       let limit = 60; // Default
-      let apiTimeframe = "15Min"; // Default for 1Day
+      if (timeframe === "5Day") limit = 5 * 24; // 5 days of hourly bars
+      if (timeframe === "1Week") limit = 7 * 24; // 7 days of hourly bars
+      if (timeframe === "1Month") limit = 30; // 30 daily bars
       
-      if (timeframe === "1Day") {
-        limit = 26; // For 15-minute bars covering a trading day (6.5 hours)
-        apiTimeframe = "15Min";
-      } else if (timeframe === "5Day") {
-        limit = 5 * 24; // 5 days of hourly bars
-        apiTimeframe = "1Hour";
-      } else if (timeframe === "1Week") {
-        limit = 7 * 8; // 7 days with 8 bars per day
-        apiTimeframe = "2Hour";
-      } else if (timeframe === "1Month") {
-        limit = 30; // 30 daily bars
-        apiTimeframe = "1Day";
-      }
-      
-      const response = await alpacaService.getBars(symbol, apiTimeframe, limit);
+      const response = await alpacaService.getBars(symbol, timeframe, limit);
       console.log("Stock data response:", response);
       if (response && Array.isArray(response)) {
         // Ensure bars are sorted by time
