@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { toast } from "@/components/ui/use-toast";
 
@@ -6,8 +5,8 @@ import { toast } from "@/components/ui/use-toast";
 const alpacaApi = axios.create({
   baseURL: 'https://paper-api.alpaca.markets',
   headers: {
-    'APCA-API-KEY-ID': 'PKJ1BKJG3HHOXYNCRLZK',
-    'APCA-API-SECRET-KEY': 'l9KdVbejeABLTE8Z6JxcLRQwHebECBnWpiqqPhhd',
+    'APCA-API-KEY-ID': import.meta.env.VITE_ALPACA_API_KEY,
+    'APCA-API-SECRET-KEY': import.meta.env.VITE_ALPACA_API_SECRET,
     'Content-Type': 'application/json'
   }
 });
@@ -16,8 +15,8 @@ const alpacaApi = axios.create({
 const alpacaDataApi = axios.create({
   baseURL: 'https://data.alpaca.markets',
   headers: {
-    'APCA-API-KEY-ID': 'PKJ1BKJG3HHOXYNCRLZK',
-    'APCA-API-SECRET-KEY': 'l9KdVbejeABLTE8Z6JxcLRQwHebECBnWpiqqPhhd',
+    'APCA-API-KEY-ID': import.meta.env.VITE_ALPACA_API_KEY,
+    'APCA-API-SECRET-KEY': import.meta.env.VITE_ALPACA_API_SECRET,
     'Content-Type': 'application/json'
   }
 });
