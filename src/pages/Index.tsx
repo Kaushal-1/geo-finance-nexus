@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, ChartBar, Bell, Clock } from "lucide-react";
@@ -15,6 +14,7 @@ import SiteMap from "@/components/SiteMap";
 import { Separator } from "@/components/ui/separator";
 import ScrollAnimations from "@/components/ScrollAnimations";
 import { getScrollProgress, getSectionVisibility } from "@/utils/scrollAnimations";
+import FAQJourneySection from "@/components/journey/FAQJourneySection";
 
 const Index = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
@@ -29,7 +29,8 @@ const Index = () => {
   const navLinks = [
     { name: "Analytics", path: "#features", anchor: true },
     { name: "Journey", path: "#journey", anchor: true },
-    { name: "Plans", path: "#plans", anchor: true }
+    { name: "Plans", path: "#plans", anchor: true },
+    { name: "FAQ", path: "#faq", anchor: true }
   ];
   
   // Define sections for scroll animations
@@ -37,7 +38,8 @@ const Index = () => {
     { id: "hero", name: "Home" },
     { id: "features", name: "Analytics" },
     { id: "journey", name: "Journey" },
-    { id: "plans", name: "Plans" }
+    { id: "plans", name: "Plans" },
+    { id: "faq", name: "FAQ" }
   ];
 
   useEffect(() => {
@@ -253,6 +255,11 @@ const Index = () => {
       {/* Subscription Plans Section */}
       <section id="plans" className="content-section section-transition">
         <SubscriptionPlans />
+      </section>
+      
+      {/* FAQ Journey Section */}
+      <section id="faq" className="content-section section-transition">
+        <FAQJourneySection />
       </section>
 
       {/* Call to Action */}

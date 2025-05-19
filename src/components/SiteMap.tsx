@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -31,7 +30,8 @@ const siteMapData = [
     title: "Resources",
     links: [
       { name: "Documentation", path: "#documentation", external: true },
-      { name: "APIs Used", path: "#apis-used", action: "showApiModal" }
+      { name: "APIs Used", path: "#apis-used", action: "showApiModal" },
+      { name: "FAQ for Investors", path: "#faq", anchor: true }
     ]
   },
   {
@@ -39,7 +39,8 @@ const siteMapData = [
     links: [
       { name: "Analytics", path: "#features", anchor: true },
       { name: "Journey", path: "#journey", anchor: true },
-      { name: "Plans", path: "#plans", anchor: true }
+      { name: "Plans", path: "#plans", anchor: true },
+      { name: "FAQ", path: "#faq", anchor: true }
     ]
   }
 ];
