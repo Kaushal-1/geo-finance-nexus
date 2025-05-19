@@ -1,9 +1,9 @@
-
 import React from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ArrowRight, Rocket, Flag, Star, Award, MapPin } from "lucide-react";
+import FuturePlansTimeline from "./journey/FuturePlansTimeline";
 
 const journeyMilestones = [
   {
@@ -210,6 +210,9 @@ const JourneySection = () => {
             <ArrowRight className="h-4 w-4" />
           </div>
         </motion.div>
+        
+        {/* Future Plans Timeline Section */}
+        <FuturePlansTimeline />
       </div>
     </section>
   );
