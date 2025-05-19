@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MapVisualization from "@/components/dashboard/MapVisualization";
@@ -54,21 +55,14 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Market Trends Banner - Added new section with the uploaded image */}
+        {/* Updated Trading View Widget */}
         <div className="h-20 rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm overflow-hidden">
-          <div className="flex items-center h-full">
-            <div className="w-1/4 h-full flex items-center justify-center">
-              <img 
-                src="/lovable-uploads/9c1a2181-81e3-4792-be08-9f1a0163b7fc.png" 
-                alt="Market trend line" 
-                className="h-16 object-contain"
-              />
-            </div>
-            <div className="w-3/4 px-4 flex items-center">
-              <div>
-                <h3 className="text-white font-semibold">Market Trends</h3>
-                <p className="text-gray-300 text-sm">Live market insights with real-time indicators</p>
-              </div>
+          <div className="tradingview-widget-container h-full">
+            <div className="tradingview-widget-container__widget h-full"></div>
+            <div className="tradingview-widget-copyright hidden md:block">
+              <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
+                <span className="text-blue-400 text-xs">Track all markets on TradingView</span>
+              </a>
             </div>
           </div>
         </div>
