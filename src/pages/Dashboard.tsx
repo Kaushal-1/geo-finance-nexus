@@ -69,8 +69,25 @@ const Dashboard = () => {
         
         {/* Global Stock News Section */}
         <div className="flex-1 min-h-[20px]">
-          <GlobalStockNews />
-        </div>
+{/* Global Market News Button */}
+  <Sheet>
+    <SheetTrigger asChild>
+      <Button 
+        className="bg-indigo-600 hover:bg-indigo-700"
+        size="sm"
+      >
+        <Newspaper className="mr-2 h-4 w-4" /> Global Market News
+      </Button>
+    </SheetTrigger>
+    <SheetContent side="right" className="w-full sm:w-[400px] bg-[#0a0e17] border-l border-white/10">
+      <SheetHeader>
+        <SheetTitle className="text-white">Global Market News</SheetTitle>
+      </SheetHeader>
+      <div className="mt-4 h-[calc(100vh-100px)] overflow-auto">
+        <GlobalStockNews />
+      </div>
+    </SheetContent>
+  </Sheet>
       </div>
       
       {/* Updated TradingView Widget */}
