@@ -56,7 +56,7 @@ const Dashboard = () => {
         </div>
         
         {/* Updated Trading View Widget */}
-        <div className="h-20 rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm overflow-hidden">
+        {/* <div className="h-20 rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm overflow-hidden">
           <div className="tradingview-widget-container h-full">
             <div className="tradingview-widget-container__widget h-full"></div>
             <div className="tradingview-widget-copyright hidden md:block">
@@ -65,7 +65,7 @@ const Dashboard = () => {
               </a>
             </div>
           </div>
-        </div>
+        </div> */}
 
         
         {/* Global Stock News Section */}
