@@ -271,8 +271,8 @@ const FuturePlansTimeline: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 1.5, duration: 0.5 }}
           >
-            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-teal-dark to-teal-light flex items-center justify-center z-10">
-              {/* <Globe className="h-8 w-8 text-white" /> */}
+            <div className="w-4 h-4 rounded-full bg-gradient-to-r from-teal-dark to-teal-light flex items-center justify-center z-10">
+              {/* <Globe className="h-8 w-8 text-white" />  */}
             </div>
           </motion.div>
         </motion.div>
