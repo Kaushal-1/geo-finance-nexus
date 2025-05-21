@@ -195,7 +195,7 @@ const FuturePlansTimeline: React.FC = () => {
                     animate={{ scale: 1 }}
                     transition={{ delay: index * 0.2 + 0.5, duration: 0.5, type: "spring" }}
                   >
-                    <Icon className="h-8 w-8 text-white" />
+                    <Icon className="h-7 w-10 text-white" />
                   </motion.div>
                 </div>
 
