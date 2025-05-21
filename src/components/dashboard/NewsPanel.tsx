@@ -74,7 +74,7 @@ const NewsPanel = () => {
 
   return (
     <Card className="h-full bg-[#1a2035]/80 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden flex flex-col">
-      {/* <div className="flex justify-between items-center p-4 border-b border-white/10"> */}
+      <div className="flex justify-between items-center p-4 border-b border-white/10">
         <h2 className="text-lg font-medium text-white">Financial News</h2>
         <button 
           onClick={() => setCollapsed(true)}
@@ -143,7 +143,7 @@ const NewsPanel = () => {
           <ExternalLink className="h-4 w-4 mr-2" />
           View All Financial News
         </Button>
-      // </div>
+      </div>
     </Card>
   );
 };
