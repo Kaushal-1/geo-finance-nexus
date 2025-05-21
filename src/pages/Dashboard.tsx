@@ -80,7 +80,7 @@ const Dashboard = () => {
 };
 
 // Updated component for TradingView Widget with the new configuration
-const UpdatedTradingViewWidget = () => {
+{/* const UpdatedTradingViewWidget = () => {
   React.useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
@@ -132,6 +132,6 @@ const UpdatedTradingViewWidget = () => {
   }, []);
   
   return null;
-};
+}; */}
 
 export default Dashboard;
