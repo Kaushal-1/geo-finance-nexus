@@ -56,8 +56,8 @@ const Dashboard = () => {
         </div>
         
         {/* Updated Trading View Widget */}
-        <div className="h-20 rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm overflow-hidden">
-          {/* <div className="tradingview-widget-container h-full">
+         {/* <div className="h-20 rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm overflow-hidden">
+          <div className="tradingview-widget-container h-full">
             <div className="tradingview-widget-container__widget h-full"></div>
             <div className="tradingview-widget-copyright hidden md:block">
               <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
@@ -65,13 +65,13 @@ const Dashboard = () => {
               </a>
             </div>
           </div>
-        </div> */}
+        </div>  */}
         
         {/* Global Stock News Section */}
         <div className="flex-1 min-h-[20px]">
           <GlobalStockNews />
         </div>
-      </div>
+      {/* </div> */}
       
       {/* Updated TradingView Widget */}
       {/* <UpdatedTradingViewWidget /> */}
