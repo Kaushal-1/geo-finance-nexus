@@ -158,7 +158,7 @@ const FuturePlansTimeline: React.FC = () => {
             Future Innovation Roadmap
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Our vision for expanding the GeoFinance Nexus ecosystem with cutting-edge features
+            Our vision for expanding the NeuroTicker ecosystem with cutting-edge features
           </p>
         </motion.div>
 

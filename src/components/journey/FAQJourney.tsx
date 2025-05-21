@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
@@ -131,7 +130,7 @@ const FAQJourney = () => {
             Financial Intelligence <span className="text-teal">Journey</span>
           </h2>
           <p className="text-lg text-gray-300 max-w-3xl mx-auto">
-            Explore how GeoFinance is revolutionizing financial analytics through geospatial visualization, 
+            Explore how NeuroTicker is revolutionizing financial analytics through geospatial visualization, 
             AI-driven insights, and immersive data experiences.
           </p>
         </motion.div>
