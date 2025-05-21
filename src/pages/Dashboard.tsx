@@ -61,7 +61,7 @@ const Dashboard = () => {
             <div className="tradingview-widget-container__widget h-full"></div>
             <div className="tradingview-widget-copyright hidden md:block">
               <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
-                <span className="text-blue-400 text-xs">Track</span>
+                <span className="text-blue-400 text-xs">Track all markte data on TradingView. </span>
               </a>
             </div>
           </div>
