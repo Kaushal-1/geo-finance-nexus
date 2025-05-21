@@ -213,15 +213,14 @@ const FAQJourney = () => {
                                       <Badge variant="outline" className="bg-white/5">#{index + 1}</Badge>
                                     </div>
                                     <h4 className="font-semibold text-white mb-2">{item.question}</h4>
-                                    <p className="text-sm text-gray-300">{item.answer}</p>
+                                    {/* <p className="text-sm text-gray-300">{item.answer}</p> */}
                                   </div>
-                                  
+                                  {/* 
                                   {item.details && (
                                     <div className="mt-4 pt-4 border-t border-white/10">
                                       <p className="text-xs text-teal">View technical details</p>
-                                      <p className="text-sm text-gray-400">{item.details}</p>
                                     </div>
-                                  )}
+                                  )} */}
                                 </Card>
                               </div>
                             </CarouselItem>
