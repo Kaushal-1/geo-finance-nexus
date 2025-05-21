@@ -41,9 +41,25 @@ serve(async (req) => {
     const alertService = new AlertService(supabaseClient);
     const telegramBot = new TelegramBot(tradingService, alertService);
 
-    // If this is a webhook from Telegram
+    // In your request handler
     if (req.method === 'POST') {
-      const body = await req.json();
+      const { action, user_id, settings } = await req.json();
+      
+      // Add this case to handle the new action
+      if (action === 'verify_user_id') {
+        try {
+          const isValid = await telegramBot.verifyUserId(user_id);
+          return new Response(
+            JSON.stringify({ verified: isValid }),
+            { headers: { 'Content-Type': 'application/json' } }
+          );
+        } catch (error) {
+          return new Response(
+            JSON.stringify({ error: error.message }),
+            { status: 500, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+      }
       
       // Check if this is a verification request from our UI
       if (body.action === 'verify_connection' && body.user_id) {

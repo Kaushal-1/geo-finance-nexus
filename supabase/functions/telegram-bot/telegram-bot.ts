@@ -478,29 +478,74 @@ Examples:
     }
   }
 
-  async handleChatCommand(chatId: number, parts: string[]): Promise<void> {
-    // Expected format: /chat [user's question]
-    if (parts.length < 2) {
-      await this.sendMessage(chatId, "Usage: /chat YOUR_QUESTION\nExample: /chat What's the current market trend?");
-      return;
-    }
-
-    // Get the question (everything after /chat)
-    const question = parts.slice(1).join(' ');
-    
-    // Let the user know we're processing
-    await this.sendMessage(chatId, `Processing your question: "${question}"\nPlease wait a moment...`);
-    
+  // Add new method to verify any user ID
+  async verifyUserId(userId: string): Promise<boolean> {
     try {
-      // Get response from the Sonar API
-      const response = await this.getSonarResponse(question);
+      // Try to get chat information from Telegram API
+      const response = await fetch(`https://api.telegram.org/bot${this.BOT_TOKEN}/getChat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: userId
+        })
+      });
+  
+      const data = await response.json();
       
-      // Send the response back to the user
-      await this.sendMessage(chatId, response);
+      // If the API call is successful, the user ID is valid
+      if (data.ok) {
+        // Initialize settings for this user if they don't exist
+        if (!userSettings.has(userId)) {
+          userSettings.set(userId, {
+            price_alerts: true,
+            order_notifications: true,
+            trade_commands: true,
+            chat_commands: true,
+            updated_at: new Date().toISOString()
+          });
+        }
+        return true;
+      }
+      
+      return false;
     } catch (error) {
-      console.error('Error getting Sonar response:', error);
-      await this.sendMessage(chatId, `❌ Sorry, I couldn't process your question. Error: ${error.message}`);
+      console.error('Error verifying user ID:', error);
+      return false;
     }
+  }
+
+  // Also update the updateSettings method to work with any verified user ID
+  async updateSettings(chatId: string, settings: any): Promise<boolean> {
+    try {
+      // Remove the restriction to only ALLOWED_USER_ID
+      // Update settings in memory
+      const currentSettings = userSettings.get(chatId) || {};
+      userSettings.set(chatId, {
+        ...currentSettings,
+        ...settings,
+        updated_at: new Date().toISOString()
+      });
+      
+      console.log(`Updated settings for user ${chatId}:`, userSettings.get(chatId));
+      return true;
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      throw error;
+    }
+  }
+
+  // Update the getSettings method to work with any verified user ID
+  async getSettings(chatId: string): Promise<any> {
+    // Return settings from in-memory storage
+    return userSettings.get(chatId) || {
+      price_alerts: true,
+      order_notifications: true,
+      trade_commands: true,
+      chat_commands: true,
+      updated_at: new Date().toISOString()
+    };
   }
 
   async getSonarResponse(question: string): Promise<string> {
