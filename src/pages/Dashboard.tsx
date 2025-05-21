@@ -1,10 +1,11 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MapVisualization from "@/components/dashboard/MapVisualization";
 import GlobalNavbar from "@/components/shared/GlobalNavbar";
 import { useTimelineData } from "@/hooks/useTimelineData";
 import { Button } from "@/components/ui/button";
-import { Newspaper } from "lucide-react";
+import { Globe, Newspaper } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -12,6 +13,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import NewsPanel from "@/components/dashboard/NewsPanel";
 import GlobalStockNews from "@/components/dashboard/GlobalStockNews";
 
@@ -30,7 +36,7 @@ const Dashboard = () => {
           <div className="relative flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm">
             <MapVisualization />
 
-            <div className="absolute top-4 left-4 z-10 flex flex-col sm:flex-row gap-2">
+            <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
               {/* Financial News Button */}
               <Sheet>
                 <SheetTrigger asChild>
@@ -52,14 +58,29 @@ const Dashboard = () => {
                   </div>
                 </SheetContent>
               </Sheet>
+
+              {/* Global Stock News Button */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="bg-indigo-600 hover:bg-indigo-700" size="sm">
+                    <Globe className="mr-2 h-4 w-4" /> Global Stock News
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  className="w-[90vw] max-w-[500px] bg-[#0a0e17] border border-white/10 rounded-lg p-3 shadow-lg"
+                  sideOffset={5}
+                  align="start"
+                >
+                  <div className="max-h-[450px] overflow-y-auto custom-scrollbar">
+                    <GlobalStockNews />
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
 
-        {/* Global Stock News Section */}
-        <div className="flex-1 min-h-[20px]">
-          <GlobalStockNews />
-        </div>
+        {/* Remove the original GlobalStockNews section */}
       </div>
     </div>
   );
