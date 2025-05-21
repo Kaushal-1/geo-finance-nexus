@@ -43,7 +43,7 @@ const DashboardHeader = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
               <Globe className="h-6 w-6 text-teal-500 mr-2" />
-              <span className="text-white font-bold text-xl">GeoFinance</span>
+              <span className="text-white font-bold text-xl">NeuroTicker</span>
             </Link>
             
             {/* Desktop Navigation */}

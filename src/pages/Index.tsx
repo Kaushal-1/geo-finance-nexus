@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Globe, ChartBar, Bell, Clock } from "lucide-react";
@@ -88,7 +89,7 @@ const Index = () => {
 
   const handleExploreClick = () => {
     toast({
-      title: "Welcome to GeoFinance",
+      title: "Welcome to NeuroTicker",
       description: "Start exploring our advanced geospatial financial analytics platform.",
       duration: 5000
     });
@@ -137,7 +138,7 @@ const Index = () => {
             <div className="rounded-lg bg-teal p-1 mr-2">
               <Globe className="h-6 w-6 text-white" />
             </div>
-            <span className="text-white text-xl font-bold">GeoFinance</span>
+            <span className="text-white text-xl font-bold">NeuroTicker</span>
           </div>
           <div className="hidden md:flex items-center space-x-6">
             {navLinks.map((link) => (
@@ -296,10 +297,10 @@ const Index = () => {
                 <div className="rounded-lg bg-teal p-1 mr-2">
                   <Globe className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-white text-lg font-bold items-center">GeoFinance</span>
+                <span className="text-white text-lg font-bold items-center">NeuroTicker</span>
               </div>
               <div className="mt-6 md:mt-0 text-sm text-gray-500">
-                © 2025 GeoFinance. All rights reserved.              
+                © 2025 NeuroTicker. All rights reserved.              
               </div>
             </div>
           </div>

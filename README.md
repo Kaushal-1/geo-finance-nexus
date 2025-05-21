@@ -1,8 +1,9 @@
-# GeoFinance Nexus
+
+# NeuroTicker
 
 ## 🌍 Geospatial Financial Intelligence Platform
 
-GeoFinance Nexus is an innovative platform that combines geospatial visualization with financial data analysis, providing traders and investors with location-aware market insights and trading capabilities.
+NeuroTicker is an innovative platform that combines geospatial visualization with financial data analysis, providing traders and investors with location-aware market insights and trading capabilities.
 
 ## 🚀 Features
 
@@ -89,10 +90,10 @@ npm run dev
 ## 🏆 Mission Perplexity Hackathon
 
 ### Project Vision
-GeoFinance Nexus was created to address the gap between traditional financial analysis tools and geospatial data. By combining these domains, we enable investors to discover insights that would otherwise remain hidden in conventional platforms.
+NeuroTicker was created to address the gap between traditional financial analysis tools and geospatial data. By combining these domains, we enable investors to discover insights that would otherwise remain hidden in conventional platforms.
 
 ### Problem Statement
-Traditional trading platforms lack geographic context for financial data, making it difficult for investors to understand regional market trends and correlations. GeoFinance Nexus solves this by providing an intuitive interface that visualizes financial data on interactive maps.
+Traditional trading platforms lack geographic context for financial data, making it difficult for investors to understand regional market trends and correlations. NeuroTicker solves this by providing an intuitive interface that visualizes financial data on interactive maps.
 
 ### Innovation
 Our platform's unique approach to combining financial data with geospatial visualization creates a new paradigm for market analysis. The integration with Alpaca Markets API allows for seamless trading capabilities within the same interface.
@@ -199,7 +200,7 @@ Dividend Yield: 0.05%
 
 #### **SONAR API**
 - A specialized chat assistant for financial research
-- Tailored to user’s trading portfolio
+- Tailored to user's trading portfolio
 - Can answer real-time financial queries
 - Personalizes answers using live portfolio + market data
 

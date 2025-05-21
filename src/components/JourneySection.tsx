@@ -1,3 +1,4 @@
+
 import React from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -85,7 +86,7 @@ const JourneySection = () => {
             Our Innovation Path
           </Badge>
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            The GeoFinance Nexus Journey
+            The NeuroTicker Journey
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
             From concept to market-changing innovation - the evolution of our platform
