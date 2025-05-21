@@ -27,7 +27,7 @@ const APIModal = ({ open, onClose }: APIModalProps) => {
         <div className="sticky top-0 z-10 bg-[#1a1f2e]/95 backdrop-blur-lg border-b border-white/10 p-4">
           <DialogHeader className="mb-0">
             <DialogTitle className="text-xl font-bold text-white">
-              APIs Used in GeoFinance
+              APIs Used in NeuroTicker
             </DialogTitle>
           </DialogHeader>
           <button 
@@ -234,7 +234,7 @@ const APIModal = ({ open, onClose }: APIModalProps) => {
                       <div className="pl-4 border-l-2 border-teal-500/50 space-y-2">
                         <h4 className="font-semibold text-teal-400">SONAR API</h4>
                         <ul className="space-y-1 text-sm text-gray-300">
-                          <li>• Powers GeoFinancerBot via /chat feature.</li>
+                          <li>• Powers NeuroTickerrBot via /chat feature.</li>
                           <li>• Sends alerts, stock updates, and real-time news.</li>
                         </ul>
                       </div>

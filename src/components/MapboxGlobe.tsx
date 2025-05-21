@@ -258,7 +258,7 @@ const MapboxGlobe: React.FC<MapboxGlobeProps> = ({ className }) => {
       // Add attribution in a more elegant way
       map.current.addControl(new mapboxgl.AttributionControl({
         compact: true,
-        customAttribution: 'Powered by MapBox | GeoFinance 2025'
+        customAttribution: 'Powered by MapBox | NeuroTicker 2025'
       }), 'bottom-left');
 
       // Handle map load event

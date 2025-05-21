@@ -209,7 +209,7 @@ Dividend Yield: 0.05%
 ### 5. Telegram Bot Integration
 
 #### **SONAR API**
-- Powers **GeoFinancerBot** via `/chat` feature
+- Powers **NeuroTickerBot** via `/chat` feature
 - Sends alerts, stock updates, and real-time news
 
 #### **Alpaca API**
