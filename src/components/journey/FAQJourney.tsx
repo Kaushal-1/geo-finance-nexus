@@ -272,7 +272,7 @@ const FAQJourney = () => {
                                     <p className="text-sm text-gray-400">{item.details}</p>
                                   </div>
                                 )}
-                                
+                                {/* 
                                 {item.metrics && (
                                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
                                     {item.metrics.map((metric, idx) => (
@@ -282,7 +282,7 @@ const FAQJourney = () => {
                                       </div>
                                     ))}
                                   </div>
-                                )}
+                                )} */}
                               </div>
                             </AccordionContent>
                           </AccordionItem>
