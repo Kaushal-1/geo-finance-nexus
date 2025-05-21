@@ -27,7 +27,7 @@ const Dashboard = () => {
       
       <div className="flex flex-col h-[calc(100vh-120px)] p-4 gap-4">
         {/* Main Content - Interactive Map with fixed height */}
-        <div className="h-[55vh] flex flex-col relative">
+        <div className="h-[100vh] flex flex-col relative">
           <div className="relative flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm">
             <MapVisualization />
             
@@ -68,7 +68,7 @@ const Dashboard = () => {
         </div>
         
         {/* Global Stock News Section */}
-        <div className="flex-1 min-h-[200px]">
+        <div className="flex-1 min-h-[20px]">
           <GlobalStockNews />
         </div>
       </div>
