@@ -21,7 +21,7 @@ export interface ChatMessage {
 const INITIAL_MESSAGES: ChatMessage[] = [
   {
     id: "welcome",
-    content: "👋 Welcome to GeoFinance Assistant! How can I help you today?",
+    content: "👋 Welcome to NeuroTicker Assistant! How can I help you today?",
     role: "assistant",
     timestamp: new Date(),
   },
@@ -110,7 +110,7 @@ const ChatbotWidget = () => {
           messages: [
             {
               role: "system",
-              content: "You are GeoFinance Assistant, an AI that helps with financial analysis, stock information, and market insights. Keep your responses focused on financial topics, concise (under 150 words), and helpful. Current date: May 2025."
+              content: "You are NeuroTicker Assistant, an AI that helps with financial analysis, stock information, and market insights. Keep your responses focused on financial topics, concise (under 150 words), and helpful. Current date: May 2025."
             },
             {
               role: "user",
@@ -205,7 +205,7 @@ const ChatbotWidget = () => {
                 <div className="bg-teal p-1 rounded-md">
                   <MessageCircle size={16} className="text-white" />
                 </div>
-                <h3 className="text-white font-semibold">GeoFinance Assistant</h3>
+                <h3 className="text-white font-semibold">NeuroTicker Assistant</h3>
                 <span className="text-xs text-gray-400">(Sonar API)</span>
               </div>
               <div className="flex gap-1">
