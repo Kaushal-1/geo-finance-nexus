@@ -27,7 +27,7 @@ const Dashboard = () => {
       
       <div className="flex flex-col h-[calc(100vh-120px)] p-4 gap-4">
         {/* Main Content - Interactive Map with fixed height */}
-        <div className="h-[100vh] flex flex-col relative">
+        <div className="h-[100vh] w-[100vh] flex flex-col relative">
           <div className="relative flex-1 overflow-hidden rounded-xl border border-white/10 bg-[#1a2035]/80 backdrop-blur-sm">
             <MapVisualization />
             
@@ -61,11 +61,12 @@ const Dashboard = () => {
             <div className="tradingview-widget-container__widget h-full"></div>
             <div className="tradingview-widget-copyright hidden md:block">
               <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
-                <span className="text-blue-400 text-xs">Track all markets on TradingView</span>
+                <span className="text-blue-400 text-xs">.</span>
               </a>
             </div>
           </div>
         </div>
+
         
         {/* Global Stock News Section */}
         <div className="flex-1 min-h-[20px]">
