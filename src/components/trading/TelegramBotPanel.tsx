@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Loader2, Bell, BellOff, RefreshCw, MessageSquare } from "lucide-react";
+import { Loader2, Bell, BellOff, RefreshCw, MessageSquare, Check, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 
 type TelegramSettings = {
   userId: string;
@@ -17,16 +18,16 @@ type TelegramSettings = {
   chatCommands: boolean;
 }
 
-// Only allow this specific user ID
-const ALLOWED_USER_ID = "2085478565";
-
 const TelegramBotPanel = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [connectionChecking, setConnectionChecking] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | null>(null);
+  const [userIdInput, setUserIdInput] = useState("");
+  const [isVerifyingUserId, setIsVerifyingUserId] = useState(false);
+  const [userIdVerified, setUserIdVerified] = useState<boolean | null>(null);
   const [settings, setSettings] = useState<TelegramSettings>({
-    userId: ALLOWED_USER_ID, // Use the specific user ID
+    userId: "", // Will be populated from localStorage or default
     priceAlerts: true,
     orderNotifications: true,
     tradeCommands: true,
@@ -43,14 +44,14 @@ const TelegramBotPanel = () => {
         if (savedSettings) {
           const parsedSettings = JSON.parse(savedSettings);
           setSettings(parsedSettings);
+          setUserIdInput(parsedSettings.userId); // Set the input field with saved user ID
           setIsLoading(false);
           return;
         }
         
-        // If no localStorage settings, try to get from database
-        // but since we have RLS issues, we'll use default settings
+        // If no localStorage settings, use default settings
         const defaultSettings = {
-          userId: ALLOWED_USER_ID,
+          userId: "", // Empty by default, requiring user input
           priceAlerts: true,
           orderNotifications: true,
           tradeCommands: true,
@@ -73,59 +74,64 @@ const TelegramBotPanel = () => {
     };
 
     fetchSettings();
-    // Check connection status on load
-    handleRefreshConnection();
+    // Only check connection status if we have a user ID
+    if (settings.userId) {
+      handleRefreshConnection();
+    }
   }, []);
 
   const saveSettings = async (newSettings: TelegramSettings) => {
     try {
       setIsSaving(true);
       
-      // Force user ID to be the allowed one
-      newSettings.userId = ALLOWED_USER_ID;
-      
-      // Store in localStorage since database operations are failing due to RLS
+      // Store in localStorage
       localStorage.setItem('telegramSettings', JSON.stringify(newSettings));
       
-      // Try to send the settings to the Edge Function directly
-      // This bypasses Supabase RLS policies
-      try {
-        const response = await fetch(`https://qlzjoasyheqykokiljwj.supabase.co/functions/v1/telegram-bot`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            action: 'update_settings',
-            user_id: ALLOWED_USER_ID,
-            settings: {
-              price_alerts: newSettings.priceAlerts,
-              order_notifications: newSettings.orderNotifications,
-              trade_commands: newSettings.tradeCommands,
-              chat_commands: newSettings.chatCommands
-            }
-          })
-        });
-        
-        if (response.ok) {
-          toast({
-            title: "Settings Saved",
-            description: "Your Telegram bot settings have been updated",
+      // Only try to send settings to Edge Function if we have a verified user ID
+      if (newSettings.userId) {
+        try {
+          const response = await fetch(`https://qlzjoasyheqykokiljwj.supabase.co/functions/v1/telegram-bot`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              action: 'update_settings',
+              user_id: newSettings.userId,
+              settings: {
+                price_alerts: newSettings.priceAlerts,
+                order_notifications: newSettings.orderNotifications,
+                trade_commands: newSettings.tradeCommands,
+                chat_commands: newSettings.chatCommands
+              }
+            })
           });
-        } else {
-          console.log("Edge function response:", await response.text());
-          // Even if the edge function call fails, we still have settings in localStorage
+          
+          if (response.ok) {
+            toast({
+              title: "Settings Saved",
+              description: "Your Telegram bot settings have been updated",
+            });
+          } else {
+            console.log("Edge function response:", await response.text());
+            // Even if the edge function call fails, we still have settings in localStorage
+            toast({
+              title: "Settings Saved Locally",
+              description: "Your settings were saved locally but could not be synchronized",
+            });
+          }
+        } catch (error) {
+          console.error("Error calling edge function:", error);
+          // Even if there's an error, the settings are still in localStorage
           toast({
             title: "Settings Saved Locally",
             description: "Your settings were saved locally but could not be synchronized",
           });
         }
-      } catch (error) {
-        console.error("Error calling edge function:", error);
-        // Even if there's an error, the settings are still in localStorage
+      } else {
         toast({
           title: "Settings Saved Locally",
-          description: "Your settings were saved locally but could not be synchronized",
+          description: "Please verify your Telegram User ID to enable synchronization",
         });
       }
       
@@ -152,7 +158,17 @@ const TelegramBotPanel = () => {
       setConnectionChecking(true);
       setConnectionStatus(null);
       
-      // Always verify the specific user ID
+      // Only check connection if we have a user ID
+      if (!settings.userId) {
+        toast({
+          title: "User ID Required",
+          description: "Please enter and verify your Telegram User ID first",
+          variant: "destructive",
+        });
+        setConnectionStatus('disconnected');
+        return;
+      }
+      
       const response = await fetch(`https://qlzjoasyheqykokiljwj.supabase.co/functions/v1/telegram-bot`, {
         method: 'POST',
         headers: {
@@ -160,7 +176,7 @@ const TelegramBotPanel = () => {
         },
         body: JSON.stringify({
           action: 'verify_connection',
-          user_id: ALLOWED_USER_ID
+          user_id: settings.userId
         })
       });
       
@@ -191,12 +207,81 @@ const TelegramBotPanel = () => {
     }
   };
 
+  const handleVerifyUserId = async () => {
+    if (!userIdInput || userIdInput.trim() === "") {
+      toast({
+        title: "User ID Required",
+        description: "Please enter your Telegram User ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsVerifyingUserId(true);
+      setUserIdVerified(null);
+      
+      const response = await fetch(`https://qlzjoasyheqykokiljwj.supabase.co/functions/v1/telegram-bot`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'verify_user_id',
+          user_id: userIdInput.trim()
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.verified) {
+        setUserIdVerified(true);
+        // Update settings with the verified user ID
+        const newSettings = { ...settings, userId: userIdInput.trim() };
+        setSettings(newSettings);
+        localStorage.setItem('telegramSettings', JSON.stringify(newSettings));
+        
+        toast({
+          title: "User ID Verified",
+          description: "Your Telegram User ID has been verified and saved",
+        });
+        
+        // Check connection status with the new user ID
+        handleRefreshConnection();
+      } else {
+        setUserIdVerified(false);
+        toast({
+          title: "Verification Failed",
+          description: "Could not verify this Telegram User ID. Please check the ID and try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error verifying user ID:", error);
+      setUserIdVerified(false);
+      
+      toast({
+        title: "Verification Error",
+        description: "Could not verify Telegram User ID",
+        variant: "destructive",
+      });
+    } finally {
+      setIsVerifyingUserId(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
           <CardTitle><Skeleton className="h-8 w-3/4" /></CardTitle>
-          <CardDescription><Skeleton className="h-4 w-full" /></CardDescription>
+          <CardDescription>
+            <span className="block"><Skeleton className="h-4 w-full" /></span>
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Skeleton className="h-10 w-full" />
@@ -219,6 +304,50 @@ const TelegramBotPanel = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* User ID Input Section */}
+        <div className="p-3 rounded-md mb-4 bg-blue-900/20 border border-blue-600/30">
+          <h3 className="text-sm font-medium text-white mb-2">Telegram User ID</h3>
+          <div className="flex items-center gap-2 mb-2">
+            <Input
+              value={userIdInput}
+              onChange={(e) => setUserIdInput(e.target.value)}
+              placeholder="Enter your Telegram User ID"
+              className="bg-black/20 border-white/10 text-white"
+              disabled={isVerifyingUserId || userIdVerified === true}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleVerifyUserId}
+              disabled={isVerifyingUserId || !userIdInput || userIdVerified === true}
+              className={`min-w-[100px] ${
+                userIdVerified === true 
+                  ? "bg-green-500/20 border-green-500 text-green-400" 
+                  : "bg-transparent border-teal-500 text-teal-500 hover:bg-teal-500/10"
+              }`}
+            >
+              {isVerifyingUserId ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : userIdVerified === true ? (
+                <Check className="h-4 w-4 mr-2" />
+              ) : (
+                <></>
+              )}
+              {userIdVerified === true ? "Verified" : "Verify ID"}
+            </Button>
+          </div>
+          <p className="text-xs text-gray-400">
+            To find your Telegram User ID, start a chat with @userinfobot on Telegram and it will display your ID.
+          </p>
+          {userIdVerified === false && (
+            <div className="mt-2 text-xs text-red-400 flex items-center">
+              <X className="h-3 w-3 mr-1" />
+              Could not verify this User ID. Please check and try again.
+            </div>
+          )}
+        </div>
+
+        {/* Connection Status Section */}
         <div className={`p-3 rounded-md mb-4 ${
           connectionStatus === 'connected' ? 'bg-green-900/20 border border-green-600/30' : 
           connectionStatus === 'disconnected' ? 'bg-red-900/20 border border-red-600/30' : 
@@ -243,7 +372,7 @@ const TelegramBotPanel = () => {
               variant="outline" 
               size="sm"
               onClick={handleRefreshConnection}
-              disabled={connectionChecking}
+              disabled={connectionChecking || !settings.userId}
               className="bg-transparent border-teal-500 text-teal-500 hover:bg-teal-500/10"
             >
               {connectionChecking ? (
@@ -265,6 +394,7 @@ const TelegramBotPanel = () => {
           </div>
         </div>
 
+        {/* Settings Section - Only enabled if user ID is verified */}
         <div className="grid gap-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
@@ -276,7 +406,7 @@ const TelegramBotPanel = () => {
             <Switch
               checked={settings.priceAlerts}
               onCheckedChange={(checked) => handleSettingChange('priceAlerts', checked)}
-              disabled={isSaving || connectionStatus !== 'connected'}
+              disabled={isSaving || connectionStatus !== 'connected' || !settings.userId}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -289,7 +419,7 @@ const TelegramBotPanel = () => {
             <Switch
               checked={settings.orderNotifications}
               onCheckedChange={(checked) => handleSettingChange('orderNotifications', checked)}
-              disabled={isSaving || connectionStatus !== 'connected'}
+              disabled={isSaving || connectionStatus !== 'connected' || !settings.userId}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -302,7 +432,7 @@ const TelegramBotPanel = () => {
             <Switch
               checked={settings.tradeCommands}
               onCheckedChange={(checked) => handleSettingChange('tradeCommands', checked)}
-              disabled={isSaving || connectionStatus !== 'connected'}
+              disabled={isSaving || connectionStatus !== 'connected' || !settings.userId}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -315,14 +445,14 @@ const TelegramBotPanel = () => {
             <Switch
               checked={settings.chatCommands}
               onCheckedChange={(checked) => handleSettingChange('chatCommands', checked)}
-              disabled={isSaving || connectionStatus !== 'connected'}
+              disabled={isSaving || connectionStatus !== 'connected' || !settings.userId}
             />
           </div>
         </div>
       </CardContent>
       <CardFooter className="flex justify-between pt-0 border-t border-white/10">
         <div className="text-sm text-gray-400">
-          User ID: {settings.userId}
+          {settings.userId ? `User ID: ${settings.userId}` : "No User ID set"}
         </div>
         {isSaving && (
           <div className="flex items-center text-teal-400 text-sm">
