@@ -279,7 +279,9 @@ const TelegramBotPanel = () => {
       <Card>
         <CardHeader>
           <CardTitle><Skeleton className="h-8 w-3/4" /></CardTitle>
-          <CardDescription><div><Skeleton className="h-4 w-full" /></div></CardDescription>
+          <CardDescription>
+            <span className="block"><Skeleton className="h-4 w-full" /></span>
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Skeleton className="h-10 w-full" />

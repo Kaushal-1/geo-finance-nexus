@@ -51,14 +51,20 @@ export class TelegramBot {
 
     console.log(`Received message from chat ${chatId}: ${text}`);
 
-    // Verify user is authorized
-    if (chatId.toString() !== ALLOWED_USER_ID) {
-      console.log(`Unauthorized access attempt from chat ID: ${chatId}`);
-      return;
+    // Check if this user ID is in our settings (verified)
+    const chatIdStr = chatId.toString();
+    if (!userSettings.has(chatIdStr)) {
+      console.log(`Message from unverified chat ID: ${chatId}, checking if valid`);
+      // Try to verify this user ID on the fly
+      const isValid = await this.verifyUserId(chatIdStr);
+      if (!isValid) {
+        console.log(`Unauthorized access attempt from chat ID: ${chatId}`);
+        return;
+      }
     }
 
     // Check user settings before processing commands
-    const canProcessCommands = await this.checkUserPermissions(chatId.toString(), text);
+    const canProcessCommands = await this.checkUserPermissions(chatIdStr, text);
     if (!canProcessCommands) {
       if (text.startsWith('/')) {
         await this.sendMessage(chatId, "This command has been disabled in your settings. You can enable it in the Trading Dashboard.");
@@ -478,9 +484,18 @@ Examples:
     }
   }
 
-  // Add new method to verify any user ID
+  // Add this method to the TelegramBot class if it doesn't exist
+  
   async verifyUserId(userId: string): Promise<boolean> {
     try {
+      console.log(`Attempting to verify Telegram user ID: ${userId}`);
+      
+      // Skip empty user IDs
+      if (!userId || userId.trim() === "") {
+        console.log("Empty user ID provided, skipping verification");
+        return false;
+      }
+      
       // Try to get chat information from Telegram API
       const response = await fetch(`https://api.telegram.org/bot${this.BOT_TOKEN}/getChat`, {
         method: 'POST',
@@ -516,36 +531,26 @@ Examples:
     }
   }
 
-  // Also update the updateSettings method to work with any verified user ID
-  async updateSettings(chatId: string, settings: any): Promise<boolean> {
+  // Also update the verifyConnection method to work with any user ID
+  async verifyConnection(chatId: string): Promise<boolean> {
     try {
-      // Remove the restriction to only ALLOWED_USER_ID
-      // Update settings in memory
-      const currentSettings = userSettings.get(chatId) || {};
-      userSettings.set(chatId, {
-        ...currentSettings,
-        ...settings,
-        updated_at: new Date().toISOString()
+      console.log(`Verifying connection for chat ID: ${chatId}`);
+      const response = await fetch(`https://api.telegram.org/bot${this.BOT_TOKEN}/getChat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId
+        })
       });
-      
-      console.log(`Updated settings for user ${chatId}:`, userSettings.get(chatId));
-      return true;
+  
+      const data = await response.json();
+      return data.ok;
     } catch (error) {
-      console.error("Error updating settings:", error);
-      throw error;
+      console.error('Error verifying Telegram connection:', error);
+      return false;
     }
-  }
-
-  // Update the getSettings method to work with any verified user ID
-  async getSettings(chatId: string): Promise<any> {
-    // Return settings from in-memory storage
-    return userSettings.get(chatId) || {
-      price_alerts: true,
-      order_notifications: true,
-      trade_commands: true,
-      chat_commands: true,
-      updated_at: new Date().toISOString()
-    };
   }
 
   async getSonarResponse(question: string): Promise<string> {
