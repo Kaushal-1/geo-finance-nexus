@@ -51,20 +51,14 @@ export class TelegramBot {
 
     console.log(`Received message from chat ${chatId}: ${text}`);
 
-    // Check if this user ID is in our settings (verified)
-    const chatIdStr = chatId.toString();
-    if (!userSettings.has(chatIdStr)) {
-      console.log(`Message from unverified chat ID: ${chatId}, checking if valid`);
-      // Try to verify this user ID on the fly
-      const isValid = await this.verifyUserId(chatIdStr);
-      if (!isValid) {
-        console.log(`Unauthorized access attempt from chat ID: ${chatId}`);
-        return;
-      }
+    // Verify user is authorized
+    if (chatId.toString() !== ALLOWED_USER_ID) {
+      console.log(`Unauthorized access attempt from chat ID: ${chatId}`);
+      return;
     }
 
     // Check user settings before processing commands
-    const canProcessCommands = await this.checkUserPermissions(chatIdStr, text);
+    const canProcessCommands = await this.checkUserPermissions(chatId.toString(), text);
     if (!canProcessCommands) {
       if (text.startsWith('/')) {
         await this.sendMessage(chatId, "This command has been disabled in your settings. You can enable it in the Trading Dashboard.");
@@ -484,72 +478,28 @@ Examples:
     }
   }
 
-  // Add this method to the TelegramBot class if it doesn't exist
-  
-  async verifyUserId(userId: string): Promise<boolean> {
-    try {
-      console.log(`Attempting to verify Telegram user ID: ${userId}`);
-      
-      // Skip empty user IDs
-      if (!userId || userId.trim() === "") {
-        console.log("Empty user ID provided, skipping verification");
-        return false;
-      }
-      
-      // Try to get chat information from Telegram API
-      const response = await fetch(`https://api.telegram.org/bot${this.BOT_TOKEN}/getChat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: userId
-        })
-      });
-  
-      const data = await response.json();
-      
-      // If the API call is successful, the user ID is valid
-      if (data.ok) {
-        // Initialize settings for this user if they don't exist
-        if (!userSettings.has(userId)) {
-          userSettings.set(userId, {
-            price_alerts: true,
-            order_notifications: true,
-            trade_commands: true,
-            chat_commands: true,
-            updated_at: new Date().toISOString()
-          });
-        }
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Error verifying user ID:', error);
-      return false;
+  async handleChatCommand(chatId: number, parts: string[]): Promise<void> {
+    // Expected format: /chat [user's question]
+    if (parts.length < 2) {
+      await this.sendMessage(chatId, "Usage: /chat YOUR_QUESTION\nExample: /chat What's the current market trend?");
+      return;
     }
-  }
 
-  // Also update the verifyConnection method to work with any user ID
-  async verifyConnection(chatId: string): Promise<boolean> {
+    // Get the question (everything after /chat)
+    const question = parts.slice(1).join(' ');
+    
+    // Let the user know we're processing
+    await this.sendMessage(chatId, `Processing your question: "${question}"\nPlease wait a moment...`);
+    
     try {
-      console.log(`Verifying connection for chat ID: ${chatId}`);
-      const response = await fetch(`https://api.telegram.org/bot${this.BOT_TOKEN}/getChat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: chatId
-        })
-      });
-  
-      const data = await response.json();
-      return data.ok;
+      // Get response from the Sonar API
+      const response = await this.getSonarResponse(question);
+      
+      // Send the response back to the user
+      await this.sendMessage(chatId, response);
     } catch (error) {
-      console.error('Error verifying Telegram connection:', error);
-      return false;
+      console.error('Error getting Sonar response:', error);
+      await this.sendMessage(chatId, `❌ Sorry, I couldn't process your question. Error: ${error.message}`);
     }
   }
 

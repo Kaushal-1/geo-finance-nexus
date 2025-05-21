@@ -41,38 +41,28 @@ serve(async (req) => {
     const alertService = new AlertService(supabaseClient);
     const telegramBot = new TelegramBot(tradingService, alertService);
 
-    // In your request handler
+    // If this is a webhook from Telegram
     if (req.method === 'POST') {
       const body = await req.json();
-      
-      // Debugging to see what's coming in
-      console.log("Received request with action:", body.action, "and user_id:", body.user_id);
-      
-      // Handle user ID verification
-      if (body.action === 'verify_user_id') {
-        try {
-          console.log("Attempting to verify user ID:", body.user_id);
-          const isValid = await telegramBot.verifyUserId(body.user_id);
-          console.log("Verification result for user ID:", body.user_id, "is:", isValid);
-          
-          return new Response(
-            JSON.stringify({ verified: isValid }),
-            { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-          );
-        } catch (error) {
-          console.error("Error verifying user ID:", error);
-          return new Response(
-            JSON.stringify({ error: error.message, verified: false }),
-            { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-          );
-        }
-      }
       
       // Check if this is a verification request from our UI
       if (body.action === 'verify_connection' && body.user_id) {
         console.log(`Verifying Telegram connection for user: ${body.user_id}`);
         
-        // Allow verification for any user ID, not just ALLOWED_USER_ID
+        // Only allow verification for the specific user ID
+        if (body.user_id !== ALLOWED_USER_ID) {
+          return new Response(
+            JSON.stringify({ 
+              status: 'disconnected',
+              user_id: body.user_id,
+              message: "This user ID is not authorized to connect."
+            }),
+            {
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            }
+          );
+        }
+        
         const isConnected = await telegramBot.verifyConnection(body.user_id);
         
         return new Response(
@@ -90,9 +80,22 @@ serve(async (req) => {
       if (body.action === 'update_settings' && body.user_id && body.settings) {
         console.log(`Updating settings for user: ${body.user_id}`);
         
-        // Allow settings updates for any verified user ID
+        // Only allow updates for the specific user ID
+        if (body.user_id !== ALLOWED_USER_ID) {
+          return new Response(
+            JSON.stringify({ 
+              success: false,
+              message: "This user ID is not authorized to update settings."
+            }),
+            {
+              headers: { 'Content-Type': 'application/json', ...corsHeaders },
+            }
+          );
+        }
+        
         try {
           // Directly store settings in memory or use a more permanent storage solution
+          // This bypasses Supabase RLS policies
           const result = await telegramBot.updateSettings(body.user_id, body.settings);
           
           return new Response(
@@ -118,10 +121,18 @@ serve(async (req) => {
         }
       }
       
-      // Regular Telegram update - process updates from any verified user
+      // Regular Telegram update - check if it's from the allowed user
       console.log("Received Telegram update:", JSON.stringify(body));
       
-      // Process the update for any user (the processUpdate method will check if the user is verified)
+      // Skip processing updates from unauthorized users
+      if (body.message && body.message.chat && body.message.chat.id.toString() !== ALLOWED_USER_ID) {
+        console.log(`Skipping update from unauthorized user: ${body.message.chat.id}`);
+        return new Response(JSON.stringify({ status: 'ok' }), {
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+      
+      // Process the update
       await telegramBot.processUpdate(body);
       
       return new Response(JSON.stringify({ status: 'ok' }), {
