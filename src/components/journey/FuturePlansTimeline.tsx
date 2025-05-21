@@ -265,18 +265,18 @@ const FuturePlansTimeline: React.FC = () => {
           })}
           
           {/* Final node */}
-          <motion.div
+          {/* <motion.div
             className="absolute bottom-0 left-8 md:left-1/2 md:transform md:-translate-x-1/2 mb-0"
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 1.5, duration: 0.5 }}
           >
             <div className="w-4 h-4 rounded-full bg-gradient-to-r from-teal-dark to-teal-light flex items-center justify-center z-10">
-              {/* <Globe className="h-8 w-8 text-white" />  */}
+               <Globe className="h-8 w-8 text-white" />  
             </div>
           </motion.div>
         </motion.div>
-        
+         */}
         {/* Call to action */}
         <motion.div 
           className="text-center mt-16"
