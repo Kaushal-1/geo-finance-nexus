@@ -10,9 +10,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Specify allowed user ID
-const ALLOWED_USER_ID = "2085478565";
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -49,20 +46,6 @@ serve(async (req) => {
       if (body.action === 'verify_connection' && body.user_id) {
         console.log(`Verifying Telegram connection for user: ${body.user_id}`);
         
-        // Only allow verification for the specific user ID
-        if (body.user_id !== ALLOWED_USER_ID) {
-          return new Response(
-            JSON.stringify({ 
-              status: 'disconnected',
-              user_id: body.user_id,
-              message: "This user ID is not authorized to connect."
-            }),
-            {
-              headers: { 'Content-Type': 'application/json', ...corsHeaders },
-            }
-          );
-        }
-        
         const isConnected = await telegramBot.verifyConnection(body.user_id);
         
         return new Response(
@@ -80,22 +63,8 @@ serve(async (req) => {
       if (body.action === 'update_settings' && body.user_id && body.settings) {
         console.log(`Updating settings for user: ${body.user_id}`);
         
-        // Only allow updates for the specific user ID
-        if (body.user_id !== ALLOWED_USER_ID) {
-          return new Response(
-            JSON.stringify({ 
-              success: false,
-              message: "This user ID is not authorized to update settings."
-            }),
-            {
-              headers: { 'Content-Type': 'application/json', ...corsHeaders },
-            }
-          );
-        }
-        
         try {
-          // Directly store settings in memory or use a more permanent storage solution
-          // This bypasses Supabase RLS policies
+          // Update settings for the specified user
           const result = await telegramBot.updateSettings(body.user_id, body.settings);
           
           return new Response(
@@ -121,18 +90,10 @@ serve(async (req) => {
         }
       }
       
-      // Regular Telegram update - check if it's from the allowed user
+      // Regular Telegram update processing - now open to all users
       console.log("Received Telegram update:", JSON.stringify(body));
       
-      // Skip processing updates from unauthorized users
-      if (body.message && body.message.chat && body.message.chat.id.toString() !== ALLOWED_USER_ID) {
-        console.log(`Skipping update from unauthorized user: ${body.message.chat.id}`);
-        return new Response(JSON.stringify({ status: 'ok' }), {
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        });
-      }
-      
-      // Process the update
+      // Process the update for any user
       await telegramBot.processUpdate(body);
       
       return new Response(JSON.stringify({ status: 'ok' }), {

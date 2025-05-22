@@ -8,6 +8,7 @@ import { Loader2, Bell, BellOff, RefreshCw, MessageSquare } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 
 type TelegramSettings = {
   userId: string;
@@ -17,16 +18,14 @@ type TelegramSettings = {
   chatCommands: boolean;
 }
 
-// Only allow this specific user ID
-const ALLOWED_USER_ID = "2085478565";
-
 const TelegramBotPanel = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [connectionChecking, setConnectionChecking] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | null>(null);
+  const [userId, setUserId] = useState<string>("");
   const [settings, setSettings] = useState<TelegramSettings>({
-    userId: ALLOWED_USER_ID, // Use the specific user ID
+    userId: "",
     priceAlerts: true,
     orderNotifications: true,
     tradeCommands: true,
@@ -40,6 +39,12 @@ const TelegramBotPanel = () => {
         setIsLoading(true);
         // Try to fetch settings from localStorage first
         const savedSettings = localStorage.getItem('telegramSettings');
+        const savedUserId = localStorage.getItem('telegramUserId');
+        
+        if (savedUserId) {
+          setUserId(savedUserId);
+        }
+        
         if (savedSettings) {
           const parsedSettings = JSON.parse(savedSettings);
           setSettings(parsedSettings);
@@ -47,10 +52,9 @@ const TelegramBotPanel = () => {
           return;
         }
         
-        // If no localStorage settings, try to get from database
-        // but since we have RLS issues, we'll use default settings
+        // If no localStorage settings, use default settings
         const defaultSettings = {
-          userId: ALLOWED_USER_ID,
+          userId: "",
           priceAlerts: true,
           orderNotifications: true,
           tradeCommands: true,
@@ -73,22 +77,20 @@ const TelegramBotPanel = () => {
     };
 
     fetchSettings();
-    // Check connection status on load
-    handleRefreshConnection();
   }, []);
 
   const saveSettings = async (newSettings: TelegramSettings) => {
     try {
       setIsSaving(true);
       
-      // Force user ID to be the allowed one
-      newSettings.userId = ALLOWED_USER_ID;
+      // Use the current userId from the input field
+      newSettings.userId = userId;
       
-      // Store in localStorage since database operations are failing due to RLS
+      // Store in localStorage
       localStorage.setItem('telegramSettings', JSON.stringify(newSettings));
+      localStorage.setItem('telegramUserId', userId);
       
       // Try to send the settings to the Edge Function directly
-      // This bypasses Supabase RLS policies
       try {
         const response = await fetch(`https://qlzjoasyheqykokiljwj.supabase.co/functions/v1/telegram-bot`, {
           method: 'POST',
@@ -97,7 +99,7 @@ const TelegramBotPanel = () => {
           },
           body: JSON.stringify({
             action: 'update_settings',
-            user_id: ALLOWED_USER_ID,
+            user_id: userId,
             settings: {
               price_alerts: newSettings.priceAlerts,
               order_notifications: newSettings.orderNotifications,
@@ -148,11 +150,20 @@ const TelegramBotPanel = () => {
   };
 
   const handleRefreshConnection = async () => {
+    // Check if user ID is provided
+    if (!userId || userId.trim() === "") {
+      toast({
+        title: "User ID Required",
+        description: "Please enter your Telegram User ID to verify connection",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       setConnectionChecking(true);
       setConnectionStatus(null);
       
-      // Always verify the specific user ID
       const response = await fetch(`https://qlzjoasyheqykokiljwj.supabase.co/functions/v1/telegram-bot`, {
         method: 'POST',
         headers: {
@@ -160,7 +171,7 @@ const TelegramBotPanel = () => {
         },
         body: JSON.stringify({
           action: 'verify_connection',
-          user_id: ALLOWED_USER_ID
+          user_id: userId
         })
       });
       
@@ -219,6 +230,36 @@ const TelegramBotPanel = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label className="text-white" htmlFor="userId">Your Telegram User ID</Label>
+          <div className="flex space-x-2">
+            <Input
+              id="userId"
+              className="flex-1 bg-[#262b3c] text-white border-white/10"
+              placeholder="Enter your Telegram user ID"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+            />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefreshConnection}
+              disabled={connectionChecking || !userId}
+              className="bg-transparent border-teal-500 text-teal-500 hover:bg-teal-500/10"
+            >
+              {connectionChecking ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Verify
+            </Button>
+          </div>
+          <p className="text-xs text-gray-400">
+            Find your Telegram user ID by sending /start to @userinfobot on Telegram
+          </p>
+        </div>
+
         <div className={`p-3 rounded-md mb-4 ${
           connectionStatus === 'connected' ? 'bg-green-900/20 border border-green-600/30' : 
           connectionStatus === 'disconnected' ? 'bg-red-900/20 border border-red-600/30' : 
@@ -239,20 +280,6 @@ const TelegramBotPanel = () => {
                  'Connection Status Unknown'}
               </span>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleRefreshConnection}
-              disabled={connectionChecking}
-              className="bg-transparent border-teal-500 text-teal-500 hover:bg-teal-500/10"
-            >
-              {connectionChecking ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              Verify Connection
-            </Button>
           </div>
           <div className="mt-2 text-xs text-gray-400">
             {connectionStatus === 'connected' ? (
@@ -260,7 +287,7 @@ const TelegramBotPanel = () => {
             ) : connectionStatus === 'disconnected' ? (
               <>To connect, search for &quot;@YourTradingBot&quot; on Telegram and start a chat with the bot.</>
             ) : (
-              'Click "Verify Connection" to check if your Telegram bot is connected.'
+              'Click "Verify" to check if your Telegram bot is connected.'
             )}
           </div>
         </div>
@@ -320,10 +347,7 @@ const TelegramBotPanel = () => {
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between pt-0 border-t border-white/10">
-        <div className="text-sm text-gray-400">
-          User ID: {settings.userId}
-        </div>
+      <CardFooter className="flex justify-end pt-0 border-t border-white/10">
         {isSaving && (
           <div className="flex items-center text-teal-400 text-sm">
             <Loader2 className="h-3 w-3 animate-spin mr-2" />
