@@ -1,11 +1,10 @@
-
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-const ALPACA_API_KEY = Deno.env.get('ALPACA_API_KEY') || '';
-const ALPACA_API_SECRET = Deno.env.get('ALPACA_API_SECRET') || '';
+const ALPACA_API_KEY = Deno.env.get('ALPACA_API_KEY') || 'PKJ1BKJG3HHOXYNCRLZK';
+const ALPACA_API_SECRET = Deno.env.get('ALPACA_API_SECRET') || 'l9KdVbejeABLTE8Z6JxcLRQwHebECBnWpiqqPhhd';
 const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN') || '';
 
 const corsHeaders = {

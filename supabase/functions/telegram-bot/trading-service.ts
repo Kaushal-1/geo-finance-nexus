@@ -6,8 +6,8 @@ export class TradingService {
   private API_SECRET: string;
 
   constructor() {
-    this.API_KEY = Deno.env.get('ALPACA_API_KEY') || '';
-    this.API_SECRET = Deno.env.get('ALPACA_API_SECRET') || '';
+    this.API_KEY = Deno.env.get('ALPACA_API_KEY') || 'PKJ1BKJG3HHOXYNCRLZK';
+    this.API_SECRET = Deno.env.get('ALPACA_API_SECRET') || 'l9KdVbejeABLTE8Z6JxcLRQwHebECBnWpiqqPhhd';
 
     if (!this.API_KEY || !this.API_SECRET) {
       console.error('❌ Alpaca API credentials are missing!');
