@@ -33,6 +33,11 @@ serve(async (req) => {
       console.error('PERPLEXITY_API_KEY environment variable not set!');
     }
 
+    // Ensure ALPACA_API_KEY and ALPACA_API_SECRET are available
+    if (!Deno.env.get('ALPACA_API_KEY') || !Deno.env.get('ALPACA_API_SECRET')) {
+      console.error('ALPACA_API_KEY or ALPACA_API_SECRET environment variables not set!');
+    }
+
     // Initialize services
     const tradingService = new TradingService();
     const alertService = new AlertService(supabaseClient);

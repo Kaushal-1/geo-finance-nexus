@@ -37,57 +37,12 @@ export class TelegramBot {
 
     console.log(`Received message from chat ${chatId}: ${text}`);
 
-    // Check user settings before processing commands
-    const canProcessCommands = await this.checkUserPermissions(chatId.toString(), text);
-    if (!canProcessCommands) {
-      if (text.startsWith('/')) {
-        await this.sendMessage(chatId, "This command has been disabled in your settings. You can enable it in the Trading Dashboard.");
-      }
-      return;
-    }
-
-    // Process commands
+    // Always allow all commands for all users
     if (text.startsWith('/')) {
       await this.processCommand(chatId, text);
     } else {
       // For non-commands, send helpful message
       await this.sendMessage(chatId, "Send /help to see available commands.");
-    }
-  }
-
-  async checkUserPermissions(chatId: string, command: string): Promise<boolean> {
-    try {
-      // Get settings from in-memory storage
-      const settings = userSettings.get(chatId);
-      
-      if (!settings) {
-        // If no settings found, initialize default settings for this user
-        userSettings.set(chatId, {
-          price_alerts: true,
-          order_notifications: true,
-          trade_commands: true,
-          chat_commands: true,
-          updated_at: new Date().toISOString()
-        });
-        console.log(`Created default settings for new user ${chatId}`);
-        return true;
-      }
-      
-      // Check specific permissions based on command type
-      if (command.startsWith('/buy') || command.startsWith('/sell')) {
-        return settings.trade_commands;
-      } else if (command.startsWith('/alert')) {
-        return settings.price_alerts;
-      } else if (command.startsWith('/chat')) {
-        return settings.chat_commands;
-      }
-      
-      // Default commands like /help are always allowed
-      return true;
-    } catch (error) {
-      console.error("Error checking user permissions:", error);
-      // Default to allow in case of error to prevent lockouts
-      return true;
     }
   }
 
@@ -130,24 +85,11 @@ export class TelegramBot {
 
   // Always return true for connection verification
   async verifyConnection(chatId: string): Promise<boolean> {
-    try {
-      // Always return true for any user ID
-      return true;
-    } catch (error) {
-      console.error('Error verifying Telegram connection:', error);
-      return true; // Return true even on error to ensure users can proceed
-    }
+    return true; // Always return true for any user ID
   }
 
   async sendPriceAlert(chatId: string, symbol: string, currentPrice: number, thresholdPrice: number, direction: string): Promise<void> {
     try {
-      // Check if user has price alerts enabled
-      const settings = userSettings.get(chatId);
-      if (settings && !settings.price_alerts) {
-        console.log(`Price alerts disabled for user ${chatId}, not sending notification`);
-        return;
-      }
-      
       const emoji = direction === 'above' ? '📈' : '📉';
       const message = `
 ${emoji} <b>Stock Price Alert</b>

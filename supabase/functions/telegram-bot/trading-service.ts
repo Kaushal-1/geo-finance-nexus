@@ -1,4 +1,3 @@
-
 // Trading service to handle buy/sell orders via Alpaca API
 export class TradingService {
   private API_BASE_URL = 'https://paper-api.alpaca.markets';

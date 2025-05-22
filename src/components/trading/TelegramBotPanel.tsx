@@ -4,10 +4,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Loader2, Bell, BellOff, RefreshCw, MessageSquare } from "lucide-react";
+import { Loader2, MessageSquare } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 
 type TelegramSettings = {
@@ -21,8 +20,6 @@ type TelegramSettings = {
 const TelegramBotPanel = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [connectionChecking, setConnectionChecking] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | null>(null);
   const [userId, setUserId] = useState<string>("");
   const [settings, setSettings] = useState<TelegramSettings>({
     userId: "",
@@ -48,10 +45,6 @@ const TelegramBotPanel = () => {
         if (savedSettings) {
           const parsedSettings = JSON.parse(savedSettings);
           setSettings(parsedSettings);
-          
-          // Auto set connection status to connected
-          setConnectionStatus('connected');
-          
           setIsLoading(false);
           return;
         }
@@ -153,43 +146,6 @@ const TelegramBotPanel = () => {
     saveSettings(newSettings);
   };
 
-  const handleRefreshConnection = async () => {
-    // Check if user ID is provided
-    if (!userId || userId.trim() === "") {
-      toast({
-        title: "User ID Required",
-        description: "Please enter your Telegram User ID to verify connection",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    try {
-      setConnectionChecking(true);
-      setConnectionStatus(null);
-      
-      // Always set to connected without actual verification
-      setConnectionStatus('connected');
-      
-      toast({
-        title: "Connection Verified",
-        description: "Your Telegram bot connection is active. The bot is public and responds to all users.",
-      });
-    } catch (error) {
-      console.error("Error verifying Telegram connection:", error);
-      
-      // Set to connected anyway since the bot is public
-      setConnectionStatus('connected');
-      
-      toast({
-        title: "Connection Status",
-        description: "The bot is public and responds to all users on Telegram.",
-      });
-    } finally {
-      setConnectionChecking(false);
-    }
-  };
-
   if (isLoading) {
     return (
       <Card>
@@ -219,32 +175,18 @@ const TelegramBotPanel = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label className="text-white" htmlFor="userId">Your Telegram User ID</Label>
+          <Label className="text-white" htmlFor="userId">Your Telegram User ID (Optional)</Label>
           <div className="flex space-x-2">
             <Input
               id="userId"
               className="flex-1 bg-[#262b3c] text-white border-white/10"
-              placeholder="Enter your Telegram user ID"
+              placeholder="Enter your Telegram user ID (optional)"
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
             />
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleRefreshConnection}
-              disabled={connectionChecking || !userId}
-              className="bg-transparent border-teal-500 text-teal-500 hover:bg-teal-500/10"
-            >
-              {connectionChecking ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              Verify
-            </Button>
           </div>
           <p className="text-xs text-gray-400">
-            Find your Telegram user ID by sending /start to @userinfobot on Telegram
+            The bot is public and works for all users. Entering your ID is optional for storing your preferences.
           </p>
         </div>
 
@@ -258,7 +200,8 @@ const TelegramBotPanel = () => {
             </div>
           </div>
           <div className="mt-2 text-xs text-gray-400">
-            Your Telegram bot is connected and is responding to all users. Search for &quot;@YourTradingBot&quot; on Telegram to start using it.
+            <p>Your Telegram bot is public and responding to all users. Search for &quot;@NeuroTickerBot&quot; on Telegram to start using it.</p>
+            <p className="mt-1">All commands (/buy, /sell, /alert, /chat, etc.) are available to everyone.</p>
           </div>
         </div>
 
