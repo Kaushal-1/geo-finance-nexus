@@ -46,11 +46,10 @@ serve(async (req) => {
       if (body.action === 'verify_connection' && body.user_id) {
         console.log(`Verifying Telegram connection for user: ${body.user_id}`);
         
-        const isConnected = await telegramBot.verifyConnection(body.user_id);
-        
+        // Always return connected status for any user ID
         return new Response(
           JSON.stringify({ 
-            status: isConnected ? 'connected' : 'disconnected',
+            status: 'connected',
             user_id: body.user_id 
           }),
           {
@@ -90,13 +89,21 @@ serve(async (req) => {
         }
       }
       
-      // Regular Telegram update processing - now open to all users
-      console.log("Received Telegram update:", JSON.stringify(body));
-      
-      // Process the update for any user
-      await telegramBot.processUpdate(body);
-      
-      return new Response(JSON.stringify({ status: 'ok' }), {
+      // Process Telegram update for any user
+      if (body.message || body.callback_query) {
+        console.log("Received Telegram update:", JSON.stringify(body));
+        
+        // Process the update for any user without restrictions
+        await telegramBot.processUpdate(body);
+        
+        return new Response(JSON.stringify({ status: 'ok' }), {
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      }
+
+      // If it's not a recognized Telegram update format
+      return new Response(JSON.stringify({ error: 'Invalid request format' }), {
+        status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
