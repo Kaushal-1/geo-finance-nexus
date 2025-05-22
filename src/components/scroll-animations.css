@@ -186,7 +186,7 @@
 }
 
 .hero-heading {
-  // animation: text-glow 4s ease-in-out infinite;
+  animation: text-glow 4s ease-in-out infinite;
   position: relative;
   z-index: 15;
 }
@@ -234,7 +234,7 @@
 .hero-content-fixed {
   position: relative;
   z-index: 15;
-  // will-change: transform;
+  will-change: transform;
 }
 
 /* Zoom background effect */
