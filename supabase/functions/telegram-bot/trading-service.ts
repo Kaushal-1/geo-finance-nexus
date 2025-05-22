@@ -6,11 +6,15 @@ export class TradingService {
   private API_SECRET: string;
 
   constructor() {
+    // Get API keys from environment variables
     this.API_KEY = Deno.env.get('ALPACA_API_KEY') || '';
     this.API_SECRET = Deno.env.get('ALPACA_API_SECRET') || '';
 
+    // Check if credentials exist
     if (!this.API_KEY || !this.API_SECRET) {
       console.error('❌ Alpaca API credentials are missing!');
+    } else {
+      console.log('✅ Alpaca API credentials loaded successfully');
     }
   }
 
@@ -26,6 +30,7 @@ export class TradingService {
   }) {
     try {
       console.log(`Placing ${orderData.side} order for ${orderData.qty} shares of ${orderData.symbol}`);
+      console.log(`Using API key: ${this.API_KEY ? this.API_KEY.substring(0, 5) + '...' : 'missing'}`);
 
       // Construct order payload
       const payload: any = {

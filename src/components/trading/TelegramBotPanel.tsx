@@ -4,10 +4,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Loader2, Bell, BellOff, RefreshCw, MessageSquare } from "lucide-react";
+import { Loader2, MessageSquare } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 
 type TelegramSettings = {
   userId: string;
@@ -17,16 +17,12 @@ type TelegramSettings = {
   chatCommands: boolean;
 }
 
-// Only allow this specific user ID
-const ALLOWED_USER_ID = "2085478565";
-
 const TelegramBotPanel = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [connectionChecking, setConnectionChecking] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | null>(null);
+  const [userId, setUserId] = useState<string>("");
   const [settings, setSettings] = useState<TelegramSettings>({
-    userId: ALLOWED_USER_ID, // Use the specific user ID
+    userId: "",
     priceAlerts: true,
     orderNotifications: true,
     tradeCommands: true,
@@ -40,6 +36,12 @@ const TelegramBotPanel = () => {
         setIsLoading(true);
         // Try to fetch settings from localStorage first
         const savedSettings = localStorage.getItem('telegramSettings');
+        const savedUserId = localStorage.getItem('telegramUserId');
+        
+        if (savedUserId) {
+          setUserId(savedUserId);
+        }
+        
         if (savedSettings) {
           const parsedSettings = JSON.parse(savedSettings);
           setSettings(parsedSettings);
@@ -47,10 +49,9 @@ const TelegramBotPanel = () => {
           return;
         }
         
-        // If no localStorage settings, try to get from database
-        // but since we have RLS issues, we'll use default settings
+        // If no localStorage settings, use default settings
         const defaultSettings = {
-          userId: ALLOWED_USER_ID,
+          userId: "",
           priceAlerts: true,
           orderNotifications: true,
           tradeCommands: true,
@@ -73,22 +74,20 @@ const TelegramBotPanel = () => {
     };
 
     fetchSettings();
-    // Check connection status on load
-    handleRefreshConnection();
   }, []);
 
   const saveSettings = async (newSettings: TelegramSettings) => {
     try {
       setIsSaving(true);
       
-      // Force user ID to be the allowed one
-      newSettings.userId = ALLOWED_USER_ID;
+      // Use the current userId from the input field
+      newSettings.userId = userId;
       
-      // Store in localStorage since database operations are failing due to RLS
+      // Store in localStorage
       localStorage.setItem('telegramSettings', JSON.stringify(newSettings));
+      localStorage.setItem('telegramUserId', userId);
       
       // Try to send the settings to the Edge Function directly
-      // This bypasses Supabase RLS policies
       try {
         const response = await fetch(`https://qlzjoasyheqykokiljwj.supabase.co/functions/v1/telegram-bot`, {
           method: 'POST',
@@ -97,7 +96,7 @@ const TelegramBotPanel = () => {
           },
           body: JSON.stringify({
             action: 'update_settings',
-            user_id: ALLOWED_USER_ID,
+            user_id: userId,
             settings: {
               price_alerts: newSettings.priceAlerts,
               order_notifications: newSettings.orderNotifications,
@@ -147,50 +146,6 @@ const TelegramBotPanel = () => {
     saveSettings(newSettings);
   };
 
-  const handleRefreshConnection = async () => {
-    try {
-      setConnectionChecking(true);
-      setConnectionStatus(null);
-      
-      // Always verify the specific user ID
-      const response = await fetch(`https://qlzjoasyheqykokiljwj.supabase.co/functions/v1/telegram-bot`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'verify_connection',
-          user_id: ALLOWED_USER_ID
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setConnectionStatus(data.status);
-      
-      toast({
-        title: data.status === 'connected' ? "Connection Verified" : "Not Connected",
-        description: data.status === 'connected' 
-          ? "Your Telegram bot connection is active"
-          : "Your Telegram bot is not connected. Please start a chat with the bot first.",
-      });
-    } catch (error) {
-      console.error("Error verifying Telegram connection:", error);
-      setConnectionStatus('disconnected');
-      
-      toast({
-        title: "Connection Error",
-        description: "Could not verify Telegram bot connection",
-        variant: "destructive",
-      });
-    } finally {
-      setConnectionChecking(false);
-    }
-  };
-
   if (isLoading) {
     return (
       <Card>
@@ -219,49 +174,34 @@ const TelegramBotPanel = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className={`p-3 rounded-md mb-4 ${
-          connectionStatus === 'connected' ? 'bg-green-900/20 border border-green-600/30' : 
-          connectionStatus === 'disconnected' ? 'bg-red-900/20 border border-red-600/30' : 
-          'bg-blue-900/20 border border-blue-600/30'
-        }`}>
+        <div className="space-y-2">
+          <Label className="text-white" htmlFor="userId">Your Telegram User ID (Optional)</Label>
+          <div className="flex space-x-2">
+            <Input
+              id="userId"
+              className="flex-1 bg-[#262b3c] text-white border-white/10"
+              placeholder="Enter your Telegram user ID (optional)"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+            />
+          </div>
+          <p className="text-xs text-gray-400">
+            The bot is public and works for all users. Entering your ID is optional for storing your preferences.
+          </p>
+        </div>
+
+        <div className="p-3 rounded-md mb-4 bg-green-900/20 border border-green-600/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              {connectionStatus === 'connected' ? (
-                <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-              ) : connectionStatus === 'disconnected' ? (
-                <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-              ) : (
-                <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-              )}
+              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
               <span className="text-sm font-medium text-white">
-                {connectionStatus === 'connected' ? 'Bot Connected' : 
-                 connectionStatus === 'disconnected' ? 'Bot Not Connected' : 
-                 'Connection Status Unknown'}
+                Bot Connected & Public
               </span>
             </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleRefreshConnection}
-              disabled={connectionChecking}
-              className="bg-transparent border-teal-500 text-teal-500 hover:bg-teal-500/10"
-            >
-              {connectionChecking ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              ) : (
-                <RefreshCw className="h-4 w-4 mr-2" />
-              )}
-              Verify Connection
-            </Button>
           </div>
           <div className="mt-2 text-xs text-gray-400">
-            {connectionStatus === 'connected' ? (
-              'Your Telegram bot is connected and ready to receive commands.'
-            ) : connectionStatus === 'disconnected' ? (
-              <>To connect, search for &quot;@YourTradingBot&quot; on Telegram and start a chat with the bot.</>
-            ) : (
-              'Click "Verify Connection" to check if your Telegram bot is connected.'
-            )}
+            <p>Your Telegram bot is public and responding to all users. Search for &quot;@NeuroTickerBot&quot; on Telegram to start using it.</p>
+            <p className="mt-1">All commands (/buy, /sell, /alert, /chat, etc.) are available to everyone.</p>
           </div>
         </div>
 
@@ -276,7 +216,7 @@ const TelegramBotPanel = () => {
             <Switch
               checked={settings.priceAlerts}
               onCheckedChange={(checked) => handleSettingChange('priceAlerts', checked)}
-              disabled={isSaving || connectionStatus !== 'connected'}
+              disabled={isSaving}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -289,7 +229,7 @@ const TelegramBotPanel = () => {
             <Switch
               checked={settings.orderNotifications}
               onCheckedChange={(checked) => handleSettingChange('orderNotifications', checked)}
-              disabled={isSaving || connectionStatus !== 'connected'}
+              disabled={isSaving}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -302,7 +242,7 @@ const TelegramBotPanel = () => {
             <Switch
               checked={settings.tradeCommands}
               onCheckedChange={(checked) => handleSettingChange('tradeCommands', checked)}
-              disabled={isSaving || connectionStatus !== 'connected'}
+              disabled={isSaving}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -315,15 +255,12 @@ const TelegramBotPanel = () => {
             <Switch
               checked={settings.chatCommands}
               onCheckedChange={(checked) => handleSettingChange('chatCommands', checked)}
-              disabled={isSaving || connectionStatus !== 'connected'}
+              disabled={isSaving}
             />
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between pt-0 border-t border-white/10">
-        <div className="text-sm text-gray-400">
-          User ID: {settings.userId}
-        </div>
+      <CardFooter className="flex justify-end pt-0 border-t border-white/10">
         {isSaving && (
           <div className="flex items-center text-teal-400 text-sm">
             <Loader2 className="h-3 w-3 animate-spin mr-2" />

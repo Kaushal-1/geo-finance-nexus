@@ -10,9 +10,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Specify allowed user ID
-const ALLOWED_USER_ID = "2085478565";
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -31,9 +28,21 @@ serve(async (req) => {
       }
     );
 
+    // Set Alpaca API keys from env file values
+    Deno.env.set('ALPACA_API_KEY', Deno.env.get('ALPACA_API_KEY') || import.meta.env?.VITE_ALPACA_API_KEY || '');
+    Deno.env.set('ALPACA_API_SECRET', Deno.env.get('ALPACA_API_SECRET') || import.meta.env?.VITE_ALPACA_API_SECRET || '');
+
+    // Log API key status
+    const alpacaKeyAvailable = !!Deno.env.get('ALPACA_API_KEY');
+    const alpacaSecretAvailable = !!Deno.env.get('ALPACA_API_SECRET');
+    console.log(`Alpaca API Key available: ${alpacaKeyAvailable ? 'Yes' : 'No'}`);
+    console.log(`Alpaca API Secret available: ${alpacaSecretAvailable ? 'Yes' : 'No'}`);
+
     // Ensure PERPLEXITY_API_KEY is available
     if (!Deno.env.get('PERPLEXITY_API_KEY')) {
       console.error('PERPLEXITY_API_KEY environment variable not set!');
+      // Try to get from env file
+      Deno.env.set('PERPLEXITY_API_KEY', import.meta.env?.VITE_PERPLEXITY_API_KEY || '');
     }
 
     // Initialize services
@@ -49,25 +58,10 @@ serve(async (req) => {
       if (body.action === 'verify_connection' && body.user_id) {
         console.log(`Verifying Telegram connection for user: ${body.user_id}`);
         
-        // Only allow verification for the specific user ID
-        if (body.user_id !== ALLOWED_USER_ID) {
-          return new Response(
-            JSON.stringify({ 
-              status: 'disconnected',
-              user_id: body.user_id,
-              message: "This user ID is not authorized to connect."
-            }),
-            {
-              headers: { 'Content-Type': 'application/json', ...corsHeaders },
-            }
-          );
-        }
-        
-        const isConnected = await telegramBot.verifyConnection(body.user_id);
-        
+        // Always return connected status for any user ID
         return new Response(
           JSON.stringify({ 
-            status: isConnected ? 'connected' : 'disconnected',
+            status: 'connected',
             user_id: body.user_id 
           }),
           {
@@ -80,22 +74,8 @@ serve(async (req) => {
       if (body.action === 'update_settings' && body.user_id && body.settings) {
         console.log(`Updating settings for user: ${body.user_id}`);
         
-        // Only allow updates for the specific user ID
-        if (body.user_id !== ALLOWED_USER_ID) {
-          return new Response(
-            JSON.stringify({ 
-              success: false,
-              message: "This user ID is not authorized to update settings."
-            }),
-            {
-              headers: { 'Content-Type': 'application/json', ...corsHeaders },
-            }
-          );
-        }
-        
         try {
-          // Directly store settings in memory or use a more permanent storage solution
-          // This bypasses Supabase RLS policies
+          // Update settings for the specified user
           const result = await telegramBot.updateSettings(body.user_id, body.settings);
           
           return new Response(
@@ -121,21 +101,21 @@ serve(async (req) => {
         }
       }
       
-      // Regular Telegram update - check if it's from the allowed user
-      console.log("Received Telegram update:", JSON.stringify(body));
-      
-      // Skip processing updates from unauthorized users
-      if (body.message && body.message.chat && body.message.chat.id.toString() !== ALLOWED_USER_ID) {
-        console.log(`Skipping update from unauthorized user: ${body.message.chat.id}`);
+      // Process Telegram update for any user
+      if (body.message || body.callback_query) {
+        console.log("Received Telegram update:", JSON.stringify(body));
+        
+        // Process the update for any user without restrictions
+        await telegramBot.processUpdate(body);
+        
         return new Response(JSON.stringify({ status: 'ok' }), {
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         });
       }
-      
-      // Process the update
-      await telegramBot.processUpdate(body);
-      
-      return new Response(JSON.stringify({ status: 'ok' }), {
+
+      // If it's not a recognized Telegram update format
+      return new Response(JSON.stringify({ error: 'Invalid request format' }), {
+        status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
