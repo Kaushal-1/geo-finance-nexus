@@ -28,14 +28,21 @@ serve(async (req) => {
       }
     );
 
+    // Set Alpaca API keys from env file values
+    Deno.env.set('ALPACA_API_KEY', Deno.env.get('ALPACA_API_KEY') || import.meta.env?.VITE_ALPACA_API_KEY || '');
+    Deno.env.set('ALPACA_API_SECRET', Deno.env.get('ALPACA_API_SECRET') || import.meta.env?.VITE_ALPACA_API_SECRET || '');
+
+    // Log API key status
+    const alpacaKeyAvailable = !!Deno.env.get('ALPACA_API_KEY');
+    const alpacaSecretAvailable = !!Deno.env.get('ALPACA_API_SECRET');
+    console.log(`Alpaca API Key available: ${alpacaKeyAvailable ? 'Yes' : 'No'}`);
+    console.log(`Alpaca API Secret available: ${alpacaSecretAvailable ? 'Yes' : 'No'}`);
+
     // Ensure PERPLEXITY_API_KEY is available
     if (!Deno.env.get('PERPLEXITY_API_KEY')) {
       console.error('PERPLEXITY_API_KEY environment variable not set!');
-    }
-
-    // Ensure ALPACA_API_KEY and ALPACA_API_SECRET are available
-    if (!Deno.env.get('ALPACA_API_KEY') || !Deno.env.get('ALPACA_API_SECRET')) {
-      console.error('ALPACA_API_KEY or ALPACA_API_SECRET environment variables not set!');
+      // Try to get from env file
+      Deno.env.set('PERPLEXITY_API_KEY', import.meta.env?.VITE_PERPLEXITY_API_KEY || '');
     }
 
     // Initialize services
