@@ -1,6 +1,9 @@
 import { TradingService } from "./trading-service.ts";
 import { AlertService } from "./alert-service.ts";
 
+// Specify allowed user ID
+const ALLOWED_USER_ID = "2085478565";
+
 // In-memory storage for settings (this would be better with a persistent store)
 const userSettings: Map<string, any> = new Map();
 
@@ -23,6 +26,17 @@ export class TelegramBot {
     if (!this.SONAR_API_KEY) {
       console.error('❌ Sonar API key is missing!');
     }
+    
+    // Initialize default settings for the allowed user
+    if (!userSettings.has(ALLOWED_USER_ID)) {
+      userSettings.set(ALLOWED_USER_ID, {
+        price_alerts: true,
+        order_notifications: true,
+        trade_commands: true,
+        chat_commands: true,
+        updated_at: new Date().toISOString()
+      });
+    }
   }
 
   async processUpdate(update: any): Promise<void> {
@@ -37,7 +51,22 @@ export class TelegramBot {
 
     console.log(`Received message from chat ${chatId}: ${text}`);
 
-    // Always allow all commands for all users
+    // Verify user is authorized
+    if (chatId.toString() !== ALLOWED_USER_ID) {
+      console.log(`Unauthorized access attempt from chat ID: ${chatId}`);
+      return;
+    }
+
+    // Check user settings before processing commands
+    const canProcessCommands = await this.checkUserPermissions(chatId.toString(), text);
+    if (!canProcessCommands) {
+      if (text.startsWith('/')) {
+        await this.sendMessage(chatId, "This command has been disabled in your settings. You can enable it in the Trading Dashboard.");
+      }
+      return;
+    }
+
+    // Process commands
     if (text.startsWith('/')) {
       await this.processCommand(chatId, text);
     } else {
@@ -46,10 +75,43 @@ export class TelegramBot {
     }
   }
 
-  // Method to update settings
+  async checkUserPermissions(chatId: string, command: string): Promise<boolean> {
+    try {
+      // Get settings from in-memory storage
+      const settings = userSettings.get(chatId);
+      
+      if (!settings) {
+        // If no settings found, default to allowing all
+        console.log(`No settings found for user ${chatId}, using defaults`);
+        return true;
+      }
+      
+      // Check specific permissions based on command type
+      if (command.startsWith('/buy') || command.startsWith('/sell')) {
+        return settings.trade_commands;
+      } else if (command.startsWith('/alert')) {
+        return settings.price_alerts;
+      } else if (command.startsWith('/chat')) {
+        return settings.chat_commands;
+      }
+      
+      // Default commands like /help are always allowed
+      return true;
+    } catch (error) {
+      console.error("Error checking user permissions:", error);
+      // Default to allow in case of error to prevent lockouts
+      return true;
+    }
+  }
+
+  // New method to update settings
   async updateSettings(chatId: string, settings: any): Promise<boolean> {
     try {
-      // Update settings in memory for any user
+      if (chatId !== ALLOWED_USER_ID) {
+        throw new Error("Unauthorized user ID");
+      }
+      
+      // Update settings in memory
       const currentSettings = userSettings.get(chatId) || {};
       userSettings.set(chatId, {
         ...currentSettings,
@@ -67,29 +129,36 @@ export class TelegramBot {
 
   // Method to get settings
   async getSettings(chatId: string): Promise<any> {
-    // Return settings from in-memory storage or create default settings
-    const settings = userSettings.get(chatId);
-    if (!settings) {
-      const defaultSettings = {
-        price_alerts: true,
-        order_notifications: true,
-        trade_commands: true,
-        chat_commands: true,
-        updated_at: new Date().toISOString()
-      };
-      userSettings.set(chatId, defaultSettings);
-      return defaultSettings;
+    // Only allow for the specific user ID
+    if (chatId !== ALLOWED_USER_ID) {
+      throw new Error("Unauthorized user ID");
     }
-    return settings;
-  }
-
-  // Always return true for connection verification
-  async verifyConnection(chatId: string): Promise<boolean> {
-    return true; // Always return true for any user ID
+    
+    // Return settings from in-memory storage
+    return userSettings.get(chatId) || {
+      price_alerts: true,
+      order_notifications: true,
+      trade_commands: true,
+      chat_commands: true,
+      updated_at: new Date().toISOString()
+    };
   }
 
   async sendPriceAlert(chatId: string, symbol: string, currentPrice: number, thresholdPrice: number, direction: string): Promise<void> {
+    // Verify user is authorized
+    if (chatId !== ALLOWED_USER_ID) {
+      console.log(`Attempted to send price alert to unauthorized user: ${chatId}`);
+      return;
+    }
+
     try {
+      // Check if user has price alerts enabled
+      const settings = userSettings.get(chatId);
+      if (settings && !settings.price_alerts) {
+        console.log(`Price alerts disabled for user ${chatId}, not sending notification`);
+        return;
+      }
+      
       const emoji = direction === 'above' ? '📈' : '📉';
       const message = `
 ${emoji} <b>Stock Price Alert</b>
@@ -380,6 +449,32 @@ Examples:
       }
     } catch (error) {
       console.error('🚨 Telegram notification error:', error);
+    }
+  }
+
+  async verifyConnection(chatId: string): Promise<boolean> {
+    // Only allow verification for the specific user
+    if (chatId !== ALLOWED_USER_ID) {
+      console.log(`Unauthorized verification attempt from: ${chatId}`);
+      return false;
+    }
+
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${this.BOT_TOKEN}/getChat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId
+        })
+      });
+
+      const data = await response.json();
+      return data.ok;
+    } catch (error) {
+      console.error('Error verifying Telegram connection:', error);
+      return false;
     }
   }
 
