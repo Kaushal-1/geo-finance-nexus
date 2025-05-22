@@ -210,7 +210,7 @@ ${emoji} <b>Stock Price Alert</b>
 
   async handleHelpCommand(chatId: number): Promise<void> {
     const helpText = `
-<b>GeoFinance Trading Bot</b>
+<b>NeuroTicker Trading Bot</b>
 
 Available commands:
 

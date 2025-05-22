@@ -61,7 +61,7 @@ const SignIn = () => {
             <div className="glass-card p-4 text-left animate-fade-in" style={{
             animationDelay: "0.2s"
           }}>
-              <p className="text-gray-300 italic">"GeoFinance revolutionizes how we visualize market opportunities across regions."</p>
+              <p className="text-gray-300 italic">"NeuroTicker revolutionizes how we visualize market opportunities across regions."</p>
               <p className="text-teal text-sm mt-2">
             </p>
             </div>
@@ -89,7 +89,7 @@ const SignIn = () => {
                 </svg>
               </div>
               <h2 className="text-3xl font-bold text-white">Sign In</h2>
-              <p className="text-gray-400 mt-2">Access your GeoFinance dashboard</p>
+              <p className="text-gray-400 mt-2">Access your NeuroTicker dashboard</p>
             </div>
           </div>
 
@@ -156,7 +156,7 @@ const SignIn = () => {
 
             <div className="text-center mt-8">
               <p className="text-gray-400">
-                New to GeoFinance?{" "}
+                New to NeuroTicker?{" "}
                 <Link to="/signup" className="text-teal hover:underline">
                   Create Account
                 </Link>

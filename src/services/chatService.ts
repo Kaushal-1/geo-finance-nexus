@@ -2,19 +2,18 @@ import { ChatMessage, Visualization, SourceCitation } from '@/types/chat';
 import { fetchFinancialNews } from '@/services/newsService';
 import { finnhubService } from '@/services/finnhubService';
 
-// Hardcoded API key - in a production app, this would be stored in an environment variable
-const PERPLEXITY_API_KEY = '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';
+// Use the API key from environment variables
+const PERPLEXITY_API_KEY = import.meta.env.VITE_PERPLEXITY_API_KEY;
 
-// Always return the hardcoded API key
+// Always return the API key from environment variables
 export const getPerplexityApiKey = () => {
   return PERPLEXITY_API_KEY;
 };
 
-// This function is no longer needed as the API key is hardcoded
-// Keeping it for backwards compatibility but it doesn't do anything
+// This function is no longer needed as the API key comes from environment variables
 export const setPerplexityApiKey = (key: string) => {
-  // No-op - the key is hardcoded now
-  console.log('API key is hardcoded, this function is deprecated');
+  // No-op - the key is now loaded from environment variables
+  console.log('API key is loaded from environment variables, this function is deprecated');
 };
 
 // Helper function to generate a response with the Perplexity API, now with portfolio context
