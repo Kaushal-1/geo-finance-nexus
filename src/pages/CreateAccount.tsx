@@ -154,7 +154,7 @@ const CreateAccount = () => {
                 </svg>
               </div>
               <h2 className="text-3xl font-bold text-white">Create Your Account</h2>
-              <p className="text-gray-400 mt-2">Join NeuroTicker to unlock powerful financial insights</p>
+              <p className="text-gray-400 mt-2">Join GeoFinance to unlock powerful financial insights</p>
             </div>
           </div>
 
@@ -328,7 +328,7 @@ const CreateAccount = () => {
                 </div>
 
                 <p className="text-sm text-gray-400 italic">
-                  This information helps us tailor NeuroTicker to your specific needs.
+                  This information helps us tailor GeoFinance to your specific needs.
                   Your professional details are optional.
                 </p>
               </div>

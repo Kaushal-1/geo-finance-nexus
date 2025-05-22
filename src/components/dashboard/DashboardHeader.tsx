@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Menu, Settings, Bell, ChevronDown, Globe } from "lucide-react";
+import { LogOut, User, Menu, Settings, Bell, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +23,6 @@ const DashboardHeader = () => {
   const links = [
     { name: "Dashboard", path: "/dashboard" },
     { name: "Trading", path: "/trading" },
-    { name: "Compare Stocks", path: "/stock-compare" },
     { name: "Research", path: "/chat-research" },
   ];
 
@@ -41,9 +40,11 @@ const DashboardHeader = () => {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center">
-              <Globe className="h-6 w-6 text-teal-500 mr-2" />
-              <span className="text-white font-bold text-xl">NeuroTicker</span>
+            <Link to="/dashboard" className="flex items-center">
+              <div className="bg-gradient-to-r from-teal-500 to-blue-500 text-white font-bold rounded-lg w-10 h-10 flex items-center justify-center mr-2">
+                G
+              </div>
+              <span className="text-white font-bold text-xl">GeoFinance</span>
             </Link>
             
             {/* Desktop Navigation */}

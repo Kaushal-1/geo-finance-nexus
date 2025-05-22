@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { getPerplexityApiKey } from "@/services/chatService";
+import { getPerplexityApiKey, setPerplexityApiKey } from "@/services/chatService";
 import { Check, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -21,9 +21,21 @@ const ApiKeyInput = () => {
   }, []);
 
   const handleSave = () => {
+    if (!apiKey.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid API key",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPerplexityApiKey(apiKey.trim());
+    setIsSaved(true);
+    
     toast({
-      title: "Information",
-      description: "API key is now loaded from environment variables. No need to manually enter it.",
+      title: "Success",
+      description: "API key saved successfully",
       variant: "default",
     });
   };
@@ -38,7 +50,7 @@ const ApiKeyInput = () => {
           {isSaved && (
             <span className="flex items-center text-xs text-green-400">
               <Check className="mr-1 h-3 w-3" />
-              Loaded from environment
+              Saved
             </span>
           )}
         </div>
@@ -47,19 +59,29 @@ const ApiKeyInput = () => {
           <Input
             id="api-key"
             type="password"
-            placeholder="API key loaded from environment variables"
+            placeholder="Enter your Perplexity API key"
             value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
+            onChange={(e) => {
+              setApiKey(e.target.value);
+              setIsSaved(false);
+            }}
             className="flex-1 bg-gray-900"
-            disabled={true}
           />
-          <Button onClick={handleSave} disabled={true}>
-            Saved
+          <Button onClick={handleSave} disabled={isSaved}>
+            Save
           </Button>
         </div>
         
         <p className="text-xs text-gray-400">
-          Your API key is now loaded from environment variables for better security.
+          Your API key is stored locally in your browser and never sent to our servers.
+          <a 
+            href="https://docs.perplexity.ai/docs/getting-started" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="ml-1 text-blue-400 hover:underline"
+          >
+            Get a key
+          </a>
         </p>
       </div>
     </div>

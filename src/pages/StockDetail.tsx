@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import GlobalNavbar from "@/components/shared/GlobalNavbar";
+import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { useToast } from '@/components/ui/use-toast';
 import { 
   fetchStockHistoricalData, 
@@ -156,7 +156,7 @@ const StockDetail = () => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#0a0e17] to-[#131b2e] text-[#f5f7fa] overflow-hidden">
-      <GlobalNavbar />
+      <DashboardHeader />
       
       <div className="container mx-auto p-4 pt-6">
         <Button 

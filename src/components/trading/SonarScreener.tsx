@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Search, TrendingUp, Newspaper, X, Calendar, ExternalLink, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { getPerplexityApiKey } from "@/services/chatService";
 import { useSonarAnalysis, NewsAnalysisParams } from "@/hooks/useSonarAnalysis";
 import { format } from "date-fns";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface SonarScreenerProps {
   stockSymbol: string;
@@ -42,10 +40,10 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
   stockSymbol
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [insight, setInsight] = useState<StockInsight | null>(null);
   const [activeTab, setActiveTab] = useState("summary");
+  const [showResults, setShowResults] = useState(false);
   const [newsTimeframe, setNewsTimeframe] = useState<string>("1month");
   const {
     analysisLoading,
@@ -56,6 +54,7 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
   const runSonarAnalysis = async (type: string) => {
     setIsLoading(true);
     setIsOpen(false);
+    setShowResults(true);
     try {
       toast({
         title: "Analyzing Stock",
@@ -83,7 +82,6 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
             includeMarketNews: true
           };
           await runNewsAnalysis(stockSymbol, params);
-          setDialogOpen(true);
           setIsLoading(false);
           return;
         // Early return as we're using the specialized hook
@@ -155,7 +153,6 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
 
       // Set the insight data
       setInsight(parsedData);
-      setDialogOpen(true);
       toast({
         title: "Analysis Complete",
         description: `${stockSymbol} analysis completed successfully.`,
@@ -169,6 +166,7 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
         variant: "destructive",
         duration: 5000
       });
+      setShowResults(false);
     } finally {
       setIsLoading(false);
     }
@@ -201,11 +199,10 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
         return "text-blue-500";
     }
   };
-  
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
+  const handleCloseResults = () => {
+    setShowResults(false);
+    setInsight(null);
   };
-  
   const formatNewsDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'MMM d, yyyy');
@@ -213,9 +210,7 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
       return dateString;
     }
   };
-  
-  return (
-    <>
+  return <>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto">
@@ -229,12 +224,12 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
             <span>Comprehensive Analysis</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-white/10" />
+          
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Loading indicator without dialog */}
-      {(isLoading || analysisLoading) && (
-        <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10">
+      {/* Results Section */}
+      {(isLoading || analysisLoading) && <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10">
           <CardContent className="p-6">
             <div className="flex flex-col space-y-4">
               <div className="flex items-center space-x-4">
@@ -249,35 +244,35 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
               <Skeleton className="h-4 w-3/4 bg-white/10" />
             </div>
           </CardContent>
-        </Card>
-      )}
+        </Card>}
 
-      {/* Dialog for Standard Analysis Results */}
-      <Dialog open={dialogOpen && !isLoading && !analysisLoading && insight && newsAnalysisData === null} onOpenChange={handleCloseDialog}>
-        <DialogContent className="bg-[#1a2035] border border-white/10 text-white max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <span className="text-xl mr-2">{stockSymbol} Analysis</span>
-              <div className={`ml-2 w-3 h-3 rounded-full ${getSentimentColor(insight?.sentiment)}`}></div>
-              <Badge className="ml-2" variant={insight?.sentiment === "Bullish" ? "default" : insight?.sentiment === "Bearish" ? "destructive" : "secondary"}>
-                {insight?.sentiment}
-              </Badge>
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="mt-4">
-            {insight?.healthScore !== undefined && (
-              <div className="flex items-center mb-4">
-                <span className="text-sm text-gray-400 mr-2">Health Score:</span>
-                <div className="bg-gray-700 rounded-full h-2 w-36 overflow-hidden">
-                  <div 
-                    className={`h-full ${insight.healthScore >= 70 ? 'bg-green-500' : insight.healthScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} 
-                    style={{width: `${insight.healthScore}%`}}
-                  ></div>
-                </div>
-                <span className="ml-2 text-sm font-medium text-white">{insight.healthScore}</span>
+      {/* Standard Analysis Results */}
+      {!isLoading && !analysisLoading && insight && showResults && !newsAnalysisData && <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10 relative">
+          <div className="absolute top-2 right-2 z-10">
+            <Button variant="ghost" size="icon" onClick={handleCloseResults} className="h-8 w-8 rounded-full bg-gray-800/50 hover:bg-gray-700/50">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <CardContent className="pt-6">
+            <div className="flex flex-col md:flex-row justify-between items-start mb-4">
+              <div className="flex items-center mb-4 md:mb-0">
+                <h3 className="text-xl font-semibold text-white">{stockSymbol} Analysis</h3>
+                <div className={`ml-3 w-3 h-3 rounded-full ${getSentimentColor(insight.sentiment)}`}></div>
+                <Badge className="ml-2" variant={insight.sentiment === "Bullish" ? "default" : insight.sentiment === "Bearish" ? "destructive" : "secondary"}>
+                  {insight.sentiment}
+                </Badge>
               </div>
-            )}
+              
+              {insight.healthScore !== undefined && <div className="flex items-center">
+                  <span className="text-sm text-gray-400 mr-2">Health Score:</span>
+                  <div className="bg-gray-700 rounded-full h-2 w-36 overflow-hidden">
+                    <div className={`h-full ${insight.healthScore >= 70 ? 'bg-green-500' : insight.healthScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{
+                width: `${insight.healthScore}%`
+              }}></div>
+                  </div>
+                  <span className="ml-2 text-sm font-medium text-white">{insight.healthScore}</span>
+                </div>}
+            </div>
             
             <Tabs defaultValue="summary" value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="bg-[#0f1628] mb-4">
@@ -287,14 +282,12 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
               </TabsList>
               
               <TabsContent value="summary" className="mt-0">
-                <p className="text-gray-300 text-sm">{insight?.summary}</p>
+                <p className="text-gray-300 text-sm">{insight.summary}</p>
               </TabsContent>
               
               <TabsContent value="news" className="mt-0">
-                {insight?.news && insight.news.length > 0 ? (
-                  <div className="space-y-4">
-                    {insight.news.map((item, index) => (
-                      <div key={index} className="p-3 border border-white/10 rounded-lg bg-white/5">
+                {insight.news && insight.news.length > 0 ? <div className="space-y-4">
+                    {insight.news.map((item, index) => <div key={index} className="p-3 border border-white/10 rounded-lg bg-white/5">
                         <div className="flex justify-between items-start mb-1">
                           <h4 className="font-medium text-white text-sm">{item.title}</h4>
                           <div className={`ml-2 w-2 h-2 rounded-full ${getSentimentColor(item.sentiment)}`}></div>
@@ -306,19 +299,13 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
                             <span>Source</span>
                           </a>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-400">No news data available.</p>
-                )}
+                      </div>)}
+                  </div> : <p className="text-gray-400">No news data available.</p>}
               </TabsContent>
               
               <TabsContent value="citations" className="mt-0">
-                {insight?.citations && insight.citations.length > 0 ? (
-                  <div className="space-y-2">
-                    {insight.citations.map((citation, index) => (
-                      <div key={index} className="flex gap-2 items-start p-2 rounded hover:bg-white/5">
+                {insight.citations && insight.citations.length > 0 ? <div className="space-y-2">
+                    {insight.citations.map((citation, index) => <div key={index} className="flex gap-2 items-start p-2 rounded hover:bg-white/5">
                         <span className="text-gray-400 text-sm">{index + 1}.</span>
                         <div>
                           <p className="text-sm text-gray-300">{citation.text}</p>
@@ -326,60 +313,58 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
                             {citation.url.replace(/https?:\/\//, '').split('/')[0]}
                           </a>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-400">No citation data available.</p>
-                )}
+                      </div>)}
+                  </div> : <p className="text-gray-400">No citation data available.</p>}
               </TabsContent>
             </Tabs>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>}
 
-      {/* Dialog for News Analysis Results */}
-      <Dialog open={dialogOpen && !isLoading && !analysisLoading && newsAnalysisData !== null} onOpenChange={handleCloseDialog}>
-        <DialogContent className="bg-[#1a2035] border border-white/10 text-white max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <span className="text-xl mr-2">{stockSymbol} News Analysis</span>
-              <div className={`ml-2 w-3 h-3 rounded-full ${getSentimentColor(newsAnalysisData?.sentiment)}`}></div>
-              <Badge className="ml-2" variant={newsAnalysisData?.sentiment === "Bullish" ? "default" : newsAnalysisData?.sentiment === "Bearish" ? "destructive" : "secondary"}>
-                {newsAnalysisData?.sentiment}
-              </Badge>
-            </DialogTitle>
-          </DialogHeader>
+      {/* News Analysis Results */}
+      {!isLoading && !analysisLoading && newsAnalysisData && showResults && <Card className="mt-4 bg-[#1a2035]/80 backdrop-blur-sm border border-white/10 relative">
+          <div className="absolute top-2 right-2 z-10">
+            <Button variant="ghost" size="icon" onClick={handleCloseResults} className="h-8 w-8 rounded-full bg-gray-800/50 hover:bg-gray-700/50">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
           
-          <div className="mt-4">
-            {newsAnalysisData?.healthScore !== undefined && (
-              <div className="flex items-center mb-4">
-                <span className="text-sm text-gray-400 mr-2">Health Score:</span>
-                <div className="bg-gray-700 rounded-full h-2 w-36 overflow-hidden">
-                  <div 
-                    className={`h-full ${newsAnalysisData.healthScore >= 70 ? 'bg-green-500' : newsAnalysisData.healthScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} 
-                    style={{width: `${newsAnalysisData.healthScore}%`}}
-                  ></div>
-                </div>
-                <span className="ml-2 text-sm font-medium text-white">{newsAnalysisData.healthScore}</span>
+          <CardHeader className="pb-0 pt-4">
+            <div className="flex flex-col md:flex-row justify-between items-start">
+              <div className="flex items-center">
+                <h3 className="text-xl font-semibold text-white">
+                  {stockSymbol} News Analysis
+                </h3>
+                <div className={`ml-3 w-3 h-3 rounded-full ${getSentimentColor(newsAnalysisData.sentiment)}`}></div>
+                <Badge className="ml-2" variant={newsAnalysisData.sentiment === "Bullish" ? "default" : newsAnalysisData.sentiment === "Bearish" ? "destructive" : "secondary"}>
+                  {newsAnalysisData.sentiment}
+                </Badge>
               </div>
-            )}
+              
+              <div className="flex items-center mt-2 md:mt-0">
+                <span className="text-sm text-gray-400 mr-2">Health:</span>
+                <div className="bg-gray-700 rounded-full h-2 w-24 overflow-hidden">
+                  <div className={`h-full ${newsAnalysisData.healthScore >= 70 ? 'bg-green-500' : newsAnalysisData.healthScore >= 40 ? 'bg-amber-500' : 'bg-red-500'}`} style={{
+                width: `${newsAnalysisData.healthScore}%`
+              }}></div>
+                </div>
+                <span className="ml-2 text-sm font-medium text-white">
+                  {newsAnalysisData.healthScore}
+                </span>
+              </div>
+            </div>
             
             <div className="mt-3">
-              <p className="text-gray-300 text-sm">{newsAnalysisData?.summary}</p>
+              <p className="text-gray-300 text-sm">{newsAnalysisData.summary}</p>
             </div>
             
             <div className="flex justify-between items-center mt-4">
               <h4 className="text-white text-sm font-medium">Recent News</h4>
-              <Select 
-                value={newsTimeframe} 
-                onValueChange={value => {
-                  setNewsTimeframe(value);
-                  runNewsAnalysis(stockSymbol, {
-                    timeframe: value
-                  });
-                }}
-              >
+              <Select value={newsTimeframe} onValueChange={value => {
+            setNewsTimeframe(value);
+            runNewsAnalysis(stockSymbol, {
+              timeframe: value
+            });
+          }}>
                 <SelectTrigger className="w-28 h-8 bg-black/30 border-white/10 text-white text-xs">
                   <SelectValue placeholder="Time Range" />
                 </SelectTrigger>
@@ -390,11 +375,11 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
                 </SelectContent>
               </Select>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-              {newsAnalysisData?.newsItems && newsAnalysisData.newsItems.length > 0 ? (
-                newsAnalysisData.newsItems.map((item, index) => (
-                  <Card key={index} className="bg-black/30 border-white/5 overflow-hidden flex flex-col">
+          </CardHeader>
+          
+          <CardContent className="pt-2 pb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+              {newsAnalysisData.newsItems && newsAnalysisData.newsItems.length > 0 ? newsAnalysisData.newsItems.map((item, index) => <Card key={index} className="bg-black/30 border-white/5 overflow-hidden flex flex-col">
                     <CardContent className="p-3 flex flex-col h-full">
                       <div className="flex justify-between items-start">
                         <h5 className="font-medium text-white text-sm line-clamp-2">{item.title}</h5>
@@ -418,19 +403,17 @@ const SonarScreener: React.FC<SonarScreenerProps> = ({
                         </div>
                       </div>
                     </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <div className="col-span-2 text-center py-6 text-gray-400">
+                  </Card>) : <div className="col-span-2 text-center py-6 text-gray-400">
                   No news data available for this timeframe.
-                </div>
-              )}
+                </div>}
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+          </CardContent>
+          
+          <CardFooter className="pt-0 pb-3 px-4 text-xs text-gray-500">
+            Data sourced by Perplexity Sonar API • Updated in real-time
+          </CardFooter>
+        </Card>}
+    </>;
 };
 
 export default SonarScreener;

@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -112,80 +113,5 @@
   
   .animate-fade-in {
     animation: fade-in 0.6s ease-out forwards;
-  }
-  
-  /* Journey section animations */
-  @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 15px rgba(0, 184, 212, 0.5); }
-    50% { box-shadow: 0 0 25px rgba(0, 184, 212, 0.8); }
-  }
-  
-  .pulse-glow {
-    animation: pulse-glow 3s infinite ease-in-out;
-  }
-  
-  /* Timeline animations */
-  @keyframes progress-line {
-    from { width: 0; }
-    to { width: 100%; }
-  }
-  
-  .progress-line-animate {
-    animation: progress-line 2s ease-out forwards;
-  }
-  
-  /* Custom scrollbar for dark UI */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.15);
-  }
-
-  .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.1) rgba(255, 255, 255, 0.05);
-  }
-  
-  /* TradingView Widget Styles */
-  .tradingview-widget-copyright {
-    font-size: 0.7em;
-    opacity: 0.8;
-    margin-top: 5px;
-  }
-  
-  /* Site map styles */
-  .site-map {
-    background: linear-gradient(180deg, rgba(0, 184, 212, 0.03) 0%, rgba(0, 0, 0, 0) 100%);
-  }
-  
-  .site-map a:hover,
-  .site-map button:hover {
-    @apply text-teal transition-colors duration-200;
-  }
-  
-  .site-map-link-active {
-    @apply text-teal font-medium;
-  }
-  
-  /* Additional animations for site map */
-  @keyframes slide-in {
-    from { transform: translateX(-10px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-  }
-  
-  .animate-slide-in {
-    animation: slide-in 0.3s ease-out forwards;
   }
 }

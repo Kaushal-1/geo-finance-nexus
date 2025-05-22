@@ -1,6 +1,4 @@
-
 import { alpacaService } from './alpacaService';
-import { getPerplexityApiKey } from './chatService';
 
 // Calculate Moving Average
 export const calculateMA = (prices: number[], period: number): number => {
@@ -200,16 +198,10 @@ export const fetchStockMetrics = async (symbol: string): Promise<any> => {
 // Function to fetch fundamental data using Perplexity (Sonar) API
 export const fetchFundamentalData = async (symbol: string): Promise<any> => {
   try {
-    const apiKey = getPerplexityApiKey();
-    
-    if (!apiKey) {
-      throw new Error('Perplexity API key not found');
-    }
-    
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': 'Bearer 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',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -217,11 +209,11 @@ export const fetchFundamentalData = async (symbol: string): Promise<any> => {
         messages: [
           {
             role: 'system',
-            content: 'You are a financial analyst AI that provides accurate and up-to-date fundamental data for stocks. Return data in JSON format with no additional text, comments, or explanations. Return ONLY valid JSON without markdown code blocks. Always provide numeric values, never respond with null or undefined.'
+            content: 'You are a financial analyst AI that provides accurate and up-to-date fundamental data for stocks. Return data in JSON format with no additional text. Return ONLY valid JSON without markdown code blocks.'
           },
           {
             role: 'user',
-            content: `Provide the following fundamental data for ${symbol}: P/E Ratio, Market Cap, Dividend Yield, Beta. Format as JSON with these exact keys: peRatio (number), marketCap (string, in trillions or billions), dividendYield (string with % symbol), beta (number). Always return numeric values for all fields - if data is not available, provide best estimates based on industry averages or similar companies.`
+            content: `Provide the following fundamental data for ${symbol}: P/E Ratio, Market Cap, Dividend Yield, Beta. Format as JSON with these exact keys: peRatio, marketCap (in billions), dividendYield (as percentage), beta.`
           }
         ],
         temperature: 0.1,
@@ -243,42 +235,32 @@ export const fetchFundamentalData = async (symbol: string): Promise<any> => {
       // Parse the JSON response from Perplexity
       const responseText = data.choices[0].message.content;
       
-      // Clean the response - remove any comments, code blocks, etc.
-      const cleanedResponse = responseText
-        .replace(/```json|```/g, '')  // Remove code blocks
-        .replace(/\/\*[\s\S]*?\*\//g, '') // Remove multiline comments
-        .replace(/\/\/.*$/gm, '') // Remove single line comments
-        .trim();
+      // Check if response is wrapped in markdown code blocks and remove them
+      const jsonContent = responseText.replace(/```json|```/g, '').trim();
       
-      console.log("Cleaned fundamental data for parsing:", cleanedResponse);
-      fundamentalData = JSON.parse(cleanedResponse);
-      
-      // Ensure all required fields exist with appropriate types
-      return {
-        peRatio: typeof fundamentalData.peRatio === 'number' ? fundamentalData.peRatio : 20,
-        marketCap: fundamentalData.marketCap || 'N/A',
-        dividendYield: fundamentalData.dividendYield || 'N/A',
-        beta: typeof fundamentalData.beta === 'number' ? fundamentalData.beta : 1
-      };
+      console.log("Formatted response for parsing:", jsonContent);
+      fundamentalData = JSON.parse(jsonContent);
     } catch (e) {
       console.error('Failed to parse Perplexity response:', e);
       
       // Fallback values
-      return {
-        peRatio: 20,
-        marketCap: symbol === 'AAPL' ? '2.5T' : '2.3T',
-        dividendYield: symbol === 'AAPL' ? '0.5%' : '0.8%',
-        beta: symbol === 'AAPL' ? 1.2 : 0.9
+      fundamentalData = {
+        peRatio: 'N/A',
+        marketCap: 'N/A',
+        dividendYield: 'N/A',
+        beta: 'N/A'
       };
     }
+    
+    return fundamentalData;
   } catch (error) {
     console.error(`Error fetching fundamental data for ${symbol}:`, error);
     // Return fallback values
     return {
-      peRatio: 20,
-      marketCap: symbol === 'AAPL' ? '2.5T' : '2.3T',
-      dividendYield: symbol === 'AAPL' ? '0.5%' : '0.8%',
-      beta: symbol === 'AAPL' ? 1.2 : 0.9
+      peRatio: 'N/A',
+      marketCap: 'N/A',
+      dividendYield: 'N/A',
+      beta: 'N/A'
     };
   }
 };

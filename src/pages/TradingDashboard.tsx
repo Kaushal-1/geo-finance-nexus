@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import GlobalNavbar from "@/components/shared/GlobalNavbar";
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { toast } from "@/components/ui/use-toast";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -97,17 +97,13 @@ const TradingDashboard = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#0a0e17] to-[#131b2e] min-h-screen">
-      <GlobalNavbar />
-      
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0e17] to-[#131b2e]">
+      <DashboardHeader />
+
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-0">
           <h1 className="text-2xl sm:text-3xl font-bold text-white">Trading Dashboard</h1>
-        </div>
-        
-        <div className="grid grid-cols-1 gap-4 sm:gap-6">
-          {/* Action Buttons Row */}
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <SonarScreener stockSymbol={currentSymbol} />
             <Button 
               onClick={refreshAll}
@@ -120,8 +116,10 @@ const TradingDashboard = () => {
               Refresh All
             </Button>
           </div>
-          
-          {/* Account Summary */}
+        </div>
+        
+        <div className="grid grid-cols-1 gap-4 sm:gap-6">
+          {/* Account Summary - Moved to top */}
           <AccountSummary 
             account={account} 
             isLoading={isLoadingAccount} 
@@ -169,7 +167,63 @@ const TradingDashboard = () => {
             onRefreshWatchlists={refreshWatchlists}
           />
           
-          {/* Removed the Business Model Card / Subscription Plans section */}
+          {/* Business Model Card */}
+          <Card className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-800/30 backdrop-blur-sm">
+            <CardContent className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-3 bg-black/20 rounded-lg border border-white/5">
+                  <h3 className="text-lg font-semibold text-white mb-2">Free Plan</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-300">
+                    <li>Paper trading access</li>
+                    <li>Basic stock analysis</li>
+                    <li>5 watchlists max</li>
+                    <li>Standard API limits</li>
+                  </ul>
+                  <div className="mt-3 text-center">
+                    <span className="text-lg font-bold text-white">$0</span>
+                    <span className="text-sm text-gray-400">/month</span>
+                  </div>
+                </div>
+                
+                <div className="p-3 bg-blue-900/30 rounded-lg border border-blue-600/30 relative">
+                  <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
+                    <span className="bg-blue-600 text-xs text-white px-2 py-1 rounded-md">POPULAR</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Premium</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-300">
+                    <li>All Free features</li>
+                    <li>Enhanced Sonar analysis</li>
+                    <li>Unlimited watchlists</li>
+                    <li>Advanced alerts</li>
+                    <li>Real-time data</li>
+                  </ul>
+                  <div className="mt-3 text-center">
+                    <span className="text-lg font-bold text-white">$19.99</span>
+                    <span className="text-sm text-gray-400">/month</span>
+                  </div>
+                </div>
+                
+                <div className="p-3 bg-purple-900/30 rounded-lg border border-purple-600/30">
+                  <h3 className="text-lg font-semibold text-white mb-2">Pro Trader</h3>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-300">
+                    <li>All Premium features</li>
+                    <li>Live trading (0.1% commission)</li>
+                    <li>Advanced portfolio analysis</li>
+                    <li>Dedicated API access</li>
+                    <li>Priority support</li>
+                  </ul>
+                  <div className="mt-3 text-center">
+                    <span className="text-lg font-bold text-white">$49.99</span>
+                    <span className="text-sm text-gray-400">/month</span>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="mt-4 text-center text-sm text-blue-300">
+                This is a paper trading platform using Alpaca API. Upgrade for real trading capabilities.
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
